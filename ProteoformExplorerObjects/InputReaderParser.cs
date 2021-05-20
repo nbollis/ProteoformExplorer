@@ -1,0 +1,251 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace ProteoformExplorer
+{
+    public static class InputReaderParser
+    {
+        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, MetaMorpheus, TDPortal, Unknown }
+        public static List<string> AcceptedFileFormats = new List<string> { ".raw", ".mzml", ".psmtsv", ".tsv", ".txt" };
+
+        private static int SpeciesNameColumn;
+        private static int SpectraFileNameColumn;
+        private static int MonoisotopicMassColumn;
+        private static int ScanNumberColumn;
+        private static int RetentionTimeColumn;
+        private static int FeatureRtStartColumn;
+        private static int FeatureRtEndColumn;
+        private static int ChargeColumn;
+        private static int MinChargeColumn;
+        private static int MaxChargeColumn;
+
+        private static char[] ItemDelimiter = new char[] { '\t' };
+        private static string[] HeadersFlashDeconv = new string[] { "ID", "FileName", "IsotopeCosineScore", "ChargeIntensityCosineScore" };
+        private static string[] HeadersMetaMorpheus = new string[] { "File Name", "Notch", "Full Sequence", "QValue Notch" };
+        private static string[] HeadersThermoDecon = new string[] { "No.", "Monoisotopic Mass", "Number of Charge States", "Scan Range" };
+        private static string[] HeadersTdPortal = new string[] { "PFR", "Uniprot Id", "Monoisotopic Mass", "Result Set" };
+
+        public static List<AnnotatedSpecies> ReadSpeciesFromFile(string filePath, out List<string> errors)
+        {
+            var fileType = InputSourceType.Unknown;
+            errors = new List<string>();
+            var listOfSpecies = new List<AnnotatedSpecies>();
+
+            // open the file to read
+            StreamReader reader;
+            try
+            {
+                reader = new StreamReader(filePath);
+            }
+            catch (Exception e)
+            {
+                errors.Add("Error reading file " + filePath + "\n" + e.Message);
+                return listOfSpecies;
+            }
+
+            // read the file
+            int lineNum = 0;
+
+            while (reader.Peek() > 0)
+            {
+                string line = reader.ReadLine();
+                lineNum++;
+
+                // determine file type from the header
+                if (lineNum == 1)
+                {
+                    fileType = GetFileTypeFromHeader(line);
+
+                    if (fileType == InputSourceType.Unknown)
+                    {
+                        errors.Add("Could not interpret header labels from file: " + filePath);
+                        return listOfSpecies;
+                    }
+
+                    continue;
+                }
+
+                // read the line + create the species object
+                AnnotatedSpecies species = null;
+                switch (fileType)
+                {
+                    case InputSourceType.MetaMorpheus:
+                        species = GetMetaMorpheusSpecies(line);
+                        break;
+
+                    case InputSourceType.FlashDeconv:
+                        species = GetFlashDeconvSpecies(line);
+                        break;
+
+                    case InputSourceType.TDPortal:
+                        species = GetTdPortalSpecies(line);
+                        break;
+
+                    case InputSourceType.ThermoDecon:
+                        species = GetThermoDeconSpecies(line, reader, filePath);
+                        break;
+                }
+
+                // add the item to the list
+                if (species != null)
+                {
+                    listOfSpecies.Add(species);
+                }
+            }
+
+            return listOfSpecies;
+        }
+
+        private static AnnotatedSpecies GetMetaMorpheusSpecies(string line)
+        {
+            string[] items = line.Split(ItemDelimiter);
+
+            string baseSequence = items[SpeciesNameColumn];
+            string modSequence = items[SpeciesNameColumn];
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+            int charge = int.Parse(items[ChargeColumn]);
+
+            var id = new Identification(baseSequence, modSequence, mass, charge);
+
+            var species = new AnnotatedSpecies(id);
+            species.Identification = id;
+
+            return species;
+        }
+
+        private static AnnotatedSpecies GetTdPortalSpecies(string line)
+        {
+            string[] items = line.Split(ItemDelimiter);
+
+            string baseSequence = items[SpeciesNameColumn];
+            string modSequence = items[SpeciesNameColumn];
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+            // TD portal does not report precursor charge
+
+            var id = new Identification(baseSequence, modSequence, mass, -1);
+
+            var species = new AnnotatedSpecies(id);
+
+            return species;
+        }
+
+        private static AnnotatedSpecies GetFlashDeconvSpecies(string line)
+        {
+            string[] items = line.Split(ItemDelimiter);
+
+            string identifier = items[SpeciesNameColumn];
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+
+            int minChargeState = int.Parse(items[MinChargeColumn]);
+            int maxChargeState = int.Parse(items[MaxChargeColumn]);
+            var chargeList = Enumerable.Range(minChargeState, maxChargeState - minChargeState + 1).ToList();
+            double apexRt = double.Parse(items[RetentionTimeColumn]) / 60;
+            double rtStart = double.Parse(items[FeatureRtStartColumn]) / 60;
+            double rtEnd = double.Parse(items[FeatureRtEndColumn]) / 60;
+            string fileName = items[SpectraFileNameColumn];
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
+            var species = new AnnotatedSpecies(deconFeature);
+            
+            species.DeconvolutionFeature = deconFeature;
+
+            return species;
+        }
+
+        /// <summary>
+        /// The Thermo decon result filename is assumed to be the same as the spectra file name
+        /// </summary>
+        private static AnnotatedSpecies GetThermoDeconSpecies(string line, StreamReader reader, string fileName)
+        {
+            string[] items = line.Split(ItemDelimiter);
+            int numCharges = int.Parse(items[3]); // TODO: get this from header, not hardcoded
+            List<int> chargeList = new List<int>();
+
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+            string speciesName = items[SpeciesNameColumn] + " (" + mass.ToString("F1") + ")" ;
+            double apexRt = double.Parse(items[RetentionTimeColumn]);
+            string rtRange = items[FeatureRtStartColumn];
+            double rtStart = double.Parse(rtRange.Split('-')[0].Trim());
+            double rtEnd = double.Parse(rtRange.Split('-')[1].Trim());
+
+            for (int i = 0; i < numCharges + 1; i++)
+            {
+                var nextLine = reader.ReadLine();
+                var chargeLineSplit = nextLine.Split(ItemDelimiter);
+
+                if (chargeLineSplit[1].Trim().Equals("Charge State", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                chargeList.Add(int.Parse(chargeLineSplit[1]));
+            }
+
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
+            var species = new AnnotatedSpecies(deconFeature);
+            
+            species.DeconvolutionFeature = deconFeature;
+
+            return species;
+        }
+
+        private static InputSourceType GetFileTypeFromHeader(string line)
+        {
+            var split = line.Split(ItemDelimiter).Select(p => p.Trim()).ToArray();
+
+            // metamorpheus input
+            if (HeadersMetaMorpheus.All(p => split.Contains(p)))
+            {
+                SpeciesNameColumn = Array.IndexOf(split, "Full Sequence");
+                SpectraFileNameColumn = Array.IndexOf(split, "File Name");
+                MonoisotopicMassColumn = Array.IndexOf(split, "Peptide Monoisotopic Mass");
+                RetentionTimeColumn = Array.IndexOf(split, "Scan Retention Time");
+                ChargeColumn = Array.IndexOf(split, "Precursor Charge");
+
+                return InputSourceType.MetaMorpheus;
+            }
+            // flashdecon input
+            else if (HeadersFlashDeconv.All(p => split.Contains(p)))
+            {
+                SpeciesNameColumn = Array.IndexOf(split, "ID");
+                SpectraFileNameColumn = Array.IndexOf(split, "FileName");
+                MonoisotopicMassColumn = Array.IndexOf(split, "MonoisotopicMass");
+                RetentionTimeColumn = Array.IndexOf(split, "ApexRetentionTime");
+                FeatureRtStartColumn = Array.IndexOf(split, "StartRetentionTime");
+                FeatureRtEndColumn = Array.IndexOf(split, "EndRetentionTime");
+                MinChargeColumn = Array.IndexOf(split, "MinCharge");
+                MaxChargeColumn = Array.IndexOf(split, "MaxCharge");
+
+                return InputSourceType.FlashDeconv;
+            }
+            // thermo decon input
+            else if (HeadersThermoDecon.All(p => split.Select(p => p.Trim()).Contains(p)))
+            {
+                SpeciesNameColumn = Array.IndexOf(split, "No.");
+                MonoisotopicMassColumn = Array.IndexOf(split, "Monoisotopic Mass");
+                // thermo decon does not include file name
+                RetentionTimeColumn = Array.IndexOf(split, "Apex RT");
+                FeatureRtStartColumn = Array.IndexOf(split, "RT Range");
+                ChargeColumn = Array.IndexOf(split, "Precursor Charge");
+
+                return InputSourceType.ThermoDecon;
+            }
+            // td portal input
+            else if (HeadersTdPortal.All(p => split.Contains(p)))
+            {
+                SpeciesNameColumn = Array.IndexOf(split, "Sequence"); // does not include mods
+                SpectraFileNameColumn = Array.IndexOf(split, "File Name");
+                MonoisotopicMassColumn = Array.IndexOf(split, "Monoisotopic Mass");
+                RetentionTimeColumn = Array.IndexOf(split, "RetentionTime");
+                //ChargeColumn = Array.IndexOf(split, "Precursor Charge"); // tdportal doesn't seem to report precursor charge
+
+                return InputSourceType.TDPortal;
+            }
+
+            // input not recognized based on column headers
+            return InputSourceType.Unknown;
+        }
+    }
+}
