@@ -16,13 +16,15 @@ namespace ProteoformExplorer
         public string SpectraFileNameWithoutExtension { get; private set; }
         public List<AnnotatedEnvelope> AnnotatedEnvelopes { get; private set; }
 
-        public DeconvolutionFeature(double monoMass, double apexRt, double rtStart, double rtEnd, List<int> charges, string spectraFileName)
+        public DeconvolutionFeature(double monoMass, double apexRt, double rtStart, double rtEnd, List<int> charges, string spectraFileName,
+            List<AnnotatedEnvelope> annotatedEnvelopes = null)
         {
             this.MonoisotopicMass = monoMass;
             this.ApexRt = apexRt;
             this.RtElutionRange = new DoubleRange(rtStart, rtEnd);
             this.Charges = charges;
             this.SpectraFileNameWithoutExtension = Path.GetFileNameWithoutExtension(spectraFileName);
+            this.AnnotatedEnvelopes = annotatedEnvelopes;
         }
 
         public void PopulateAnnotatedEnvelopes(KeyValuePair<string, DynamicDataConnection> data)

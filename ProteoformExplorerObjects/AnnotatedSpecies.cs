@@ -9,22 +9,26 @@ namespace ProteoformExplorer
     {
         public string SpeciesLabel { get; private set; }
         public string SpectraFileNameWithoutExtension { get; private set; }
-        public Identification Identification { get; set; }
-        public DeconvolutionFeature DeconvolutionFeature { get; set; }
+        public Identification Identification { get; private set; }
+        public DeconvolutionFeature DeconvolutionFeature { get; private set; }
 
         public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature)
         {
             SpeciesLabel = deconvolutionFeature.MonoisotopicMass.ToString("F2");
+            DeconvolutionFeature = deconvolutionFeature;
         }
 
         public AnnotatedSpecies(Identification identification)
         {
             SpeciesLabel = identification.FullSequence;
+            Identification = identification;
         }
 
         public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature, Identification identification)
         {
             SpeciesLabel = identification.FullSequence;
+            Identification = identification;
+            DeconvolutionFeature = deconvolutionFeature;
         }
 
         //public override bool Equals(object obj)

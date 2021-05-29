@@ -8,7 +8,7 @@ namespace ProteoformExplorer
 {
     public static class InputReaderParser
     {
-        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, MetaMorpheus, TDPortal, Unknown }
+        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, ProteoformExplorer, MetaMorpheus, TDPortal, Unknown }
         public static List<string> AcceptedFileFormats = new List<string> { ".raw", ".mzml", ".psmtsv", ".tsv", ".txt" };
 
         private static int SpeciesNameColumn;
@@ -21,12 +21,14 @@ namespace ProteoformExplorer
         private static int ChargeColumn;
         private static int MinChargeColumn;
         private static int MaxChargeColumn;
+        private static int PeaksListColumn;
 
         private static char[] ItemDelimiter = new char[] { '\t' };
         private static string[] HeadersFlashDeconv = new string[] { "ID", "FileName", "IsotopeCosineScore", "ChargeIntensityCosineScore" };
         private static string[] HeadersMetaMorpheus = new string[] { "File Name", "Notch", "Full Sequence", "QValue Notch" };
         private static string[] HeadersThermoDecon = new string[] { "No.", "Monoisotopic Mass", "Number of Charge States", "Scan Range" };
         private static string[] HeadersTdPortal = new string[] { "PFR", "Uniprot Id", "Monoisotopic Mass", "Result Set" };
+        private static string[] HeadersProteoformExplorer = new string[] { "File Name", "Scan Number", "Retention Time", "Species", "Monoisotopic Mass", "Charge", "Peaks List" };
 
         public static List<AnnotatedSpecies> ReadSpeciesFromFile(string filePath, out List<string> errors)
         {
@@ -87,6 +89,10 @@ namespace ProteoformExplorer
                     case InputSourceType.ThermoDecon:
                         species = GetThermoDeconSpecies(line, reader, filePath);
                         break;
+
+                    case InputSourceType.ProteoformExplorer:
+                        species = GetProteoformExplorerSpecies(line, reader);
+                        break;
                 }
 
                 // add the item to the list
@@ -111,7 +117,6 @@ namespace ProteoformExplorer
             var id = new Identification(baseSequence, modSequence, mass, charge);
 
             var species = new AnnotatedSpecies(id);
-            species.Identification = id;
 
             return species;
         }
@@ -148,8 +153,6 @@ namespace ProteoformExplorer
             string fileName = items[SpectraFileNameColumn];
             var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
             var species = new AnnotatedSpecies(deconFeature);
-            
-            species.DeconvolutionFeature = deconFeature;
 
             return species;
         }
@@ -164,7 +167,7 @@ namespace ProteoformExplorer
             List<int> chargeList = new List<int>();
 
             double mass = double.Parse(items[MonoisotopicMassColumn]);
-            string speciesName = items[SpeciesNameColumn] + " (" + mass.ToString("F1") + ")" ;
+            string speciesName = items[SpeciesNameColumn] + " (" + mass.ToString("F1") + ")";
             double apexRt = double.Parse(items[RetentionTimeColumn]);
             string rtRange = items[FeatureRtStartColumn];
             double rtStart = double.Parse(rtRange.Split('-')[0].Trim());
@@ -185,8 +188,26 @@ namespace ProteoformExplorer
 
             var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
             var species = new AnnotatedSpecies(deconFeature);
-            
-            species.DeconvolutionFeature = deconFeature;
+
+            return species;
+        }
+
+        private static AnnotatedSpecies GetProteoformExplorerSpecies(string line, StreamReader reader)
+        {
+            line = line.Replace("\"", string.Empty);
+            string[] items = line.Split(ItemDelimiter);
+
+            string identifier = items[SpeciesNameColumn];
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+            int charge = int.Parse(items[ChargeColumn]);
+            double apexRt = double.Parse(items[RetentionTimeColumn]);
+            string fileName = items[SpectraFileNameColumn];
+            int scan = int.Parse(items[ScanNumberColumn]);
+            var peaks = items[PeaksListColumn].Split(',').Select(p => double.Parse(p)).ToList();
+
+            var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName, new List<AnnotatedEnvelope> { annotEnvelope });
+            var species = new AnnotatedSpecies(deconFeature);
 
             return species;
         }
@@ -242,6 +263,19 @@ namespace ProteoformExplorer
                 //ChargeColumn = Array.IndexOf(split, "Precursor Charge"); // tdportal doesn't seem to report precursor charge
 
                 return InputSourceType.TDPortal;
+            }
+            // proteoform explorer input
+            else if (HeadersProteoformExplorer.All(p => split.Contains(p)))
+            {
+                SpectraFileNameColumn = Array.IndexOf(split, "File Name");
+                ScanNumberColumn = Array.IndexOf(split, "Scan Number");
+                RetentionTimeColumn = Array.IndexOf(split, "Retention Time");
+                SpeciesNameColumn = Array.IndexOf(split, "Species");
+                MonoisotopicMassColumn = Array.IndexOf(split, "Monoisotopic Mass");
+                ChargeColumn = Array.IndexOf(split, "Charge");
+                PeaksListColumn = Array.IndexOf(split, "Peaks List");
+
+                return InputSourceType.ProteoformExplorer;
             }
 
             // input not recognized based on column headers
