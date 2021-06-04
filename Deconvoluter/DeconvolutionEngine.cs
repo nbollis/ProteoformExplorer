@@ -490,7 +490,7 @@ namespace Deconvoluter
                 List<DeconvolutedPeak> subsetPeaks = new List<DeconvolutedPeak>();
                 for (int start = 0; start < sortedPeaks.Count; start++)
                 {
-                    for (int end = deconvolutedPeaks.Count - 1; end >= start + 1; end--)
+                    for (int end = sortedPeaks.Count - 1; end >= start + 1; end--)
                     {
                         subsetPeaks.Clear();
 
