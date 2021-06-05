@@ -2,6 +2,7 @@ using Chemistry;
 using Deconvoluter;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
+using MzLibUtil;
 using NUnit.Framework;
 using ProteoformExplorer;
 using System;
@@ -145,7 +146,7 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature != null));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes != null && p.DeconvolutionFeature.AnnotatedEnvelopes.Count > 0));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes.All(v => v.PeakMzs.Count > 0)));
-            
+
             //Assert.That(species.Count == 1);
         }
 
@@ -175,6 +176,48 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes != null && p.DeconvolutionFeature.AnnotatedEnvelopes.Count > 0));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes.All(v => v.PeakMzs.Count > 0)));
             Assert.That(species.All(p => p.DeconvolutionFeature.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(filePath)));
+        }
+
+        [Test]
+        [TestCase(@"032421_MALAT1Capture_11903_30632", 1136.1993, 30632.139, 27)] // false harmonic
+        [TestCase(@"032421_MALAT1Capture_3033_5648", 628.9741, 5648.693, 9)] // very noisy/difficult
+
+        [TestCase(@"032421_MALAT1Capture_3090_13765", 689.6843, 13765.519, 20)] // easy case
+        [TestCase(@"032421_MALAT1Capture_5081_7011", 638.7745, 7011.428, 11)] // harmonic
+        [TestCase(@"032421_MALAT1Capture_5790_7045", 784.3348, 7045.937, 9)] // harmonic
+
+        public static void TestDeconvolutionDifferentCases(string dataFilePath, double mz, double monoMass, int z)
+        {
+            string filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\DeconCases\" + dataFilePath + ".mzML");
+            var data = IO.MzML.Mzml.LoadAllStaticData(filePath);
+            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.4, 3, 5, 2, 60, 3);
+
+            var scan = data.GetAllScansList().First();
+
+            Tolerance t = new AbsoluteTolerance(0.001);
+
+            var candidates = deconEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange);
+            deconEngine.CalculateSignalToNoise(scan.MassSpectrum, candidates);
+            var candidatesWithMz = candidates.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).OrderByDescending(p => p.Score).ToList();
+
+            var parsimonyEnvelopes = deconEngine.RunEnvelopeParsimony(candidates, scan.MassSpectrum);
+            deconEngine.CalculateSignalToNoise(scan.MassSpectrum, parsimonyEnvelopes);
+            var parsimonyEnvsWithMz = parsimonyEnvelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
+
+           
+            
+
+            //var envelopes = deconEngine.Deconvolute(data, filePath, 1).ToList();
+            //var finalEnvelopesWithMz = envelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
+
+            //Assert.That(testedEnvelope.Count == 1);
+            //Assert.That(testedEnvelope[0].Charge == z);
+            //Assert.That(testedEnvelope[0].MonoisotopicMass == monoMass);
+        }
+
+        private static void WriteEnvelopesToFile(MsDataFile file, List<DeconvolutedEnvelope> envelopesToWrite)
+        {
+
         }
 
         //[Test]

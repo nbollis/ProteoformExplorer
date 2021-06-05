@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Chemistry;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,13 +7,15 @@ namespace Deconvoluter
 {
     public class DeconvolutedPeak
     {
-        public double ExperimentalMz;
-        public double TheoreticalMz;
-        public int Charge;
-        public double ExperimentalIntensity;
-        public double TheoreticalIntensity;
-        public double TheoreticalNormalizedAbundance;
-        public int IsotopeNumber;
+        public double ExperimentalMz { get; private set; }
+        public double TheoreticalMz { get; private set; }
+        public int Charge { get; private set; }
+        public double ExperimentalIntensity { get; private set; }
+        public double TheoreticalIntensity { get; set; }
+        public double TheoreticalNormalizedAbundance { get; private set; }
+        public int IsotopeNumber { get; private set; }
+        public double PpmError { get { return ((ExperimentalMz.ToMass(Charge) - TheoreticalMz.ToMass(Charge)) / TheoreticalMz.ToMass(Charge)) * 1e6; } }
+        public double IntensityError { get { return ExperimentalIntensity - TheoreticalIntensity; } }
 
         public DeconvolutedPeak(double experimentalMz, double theorMz, int z, double expIntensity, double theorIntensity, int isotopeNumber, double theoreticalNormalizedAbundance)
         {

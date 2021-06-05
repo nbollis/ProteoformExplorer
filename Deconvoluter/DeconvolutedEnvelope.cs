@@ -33,6 +33,8 @@ namespace Deconvoluter
             FractionIntensityObserved = fractionIntensityObserved;
             Score = Math.Log(Peaks.Count, 2) * pearsonCorr;
             DeltaScore = Score;
+
+            CalculateIntensityErrors();
         }
 
         public override string ToString()
@@ -102,12 +104,25 @@ namespace Deconvoluter
             sb.Append('\t');
             sb.Append(TotalScanDeconvolutedIntensity);
             sb.Append('\t');
-            sb.Append(string.Join(",", Peaks.Select(p => 
-                (Math.Log(p.ExperimentalIntensity, 2) - Math.Log(p.TheoreticalIntensity, 2)) + 
-                ";" + 
+            sb.Append(string.Join(",", Peaks.Select(p =>
+                (Math.Log(p.ExperimentalIntensity, 2) - Math.Log(p.TheoreticalIntensity, 2)) +
+                ";" +
                 (p.ExperimentalIntensity - this.Baseline) / this.NoiseFwhm)));
 
             return sb.ToString();
+        }
+
+        private void CalculateIntensityErrors()
+        {
+            double sumNormalizedAbundance = Peaks.Sum(p => p.TheoreticalNormalizedAbundance);
+            double sumExperimentalIntensity = Peaks.Sum(p => p.ExperimentalIntensity);
+
+            foreach (var peak in Peaks)
+            {
+                double fractionOfTotalEnvelopeAbundance = peak.TheoreticalNormalizedAbundance / sumNormalizedAbundance;
+                double theoreticalIntensity = fractionOfTotalEnvelopeAbundance * sumExperimentalIntensity;
+                peak.TheoreticalIntensity = theoreticalIntensity;
+            } 
         }
     }
 }

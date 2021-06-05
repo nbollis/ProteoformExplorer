@@ -254,24 +254,27 @@ namespace Deconvoluter
                 overlappingEnvelopes.Clear();
                 overlappingEnvelopes.AddRange(envelopeCandidates.Where(p => p.Peaks.Any(v => mzsClaimed.Contains(v.ExperimentalMz))));
 
-                foreach (var envelope in overlappingEnvelopes.OrderByDescending(p => p.Score))
+                foreach (DeconvolutedEnvelope overlappingEnvelope in overlappingEnvelopes.OrderByDescending(p => p.Score))
                 {
-                    if (nextEnvelope.DeltaScore == nextEnvelope.Score && nextEnvelope.Charge != envelope.Charge)
+                    int mzIndex = spectrum.GetClosestPeakIndex(overlappingEnvelope.Peaks.First().ExperimentalMz);
+                    int candidateEnvelopeIndex = envelopeCandidates.IndexOf(overlappingEnvelope);
+
+                    DeconvolutedEnvelope redeconEnv = GetIsotopicEnvelope(spectrum, mzIndex, overlappingEnvelope.Charge, peaksBuffer, mzsClaimed);
+
+                    if (redeconEnv != null)
                     {
-                        nextEnvelope.DeltaScore = nextEnvelope.Score - envelope.Score;
+                        redeconEnv.NoiseFwhm = overlappingEnvelope.NoiseFwhm;
+                        redeconEnv.SignalToNoise = overlappingEnvelope.SignalToNoise;
+                        redeconEnv.Baseline = overlappingEnvelope.Baseline;
                     }
 
-                    int mzIndex = spectrum.GetClosestPeakIndex(envelope.Peaks.First().ExperimentalMz);
-                    int candidateEnvelopeIndex = envelopeCandidates.IndexOf(envelope);
-
-                    DeconvolutedEnvelope redeconEnv = GetIsotopicEnvelope(spectrum, mzIndex, envelope.Charge, peaksBuffer, mzsClaimed);
                     envelopeCandidates[candidateEnvelopeIndex] = redeconEnv;
                 }
 
                 // remove all invalid isotopic envelopes
                 envelopeCandidates.RemoveAll(p => p == null);
 
-                // remove harmonics
+                //remove harmonics
                 if (chosenEnvelope.MonoisotopicMass > 10000 && !harmonicsRemoved)
                 {
                     RemoveHarmonics(envelopeCandidates, chosenEnvelope, spectrum);
@@ -279,7 +282,7 @@ namespace Deconvoluter
                 }
 
                 // get the next-best envelope
-                nextEnvelope = GetNextBestEnvelope(envelopeCandidates, chosenEnvelope);//envelopesOrderedByScore.FirstOrDefault();
+                nextEnvelope = GetNextBestEnvelope(envelopeCandidates, chosenEnvelope);
             }
 
             return parsimoniousEnvelopes;
@@ -287,83 +290,33 @@ namespace Deconvoluter
 
         public void RemoveHarmonics(List<DeconvolutedEnvelope> envelopeCandidates, DeconvolutedEnvelope previousBestEnvelope, MzSpectrum spectrum)
         {
-            //List<DeconvolutedPeak> peaks = new List<DeconvolutedPeak>();
-            //HashSet<double> peaks2 = new HashSet<double>();
-
-            //for (int z = 1; z < MaxCharge; z++)
-            //{
-            //    double mz = previousBestEnvelope.Peaks.First().mz.ToMass(previousBestEnvelope.Charge).ToMz(z);
-            //    int index = spectrum.GetClosestPeakIndex(mz);
-
-            //    double expMz = spectrum.XArray[index];
-
-            //    if (PpmTolerance.Within(expMz.ToMass(z), mz.ToMass(z)))
-            //    {
-            //        var harmonicEnvelopes = envelopeCandidates.Where(p => p.Peaks.Any(v => v.mz == expMz)
-            //            && z % p.Charge == 0
-            //            && z != p.Charge).ToList();
-
-            //        // IF S/N < 10 and multiple peaks z * 2 observed, remove envelope
-
-            //        foreach (var envelope in harmonicEnvelopes)
-            //        {
-            //            //TODO: check to see if there are additional peaks for Z so as to not accidentally remove a real envelope
-            //            envelopeCandidates.Remove(envelope);
-            //        }
-            //    }
-            //}
-
             List<DeconvolutedEnvelope> harmonicEnvelopes = new List<DeconvolutedEnvelope>();
-            HashSet<double> harmonicMzs = new HashSet<double>();
-            HashSet<double> envelopeMzs = new HashSet<double>();
 
             foreach (DeconvolutedEnvelope envelope in envelopeCandidates)
             {
-                foreach (var peak in envelope.Peaks)
-                {
-                    envelopeMzs.Add(peak.ExperimentalMz);
-                }
-
                 for (int i = 2; i < MaxCharge / envelope.Charge; i++)
                 {
                     int harmonicZ = envelope.Charge * i;
-                    harmonicMzs.Clear();
+                    double mainMz = envelope.Peaks.First().ExperimentalMz;
 
-                    for (int pk = 0; pk < envelope.Peaks.Count; pk++)
+                    var theoreticalHarmonicMz = (mainMz.ToMass(harmonicZ) + Constants.C13MinusC12).ToMz(harmonicZ);
+                    int ind = spectrum.GetClosestPeakIndex(theoreticalHarmonicMz);
+                    double experimentalHarmonicMz = spectrum.XArray[ind];
+
+                    if (PpmTolerance.Within(experimentalHarmonicMz.ToMass(harmonicZ), theoreticalHarmonicMz.ToMass(harmonicZ))
+                        && experimentalHarmonicMz != mainMz)
                     {
-                        // look for +1 dalton peak
-                        double theoreticalHarmonicIsotopeMz = (envelope.Peaks[pk].ExperimentalMz.ToMass(harmonicZ) + Constants.C13MinusC12).ToMz(harmonicZ);
-                        int index = spectrum.GetClosestPeakIndex(theoreticalHarmonicIsotopeMz);
-                        double experimentalHarmonicIsotopeMz = spectrum.XArray[index];
-                        double experimentalHarmonicIsotopeIntensity = spectrum.YArray[index];
-                        double sn = (experimentalHarmonicIsotopeIntensity - envelope.Baseline) / envelope.NoiseFwhm;
+                        var harmonicCandidates = envelopeCandidates.Where(p => p.Charge == harmonicZ
+                            && p.Peaks.Any(v => v.ExperimentalMz == experimentalHarmonicMz || v.ExperimentalMz == mainMz))
+                            .ToList(); // DEBUG
 
-                        if (PpmTolerance.Within(experimentalHarmonicIsotopeMz.ToMass(harmonicZ), theoreticalHarmonicIsotopeMz.ToMass(harmonicZ)) 
-                            && sn >= 0
-                            && !envelopeMzs.Contains(experimentalHarmonicIsotopeMz))
+                        if (harmonicCandidates.Any())
                         {
-                            harmonicMzs.Add(experimentalHarmonicIsotopeMz);
-                        }
-
-                        // look for -1 dalton peak
-                        theoreticalHarmonicIsotopeMz = (envelope.Peaks[pk].ExperimentalMz.ToMass(harmonicZ) - Constants.C13MinusC12).ToMz(harmonicZ);
-                        index = spectrum.GetClosestPeakIndex(theoreticalHarmonicIsotopeMz);
-                        experimentalHarmonicIsotopeMz = spectrum.XArray[index];
-                        experimentalHarmonicIsotopeIntensity = spectrum.YArray[index];
-                        sn = (experimentalHarmonicIsotopeIntensity - envelope.Baseline) / envelope.NoiseFwhm;
-
-                        if (PpmTolerance.Within(experimentalHarmonicIsotopeMz.ToMass(harmonicZ), theoreticalHarmonicIsotopeMz.ToMass(harmonicZ)) 
-                            && sn >= 0
-                            && !envelopeMzs.Contains(experimentalHarmonicIsotopeMz))
-                        {
-                            harmonicMzs.Add(experimentalHarmonicIsotopeMz);
+                            harmonicEnvelopes.Add(envelope);
                         }
                     }
 
-                    if ((harmonicMzs.Count >= envelope.Peaks.Count - 2 && harmonicMzs.Count >= 2) || (envelope.SignalToNoise < 5 && harmonicMzs.Count >= 2))
-                    {
-                        harmonicEnvelopes.Add(envelope);
-                    }
+                    // TODO: look for -1 dalton peak
                 }
             }
 
@@ -511,7 +464,7 @@ namespace Deconvoluter
 
                         if (corr >= PearsonCorrelationRequired && fracIntensityObserved >= MinFractionIntensityRequired && subsetPeaks.Count >= 2)
                         {
-                            var subsetEnvelope = new DeconvolutedEnvelope(subsetPeaks.OrderBy(p => Math.Abs(p.ExperimentalMz - mz)).ToList(), 
+                            var subsetEnvelope = new DeconvolutedEnvelope(subsetPeaks.OrderBy(p => Math.Abs(p.ExperimentalMz - mz)).ToList(),
                                 monoMass, z, corr, fracIntensityObserved);
 
                             subsetEnvelopeCandidates.Add(subsetEnvelope);
@@ -561,29 +514,13 @@ namespace Deconvoluter
             foreach (var envelope in envelopes.OrderBy(p => p.Peaks.First().ExperimentalMz))
             {
                 double mz = envelope.Peaks.First().ExperimentalMz;
-                intensities.Clear();
-
                 int i = spectrum.GetClosestPeakIndex(mz - noiseHalfWindowWidth);
 
-                for (int j = i; j < spectrum.XArray.Length; j++)
-                {
-                    if (spectrum.XArray[j] > mz + noiseHalfWindowWidth)
-                    {
-                        break;
-                    }
+                var baselineAndFwhm = GetBaselineAndNoise(i, intensities, spectrum);
 
-                    intensities.Add((spectrum.XArray[j], spectrum.YArray[j]));
-                }
-
-                var hdi = Util.GetHighestDensityInterval(intensities.Select(p => p.Item2).ToArray(), 0.2);
-                double noiseSigma = (hdi.hdi_end - hdi.hdi_start) * 1.9685;
-                double noiseFwhm = noiseSigma * 2.3558;
-                double baseline = (hdi.hdi_end + hdi.hdi_start) / 2;
-                double signalToNoise = (envelope.Peaks.Max(p => p.ExperimentalIntensity) - baseline) / noiseFwhm;
-
-                envelope.Baseline = baseline;
-                envelope.SignalToNoise = signalToNoise;
-                envelope.NoiseFwhm = noiseFwhm;
+                envelope.Baseline = baselineAndFwhm.baseline;
+                envelope.NoiseFwhm = baselineAndFwhm.noiseFwhm;
+                envelope.SignalToNoise = (envelope.Peaks.Max(p => p.ExperimentalIntensity) - envelope.Baseline) / envelope.NoiseFwhm;
             }
         }
 
@@ -660,6 +597,40 @@ namespace Deconvoluter
             }
 
             return envelopeCandidates.OrderByDescending(p => p.Score).FirstOrDefault();
+        }
+
+        public (double baseline, double noiseFwhm) GetBaselineAndNoise(int index, List<(double, double)> intensities, MzSpectrum spectrum)
+        {
+            double noiseHalfWindowWidth = 50;
+
+            double mz = spectrum.XArray[index];
+            intensities.Clear();
+
+            for (int j = index; j < spectrum.XArray.Length; j++)
+            {
+                if (spectrum.XArray[j] > mz + noiseHalfWindowWidth)
+                {
+                    break;
+                }
+
+                intensities.Add((spectrum.XArray[j], spectrum.YArray[j]));
+            }
+            for (int j = index - 1; j >= 0; j--)
+            {
+                if (spectrum.XArray[j] < mz - noiseHalfWindowWidth)
+                {
+                    break;
+                }
+
+                intensities.Add((spectrum.XArray[j], spectrum.YArray[j]));
+            }
+
+            var hdi = Util.GetHighestDensityInterval(intensities.Select(p => p.Item2).ToArray(), 0.2);
+            double noiseSigma = (hdi.hdi_end - hdi.hdi_start) * 1.9685;
+            double noiseFwhm = noiseSigma * 2.3558;
+            double baseline = (hdi.hdi_end + hdi.hdi_start) / 2;
+
+            return (baseline, noiseFwhm);
         }
     }
 }

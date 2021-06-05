@@ -25,6 +25,57 @@
     <None Update="TestData\3-19-18_MCF7_IM_br1_f1_2_results+_calibrated.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_11845_35648.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_11853_21860.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_11863_25665.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_11903_30632.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_11957_17083.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_12081_13778.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_2766_11358.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_2982_4636.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_3015_6943.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_3033_5648.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_3047_3463.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_3090_13765.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_4198_15361.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_5081_7011.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_5790_7045.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_5808_13836.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestData\DeconCases\032421_MALAT1Capture_6501_15046.mzML">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestData\FlashDeconTest.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
