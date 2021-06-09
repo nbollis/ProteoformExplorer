@@ -18,7 +18,7 @@ namespace Deconvoluter
 
             var data = IO.ThermoRawFileReader.ThermoRawFileReader.LoadAllStaticData(file);
 
-            var engine = new DeconvolutionEngine(2000, 0.4, 6, 0.4, 10, 5, 2, 60, 3);
+            var engine = new DeconvolutionEngine(2000, 0.4, 4, 0.4, 5, 5, 2, 60, 2);
 
             var envs = engine.Deconvolute(data, file).ToList();
 

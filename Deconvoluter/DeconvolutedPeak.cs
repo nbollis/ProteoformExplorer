@@ -16,6 +16,8 @@ namespace Deconvoluter
         public int IsotopeNumber { get; private set; }
         public double PpmError { get { return ((ExperimentalMz.ToMass(Charge) - TheoreticalMz.ToMass(Charge)) / TheoreticalMz.ToMass(Charge)) * 1e6; } }
         public double IntensityError { get { return ExperimentalIntensity - TheoreticalIntensity; } }
+        public double SignalToNoise { get { return (ExperimentalIntensity - Envelope.Baseline) / Envelope.NoiseFwhm; } }
+        public DeconvolutedEnvelope Envelope { get; set; }
 
         public DeconvolutedPeak(double experimentalMz, double theorMz, int z, double expIntensity, double theorIntensity, int isotopeNumber, double theoreticalNormalizedAbundance)
         {

@@ -190,43 +190,29 @@ namespace Test
         {
             string filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\DeconCases\" + dataFilePath + ".mzML");
             var data = IO.MzML.Mzml.LoadAllStaticData(filePath);
-            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.4, 3, 5, 2, 60, 3);
+            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.4, 3, 5, 2, 60, 2);
 
             var scan = data.GetAllScansList().First();
 
             Tolerance t = new AbsoluteTolerance(0.001);
 
             var candidates = deconEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange);
-            deconEngine.CalculateSignalToNoise(scan.MassSpectrum, candidates);
+            //deconEngine.CalculateSignalToNoise(scan.MassSpectrum, candidates);
             var candidatesWithMz = candidates.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).OrderByDescending(p => p.Score).ToList();
 
             var parsimonyEnvelopes = deconEngine.RunEnvelopeParsimony(candidates, scan.MassSpectrum);
-            deconEngine.CalculateSignalToNoise(scan.MassSpectrum, parsimonyEnvelopes);
+            //deconEngine.CalculateSignalToNoise(scan.MassSpectrum, parsimonyEnvelopes);
             var parsimonyEnvsWithMz = parsimonyEnvelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
 
-           
-            
-
-            //var envelopes = deconEngine.Deconvolute(data, filePath, 1).ToList();
-            //var finalEnvelopesWithMz = envelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
-
-            //Assert.That(testedEnvelope.Count == 1);
-            //Assert.That(testedEnvelope[0].Charge == z);
-            //Assert.That(testedEnvelope[0].MonoisotopicMass == monoMass);
+            //List<string> output = new List<string>();
+            //foreach (var env in parsimonyEnvelopes.Where(p => p.MonoisotopicMass > 8000))
+            //{
+            //    foreach (var peak in env.Peaks)
+            //    {
+            //        output.Add(env.SignalToNoise + "\t" + peak.SignalToNoise);
+            //    }
+            //}
+            //File.WriteAllLines(@"C:\Users\rmillikin\Desktop\DeconvolutionTraining\peaksSn.tsv", output);
         }
-
-        private static void WriteEnvelopesToFile(MsDataFile file, List<DeconvolutedEnvelope> envelopesToWrite)
-        {
-
-        }
-
-        //[Test]
-        //public void TestMetaMorpheusOutputWithRaw()
-        //{
-        //    string filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\mcf7_sliced\AllPSMs.psmtsv");
-        //    string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\mcf7_sliced\mcf7_sliced_td.raw");
-
-        //    var species = InputReaderParser.ReadSpeciesFromFile(filePath, out var errors);
-        //}
     }
 }
