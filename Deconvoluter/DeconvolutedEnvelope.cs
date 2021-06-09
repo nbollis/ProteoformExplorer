@@ -39,6 +39,8 @@ namespace Deconvoluter
         public double FractionIntensityMissing { get; set; }
 
         private double _signalToNoise = double.NaN;
+        public string MachineLearningClassification;
+        public double InterstitialSpectralAngle { get; set; }
 
         public DeconvolutedEnvelope(List<DeconvolutedPeak> peaks, double monoMass, int charge, double pearsonCorr, double fractionIntensityObserved)
         {
@@ -55,7 +57,7 @@ namespace Deconvoluter
 
         public override string ToString()
         {
-            return MonoisotopicMass.ToString("F2") + "; z=" + Charge + "; FM=" + FractionIntensityMissing.ToString("F2");
+            return MonoisotopicMass.ToString("F2") + "; z=" + Charge + "; FM=" + FractionIntensityMissing.ToString("F2") + "; ISA=" + InterstitialSpectralAngle.ToString("F2");
         }
 
         public static string TabDelimitedHeader
@@ -91,6 +93,10 @@ namespace Deconvoluter
                 sb.Append("Normalized Spectral Angle");
                 sb.Append('\t');
                 sb.Append("Fraction Intensity Expected But Missing");
+                sb.Append('\t');
+                sb.Append("Machine Learning Classifier");
+                sb.Append('\t');
+                sb.Append("Interstitial Spectral Angle");
 
                 return sb.ToString();
             }
@@ -127,6 +133,10 @@ namespace Deconvoluter
             sb.Append(NormalizedSpectralAngle);
             sb.Append('\t');
             sb.Append(FractionIntensityMissing);
+            sb.Append('\t');
+            sb.Append(MachineLearningClassification);
+            sb.Append('\t');
+            sb.Append(InterstitialSpectralAngle);
 
             return sb.ToString();
         }
@@ -146,13 +156,8 @@ namespace Deconvoluter
             }
         }
 
-        public double GetNormalizedSpectralAngle(MzSpectrum spectrum, double[] averagineMasses, double[] averagineIntensities, Tolerance tol, int? charge = null)
+        public double GetNormalizedSpectralAngle(MzSpectrum spectrum, double[] averagineMasses, double[] averagineIntensities, Tolerance tol, HashSet<double> mzsToExcludeFromCalculation)
         {
-            if (charge == null)
-            {
-                charge = this.Charge;
-            }
-
             double abundanceMissing = 0;
             List<(double theor, double actual)> intensities = new List<(double theor, double actual)>();
 
@@ -178,11 +183,11 @@ namespace Deconvoluter
                     {
                         intensities.Add((theoreticalIntensity - Baseline, 0));
 
-                        double theorIsotopeMz = (MonoisotopicMass + i * Constants.C13MinusC12).ToMz(charge.Value);
+                        double theorIsotopeMz = (MonoisotopicMass + i * Constants.C13MinusC12).ToMz(this.Charge);
                         int pkIndex = spectrum.GetClosestPeakIndex(theorIsotopeMz);
                         double expMz = spectrum.XArray[pkIndex];
 
-                        if (!tol.Within(expMz.ToMass(charge.Value), theorIsotopeMz.ToMass(charge.Value)))
+                        if (!tol.Within(expMz.ToMass(this.Charge), theorIsotopeMz.ToMass(this.Charge)))
                         {
                             double multiplier = Math.Min(theoreticalSn, 1.0);
                             abundanceMissing += averagineIntensities[i] * multiplier;
@@ -193,6 +198,11 @@ namespace Deconvoluter
                 }
                 else
                 {
+                    if (mzsToExcludeFromCalculation != null && mzsToExcludeFromCalculation.Contains(observedPeak.ExperimentalMz))
+                    {
+                        continue;
+                    }
+
                     intensities.Add((theoreticalIntensity - Baseline, observedPeak.ExperimentalIntensity - Baseline));
                 }
             }

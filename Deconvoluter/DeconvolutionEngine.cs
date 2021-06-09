@@ -399,7 +399,6 @@ namespace Deconvoluter
                 return null;
             }
 
-            deconvolutedPeaks.Clear();
             double mass = mz.ToMass(z);
 
             // get the index of an averagine envelope close in mass
@@ -414,50 +413,7 @@ namespace Deconvoluter
             double[] averagineEnvelopeIntensities = allIntensities[massIndex];
             double monoMass = mass - diffToMonoisotopic[massIndex];
 
-            int indOfMostIntense = Array.IndexOf(averagineEnvelopeIntensities, 1);
-
-            // 1 is to the right, -1 is to the left in the envelope
-            int isotopeDirection = 1;
-            for (int i = indOfMostIntense; i < averagineEnvelopeMasses.Length && i >= 0; i += isotopeDirection)
-            {
-                double isotopeMassShift = averagineEnvelopeMasses[i] - averagineEnvelopeMasses[indOfMostIntense];
-                double isotopeTheoreticalMass = mass + isotopeMassShift;
-                double theoreticalIsotopeMz = isotopeTheoreticalMass.ToMz(z);
-                double theoreticalIsotopeIntensity = averagineEnvelopeIntensities[i] * intensity;
-
-                var peakIndex = spectrum.GetClosestPeakIndex(theoreticalIsotopeMz);
-
-                //TODO: look for other peaks in the scan that could be this isotope that meet the m/z tolerance
-                var isotopeExperMz = spectrum.XArray[peakIndex];
-                var isotopeExperIntensity = spectrum.YArray[peakIndex];
-
-                double intensityRatio = isotopeExperIntensity / theoreticalIsotopeIntensity;
-
-                double isotopeExperimentalMass = isotopeExperMz.ToMass(z);
-                bool withinMassTol = PpmTolerance.Within(isotopeExperMz.ToMass(z), isotopeTheoreticalMass);
-                bool withinIntensityTol = intensityRatio < IntensityRatioLimit && intensityRatio > 1 / IntensityRatioLimit;
-                bool unclaimedMz = !alreadyClaimedMzs.Contains(isotopeExperMz) && !deconvolutedPeaks.Select(p => p.ExperimentalMz).Contains(isotopeExperMz);
-
-                if (withinMassTol // check mass tolerance
-                    && withinIntensityTol // check intensity tolerance
-                    && unclaimedMz) // check to see if this peak has already been claimed by another envelope or this envelope
-                {
-                    deconvolutedPeaks.Add(new DeconvolutedPeak(isotopeExperMz, theoreticalIsotopeMz, z, isotopeExperIntensity,
-                        theoreticalIsotopeIntensity, i, averagineEnvelopeIntensities[i]));
-                }
-                else
-                {
-                    if (isotopeDirection == 1)
-                    {
-                        isotopeDirection = -1;
-                        i = indOfMostIntense;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
+            GetPotentialIsotopePeaks(deconvolutedPeaks, massIndex, alreadyClaimedMzs, spectrum, z, mass, intensity);
 
             if (deconvolutedPeaks.Count < 2)
             {
@@ -540,12 +496,43 @@ namespace Deconvoluter
 
             if (env != null)
             {
+                HashSet<double> originalEnvelopeMzs = new HashSet<double>(env.Peaks.Select(p => p.ExperimentalMz));
+
                 var sn = GetBaselineAndNoise(p, intensitiesBuffer, spectrum);
                 env.Baseline = sn.baseline;
                 env.NoiseFwhm = sn.noiseFwhm;
 
-                var spectralAngle = env.GetNormalizedSpectralAngle(spectrum, averagineEnvelopeMasses, averagineEnvelopeIntensities, PpmTolerance);
+                var spectralAngle = env.GetNormalizedSpectralAngle(spectrum, averagineEnvelopeMasses, averagineEnvelopeIntensities, PpmTolerance, null);
                 env.NormalizedSpectralAngle = spectralAngle;
+
+                for (int i = 2; i < 6; i++)
+                {
+                    int harmonicCharge = i * env.Charge;
+                    double harmonicMass = mz.ToMass(harmonicCharge);
+                    int harmonicMassIndex = GetMassIndex(harmonicMass);
+
+                    if (harmonicMassIndex >= allMasses.Length)
+                    {
+                        break;
+                    }
+
+                    var harmonicIsotopes = GetPotentialIsotopePeaks(deconvolutedPeaks, harmonicMassIndex, null, spectrum, harmonicCharge, harmonicMass, intensity);
+
+                    double[] harmonicAveragineEnvelopeMasses = allMasses[harmonicMassIndex];
+                    double[] harmonicAveragineEnvelopeIntensities = allIntensities[harmonicMassIndex];
+                    double harmonicMonoMass = mass - diffToMonoisotopic[harmonicMassIndex];
+
+                    var harmonicEnvelope = new DeconvolutedEnvelope(deconvolutedPeaks, harmonicMass, harmonicCharge, 0, 0);
+                    harmonicEnvelope.NoiseFwhm = env.NoiseFwhm;
+                    harmonicEnvelope.Baseline = env.Baseline;
+                    double harmonicSpectralAngle = harmonicEnvelope.GetNormalizedSpectralAngle(spectrum, harmonicAveragineEnvelopeMasses, harmonicAveragineEnvelopeIntensities, PpmTolerance,
+                        originalEnvelopeMzs);
+
+                    if (!double.IsNaN(harmonicSpectralAngle))
+                    {
+                        env.InterstitialSpectralAngle = Math.Max(harmonicSpectralAngle, env.InterstitialSpectralAngle);
+                    }
+                }
 
                 //if (env.SignalToNoise > 5 && env.FractionIntensityMissing > 0.3)
                 //{
@@ -621,6 +608,64 @@ namespace Deconvoluter
             }
 
             return indexes;
+        }
+
+        public List<DeconvolutedPeak> GetPotentialIsotopePeaks(List<DeconvolutedPeak> deconvolutedPeaks, int massIndex, HashSet<double> alreadyClaimedMzs,
+            MzSpectrum spectrum, int z, double modeMass, double modeIntensity)
+        {
+            deconvolutedPeaks.Clear();
+
+            double[] averagineEnvelopeMasses = allMasses[massIndex];
+            double[] averagineEnvelopeIntensities = allIntensities[massIndex];
+            double monoMass = modeMass - diffToMonoisotopic[massIndex];
+
+            int indOfMostIntense = Array.IndexOf(averagineEnvelopeIntensities, 1);
+
+            // 1 is to the right, -1 is to the left in the envelope
+            int isotopeDirection = 1;
+            for (int i = indOfMostIntense; i < averagineEnvelopeMasses.Length && i >= 0; i += isotopeDirection)
+            {
+                double isotopeMassShift = averagineEnvelopeMasses[i] - averagineEnvelopeMasses[indOfMostIntense];
+                double isotopeTheoreticalMass = modeMass + isotopeMassShift;
+                double theoreticalIsotopeMz = isotopeTheoreticalMass.ToMz(z);
+                double theoreticalIsotopeIntensity = averagineEnvelopeIntensities[i] * modeIntensity;
+
+                var peakIndex = spectrum.GetClosestPeakIndex(theoreticalIsotopeMz);
+
+                //TODO: look for other peaks in the scan that could be this isotope that meet the m/z tolerance
+                var isotopeExperMz = spectrum.XArray[peakIndex];
+                var isotopeExperIntensity = spectrum.YArray[peakIndex];
+
+                double intensityRatio = isotopeExperIntensity / theoreticalIsotopeIntensity;
+
+                double isotopeExperimentalMass = isotopeExperMz.ToMass(z);
+                bool withinMassTol = PpmTolerance.Within(isotopeExperMz.ToMass(z), isotopeTheoreticalMass);
+                bool withinIntensityTol = intensityRatio < IntensityRatioLimit && intensityRatio > 1 / IntensityRatioLimit;
+                bool unclaimedMz = (alreadyClaimedMzs == null || !alreadyClaimedMzs.Contains(isotopeExperMz))
+                    && !deconvolutedPeaks.Select(p => p.ExperimentalMz).Contains(isotopeExperMz);
+
+                if (withinMassTol // check mass tolerance
+                    && withinIntensityTol // check intensity tolerance
+                    && unclaimedMz) // check to see if this peak has already been claimed by another envelope or this envelope
+                {
+                    deconvolutedPeaks.Add(new DeconvolutedPeak(isotopeExperMz, theoreticalIsotopeMz, z, isotopeExperIntensity,
+                        theoreticalIsotopeIntensity, i, averagineEnvelopeIntensities[i]));
+                }
+                else
+                {
+                    if (isotopeDirection == 1)
+                    {
+                        isotopeDirection = -1;
+                        i = indOfMostIntense;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return deconvolutedPeaks;
         }
 
         private int GetMassIndex(double mass)

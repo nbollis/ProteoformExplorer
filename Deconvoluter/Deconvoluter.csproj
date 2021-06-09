@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.ML" Version="1.5.5" />
     <PackageReference Include="mzLib" Version="1.0.485" />
   </ItemGroup>
 

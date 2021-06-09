@@ -1,4 +1,5 @@
-﻿using MassSpectrometry;
+﻿using Deconvoluter.ML;
+using MassSpectrometry;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +23,35 @@ namespace Deconvoluter
 
             var envs = engine.Deconvolute(data, file).ToList();
 
-            List<string> output = new List<string>() { DeconvolutedEnvelope.TabDelimitedHeader };
+            Console.WriteLine("Running ML");
+
+            List<string> output = new List<string>();
+            foreach (var env in envs)
+            {
+                var envelopeData = new EnvelopeData(env);
+                output.Add(envelopeData.ToOutputString());
+            }
+
+            var classificationDataPath = @"C:\Users\rmillikin\Desktop\MetaMorpheus Problems\TDHyPRMSdata_forRMandJP\BR1\raw\classificationData_" +
+                Path.GetFileNameWithoutExtension(file) + ".csv";
+            var savedModelPath = @"C:\Users\rmillikin\Desktop\MetaMorpheus Problems\TDHyPRMSdata_forRMandJP\BR1\raw\trainedModel_" +
+                Path.GetFileNameWithoutExtension(file) + ".zip";
+
+            File.WriteAllLines(classificationDataPath, output);
+
+            EnvelopeClassification classifier = new EnvelopeClassification(classificationDataPath, savedModelPath);
+            classifier.TrainAndSavePredictor();
+
+            foreach (var envelope in envs)
+            {
+                var envelopeData = new EnvelopeData(envelope);
+                var prediction = classifier.Predict(envelopeData);
+                envelope.MachineLearningClassification = prediction.PredictedClusterId.ToString();
+            }
+
+            Console.WriteLine("Writing output");
+
+            output = new List<string>() { DeconvolutedEnvelope.TabDelimitedHeader };
 
             foreach (var env in envs)
             {
