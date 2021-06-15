@@ -11,62 +11,106 @@ namespace Deconvoluter.ML
 {
     public class EnvelopeClassification
     {
-        readonly string _dataPath;
-        readonly string _modelPath;
-        PredictionEngine<EnvelopeData, ClusterPrediction> Predictor;
-        MLContext mlContext;
+        private IDataView _trainingDataView;
+        private PredictionEngine<EnvelopeData, ClassificationPrediction> _predictionEngine;
+        private ITransformer _trainedModel;
+        private MLContext _mlContext;
 
-        public EnvelopeClassification(string dataPath, string modelPath)
+        public EnvelopeClassification()
         {
-            _dataPath = dataPath;
-            _modelPath = modelPath;
-            mlContext = new MLContext(seed: 0);
+            _mlContext = new MLContext(seed: 0);
         }
 
-        public void TrainAndSavePredictor()
+        public void TrainAndTestModel(string trainingDataPath, string testingDataPath)
         {
-            var typeProperties = typeof(EnvelopeData).GetFields().Select(p => p.Name).ToArray();
+            // load training data
+            _trainingDataView = _mlContext.Data.LoadFromTextFile<EnvelopeData>(trainingDataPath, hasHeader: true, separatorChar: ',');
 
-            var dataView = mlContext.Data.LoadFromTextFile<EnvelopeData>(_dataPath, hasHeader: false, separatorChar: ',');
+            // train model
+            BuildAndTrainModel(_trainingDataView);
 
-            string featuresColumnName = "Features";
+            // load test data
+            var _testingDataView = _mlContext.Data.LoadFromTextFile<EnvelopeData>(testingDataPath, hasHeader: true, separatorChar: ',');
 
-            var pipeline = mlContext.Transforms
-                .Concatenate(featuresColumnName, typeProperties)
-                .Append(mlContext.Clustering.Trainers.KMeans(featuresColumnName, numberOfClusters: 4));
-
-            var model = pipeline.Fit(dataView);
-
-            using (var fileStream = new FileStream(_modelPath, FileMode.Create, FileAccess.Write, FileShare.Write))
-            {
-                mlContext.Model.Save(model, dataView.Schema, fileStream);
-            }
-
-            Predictor = mlContext.Model.CreatePredictionEngine<EnvelopeData, ClusterPrediction>(model);
+            // evaluate model
+            EvaluateModel(_testingDataView);
         }
 
-        public void LoadModel()
+        public void SaveModel(string path)
         {
-            ITransformer model;
-
-            using (var fileStream = new FileStream(_modelPath, FileMode.Create, FileAccess.Write, FileShare.Write))
-            {
-                model = mlContext.Model.Load(fileStream, out var inputSchema);
-            }
-
-            Predictor = mlContext.Model.CreatePredictionEngine<EnvelopeData, ClusterPrediction>(model);
+            _mlContext.Model.Save(_trainedModel, _trainingDataView.Schema, path);
         }
 
-        public ClusterPrediction Predict(EnvelopeData envelope)
+        public void LoadModel(string path)
         {
-            if (Predictor == null)
+            _trainedModel = _mlContext.Model.Load(path, out var trainingDataSchema);
+        }
+
+        public ClassificationPrediction Classify(EnvelopeData envelope)
+        {
+            if (_predictionEngine == null)
             {
-                throw new Exception("Predictor must be loaded or trained prior to use");
+                throw new Exception("Model must be loaded or trained prior to use");
             }
 
-            var prediction = Predictor.Predict(envelope);
+            var classification = _predictionEngine.Predict(envelope);
 
-            return prediction;
+            return classification;
+        }
+
+        public List<string> GetModelPredictedLabelNames(string name)
+        {
+            var column = _trainingDataView.Schema.GetColumnOrNull(name);
+
+            var slotNames = new VBuffer<ReadOnlyMemory<char>>();
+            column.Value.GetSlotNames(ref slotNames);
+            var names = new string[slotNames.Length];
+            var num = 0;
+            foreach (var denseValue in slotNames.DenseValues())
+            {
+                names[num++] = denseValue.ToString();
+            }
+
+            return names.ToList();
+        }
+
+        private IEstimator<ITransformer> BuildAndTrainModel(IDataView trainingDataView)
+        {
+            var featureNames = typeof(EnvelopeData).GetFields().Select(p => p.Name).ToList();
+            featureNames.Remove("Label");
+            var arrayOfFeatures = featureNames.ToArray();
+
+            var dataProcessPipeline = _mlContext.Transforms.Conversion.MapValueToKey("Label", "Label")
+                                      .Append(_mlContext.Transforms.Concatenate("Features", arrayOfFeatures))
+                                      .AppendCacheCheckpoint(_mlContext);
+
+            var trainer = _mlContext.MulticlassClassification.Trainers
+                //.SdcaMaximumEntropy(labelColumnName: "Label", featureColumnName: "Features")
+                .LightGbm(labelColumnName: "Label", featureColumnName: "Features")
+                .Append(_mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel", "PredictedLabel"));
+
+            var trainingPipeline = dataProcessPipeline.Append(trainer);
+
+            _trainedModel = trainingPipeline.Fit(trainingDataView);
+
+            _predictionEngine = _mlContext.Model.CreatePredictionEngine<EnvelopeData, ClassificationPrediction>(_trainedModel);
+
+            return trainingPipeline;
+        }
+
+        private void EvaluateModel(IDataView trainingDataView)
+        {
+            var testMetrics = _mlContext.MulticlassClassification.Evaluate(_trainedModel.Transform(trainingDataView));
+
+            Console.WriteLine($"=============== Evaluating to get model's accuracy metrics - Ending time: {DateTime.Now.ToString()} ===============");
+            Console.WriteLine($"*************************************************************************************************************");
+            Console.WriteLine($"*       Metrics for Multi-class Classification model - Test Data     ");
+            Console.WriteLine($"*------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine($"*       MicroAccuracy:    {testMetrics.MicroAccuracy:0.###}");
+            Console.WriteLine($"*       MacroAccuracy:    {testMetrics.MacroAccuracy:0.###}");
+            Console.WriteLine($"*       LogLoss:          {testMetrics.LogLoss:#.###}");
+            Console.WriteLine($"*       LogLossReduction: {testMetrics.LogLossReduction:#.###}");
+            Console.WriteLine($"*************************************************************************************************************");
         }
     }
 }

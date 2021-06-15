@@ -205,7 +205,7 @@ namespace Test
             //deconEngine.CalculateSignalToNoise(scan.MassSpectrum, parsimonyEnvelopes);
             var parsimonyEnvsWithMz = parsimonyEnvelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
 
-            
+
 
             //List<string> output = new List<string>();
             //foreach (var env in parsimonyEnvelopes.Where(p => p.MonoisotopicMass > 8000))
@@ -216,6 +216,19 @@ namespace Test
             //    }
             //}
             //File.WriteAllLines(@"C:\Users\rmillikin\Desktop\DeconvolutionTraining\peaksSn.tsv", output);
+        }
+
+        [Test]
+        public static void TestTest()
+        {
+            string filePath = Path.Combine(@"C:\Users\rmillikin\Desktop\MetaMorpheus Problems\TDHyPRMSdata_forRMandJP\BR1\raw\032421_MALAT1Capture.raw");
+            //var data = IO.ThermoRawFileReader.ThermoRawFileReader.LoadAllStaticData(filePath);
+            var connection = new KeyValuePair<string, DynamicDataConnection>(filePath, new ThermoDynamicData(filePath));
+
+            var scan = connection.Value.GetOneBasedScanFromDynamicConnection(2678);
+
+            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.3, 5, 5, 2, 60, 2);
+            var envelopes = deconEngine.Deconvolute(scan).ToList();
         }
     }
 }

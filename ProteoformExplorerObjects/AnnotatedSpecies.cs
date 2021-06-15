@@ -16,6 +16,7 @@ namespace ProteoformExplorer
         {
             SpeciesLabel = deconvolutionFeature.MonoisotopicMass.ToString("F2");
             DeconvolutionFeature = deconvolutionFeature;
+            SpectraFileNameWithoutExtension = deconvolutionFeature.SpectraFileNameWithoutExtension;
         }
 
         public AnnotatedSpecies(Identification identification)
@@ -29,6 +30,7 @@ namespace ProteoformExplorer
             SpeciesLabel = identification.FullSequence;
             Identification = identification;
             DeconvolutionFeature = deconvolutionFeature;
+            SpectraFileNameWithoutExtension = deconvolutionFeature.SpectraFileNameWithoutExtension;
         }
 
         //public override bool Equals(object obj)

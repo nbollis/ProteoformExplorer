@@ -40,7 +40,10 @@ namespace Deconvoluter
 
         private double _signalToNoise = double.NaN;
         public string MachineLearningClassification;
+        public float[] MachineLearningClassificationScores;
         public double InterstitialSpectralAngle { get; set; }
+        public int NeighboringCharges { get; set; }
+        public IEnumerable<DeconvolutedPeak> PeaksOrderedByMass { get { return Peaks.OrderBy(p => p.ExperimentalMz.ToMass(Charge)); } }
 
         public DeconvolutedEnvelope(List<DeconvolutedPeak> peaks, double monoMass, int charge, double pearsonCorr, double fractionIntensityObserved)
         {
@@ -51,6 +54,7 @@ namespace Deconvoluter
             FractionIntensityObserved = fractionIntensityObserved;
             Score = Math.Log(Peaks.Count, 2) * pearsonCorr;
             DeltaScore = Score;
+            FractionIntensityMissing = double.NaN;
 
             CalculateIntensityErrors();
         }
@@ -94,9 +98,11 @@ namespace Deconvoluter
                 sb.Append('\t');
                 sb.Append("Fraction Intensity Expected But Missing");
                 sb.Append('\t');
+                sb.Append("Interstitial Spectral Angle");
+                sb.Append('\t');
                 sb.Append("Machine Learning Classifier");
                 sb.Append('\t');
-                sb.Append("Interstitial Spectral Angle");
+                sb.Append("Machine Learning Classifier Scores");
 
                 return sb.ToString();
             }
@@ -134,9 +140,11 @@ namespace Deconvoluter
             sb.Append('\t');
             sb.Append(FractionIntensityMissing);
             sb.Append('\t');
+            sb.Append(InterstitialSpectralAngle);
+            sb.Append('\t');
             sb.Append(MachineLearningClassification);
             sb.Append('\t');
-            sb.Append(InterstitialSpectralAngle);
+            sb.Append(string.Join("\t", MachineLearningClassificationScores.Select(p => p.ToString("F4"))));
 
             return sb.ToString();
         }
@@ -156,15 +164,16 @@ namespace Deconvoluter
             }
         }
 
-        public double GetNormalizedSpectralAngle(MzSpectrum spectrum, double[] averagineMasses, double[] averagineIntensities, Tolerance tol, HashSet<double> mzsToExcludeFromCalculation)
+        public double GetNormalizedSpectralAngle(MzSpectrum spectrum, double[] averagineMasses, double[] averagineIntensities, Tolerance tol, HashSet<double> mzsToExcludeFromCalculation,
+            bool calculatingInterstitial = false)
         {
-            double abundanceMissing = 0;
             List<(double theor, double actual)> intensities = new List<(double theor, double actual)>();
 
             double summedAbundance = this.Peaks.Sum(p => p.TheoreticalNormalizedAbundance);
             double summedExperimentalIntensity = this.Peaks.Sum(p => p.ExperimentalIntensity);
-            int isotopeNumber = this.Peaks.First().IsotopeNumber;
-            double summedAbundanceThatShouldHaveBeenObserved = 0;
+
+            double intensityMissing = 0;
+            double summedIntensityThatShouldHaveBeenObserved = 0;
 
             for (int i = 0; i < averagineMasses.Length; i++)
             {
@@ -174,7 +183,7 @@ namespace Deconvoluter
 
                 if (theoreticalSn > 0)
                 {
-                    summedAbundanceThatShouldHaveBeenObserved += averagineIntensities[i];
+                    summedIntensityThatShouldHaveBeenObserved += (theoreticalIntensity - this.Baseline);
                 }
 
                 if (observedPeak == null)
@@ -189,11 +198,8 @@ namespace Deconvoluter
 
                         if (!tol.Within(expMz.ToMass(this.Charge), theorIsotopeMz.ToMass(this.Charge)))
                         {
-                            double multiplier = Math.Min(theoreticalSn, 1.0);
-                            abundanceMissing += averagineIntensities[i] * multiplier;
+                            intensityMissing += (theoreticalIntensity - this.Baseline);
                         }
-
-                        //FractionIntensityMissing += theoreticalSn;
                     }
                 }
                 else
@@ -207,11 +213,21 @@ namespace Deconvoluter
                 }
             }
 
-            FractionIntensityMissing = abundanceMissing / summedAbundanceThatShouldHaveBeenObserved;
+            if (!calculatingInterstitial)
+            {
+                FractionIntensityMissing = intensityMissing / summedIntensityThatShouldHaveBeenObserved;
+            }
 
             // L2 norm
             double expNormalizer = Math.Sqrt(intensities.Sum(p => Math.Pow(p.actual, 2)));
             double theorNormalizer = Math.Sqrt(intensities.Sum(p => Math.Pow(p.theor, 2)));
+
+            // interstitial spectral angle has a different normalization
+            if (calculatingInterstitial)
+            {
+                expNormalizer = (expNormalizer + theorNormalizer) / 2;
+                theorNormalizer = expNormalizer;
+            }
 
             double dotProduct = 0;
 
@@ -230,7 +246,7 @@ namespace Deconvoluter
             //double excessIntensity = Peaks.Sum(p => Math.Max(0, p.ExperimentalIntensity - Baseline));
             //double noiseWidth = Peaks.Count(p => Math.Max(0, p.ExperimentalIntensity - Baseline) > 0) * NoiseFwhm;
             //_signalToNoise = excessIntensity / noiseWidth;
-            _signalToNoise = Peaks.Max(p => p.ExperimentalIntensity) / NoiseFwhm;
+            _signalToNoise = (Peaks.Max(p => p.ExperimentalIntensity) - this.Baseline) / NoiseFwhm;
         }
     }
 }

@@ -67,7 +67,6 @@ namespace ProteoformExplorer
             {
                 m = (l + r) / 2;
 
-
                 if (double.IsNaN(rtArray[m]))
                 {
                     rtArray[m] = data.Value.GetOneBasedScanFromDynamicConnection(m + 1).RetentionTime;

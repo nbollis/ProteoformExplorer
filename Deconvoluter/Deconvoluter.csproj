@@ -7,7 +7,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="1.5.5" />
+    <PackageReference Include="Microsoft.ML.LightGbm" Version="1.5.5" />
     <PackageReference Include="mzLib" Version="1.0.485" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ML\TrainingAndTestingData\" />
+    <Folder Include="ML\TrainedModels\" />
   </ItemGroup>
 
 </Project>

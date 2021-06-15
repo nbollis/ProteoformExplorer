@@ -1,4 +1,5 @@
-﻿using IO.MzML;
+﻿using Deconvoluter;
+using IO.MzML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
 using System;
@@ -29,6 +30,7 @@ namespace ProteoformExplorer
         private static ObservableCollection<AnnotatedSpecies> LoadedAnnotatedSpecies;
         private static Page1_QuantifiedTic Page1;
         private static Page2_SpeciesView Page2;
+        public static DeconvolutionEngine DeconvolutionEngine;
 
         public HomePage()
         {
@@ -36,6 +38,7 @@ namespace ProteoformExplorer
 
             if (Page1 == null)
             {
+                DeconvolutionEngine = new DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
                 LoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
                 SpectraFiles = new Dictionary<string, DynamicDataConnection>();
                 SelectedFilePaths = new ObservableCollection<string>();

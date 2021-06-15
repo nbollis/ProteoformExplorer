@@ -1,54 +1,65 @@
 ﻿using Microsoft.ML.Data;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Deconvoluter.ML
 {
     public class EnvelopeData
     {
-        [LoadColumn(0)]
+        [ColumnName("PearsonCorrelation"), LoadColumn(0)]
         public float PearsonCorrelation;
 
-        [LoadColumn(1)]
+        [ColumnName("NormalizedSpectralAngle"), LoadColumn(1)]
         public float NormalizedSpectralAngle;
 
-        [LoadColumn(2)]
+        [ColumnName("NumberOfPeaks"), LoadColumn(2)]
         public float NumberOfPeaks;
 
-        [LoadColumn(3)]
+        [ColumnName("SignalToNoise"), LoadColumn(3)]
         public float SignalToNoise;
 
-        [LoadColumn(4)]
+        [ColumnName("FractionIntensityObserved"), LoadColumn(4)]
         public float FractionIntensityObserved;
 
-        [LoadColumn(5)]
+        [ColumnName("FractionIntensityMissing"), LoadColumn(5)]
         public float FractionIntensityMissing;
 
-        [LoadColumn(6)]
+        [ColumnName("InterstitialNormalizedSpectralAngle"), LoadColumn(6)]
         public float InterstitialNormalizedSpectralAngle;
 
-        [LoadColumn(7)]
-        public float NeighboringChargeObserved;
+        [ColumnName("Label"), LoadColumn(7)]
+        public string Label { get; set; }
 
-        [LoadColumn(8)]
-        public float NeighboringScanObserved;
+        //[LoadColumn(7)]
+        //public float NeighboringChargeObserved;
+
+        //[LoadColumn(8)]
+        //public float NeighboringScanObserved;
 
         public EnvelopeData(DeconvolutedEnvelope envelope)
         {
             this.PearsonCorrelation = (float)envelope.PearsonCorrelation;
             this.NormalizedSpectralAngle = (float)envelope.NormalizedSpectralAngle;
             this.NumberOfPeaks = envelope.Peaks.Count;
-            this.SignalToNoise = Math.Min(20, (float)envelope.SignalToNoise);
+            this.SignalToNoise = (float)Math.Log(envelope.SignalToNoise + Math.Sqrt(Math.Pow(envelope.SignalToNoise, 2) + 1));
             this.FractionIntensityObserved = (float)envelope.FractionIntensityObserved;
             this.FractionIntensityMissing = (float)envelope.FractionIntensityMissing;
-
             this.InterstitialNormalizedSpectralAngle = (float)envelope.InterstitialSpectralAngle;
-            this.NeighboringChargeObserved = 0; //envelope.NormalizedSpectralAngle;
-            this.NeighboringScanObserved = 0; // envelope.NormalizedSpectralAngle;
+            //this.NeighboringChargeObserved = 0; //envelope.NormalizedSpectralAngle;
+            //this.NeighboringScanObserved = 0; // envelope.NormalizedSpectralAngle;
         }
 
-        public string ToOutputString()
+        public static string TabDelimitedHeader
+        {
+            get 
+            { 
+                return string.Join(',', typeof(EnvelopeData).GetFields().Select(p => p.Name)) + ",Label";
+            }
+        }
+
+        public string ToOutputString(string label)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -66,20 +77,20 @@ namespace Deconvoluter.ML
             sb.Append(',');
             sb.Append(InterstitialNormalizedSpectralAngle);
             sb.Append(',');
-            sb.Append(NeighboringChargeObserved);
-            sb.Append(',');
-            sb.Append(NeighboringScanObserved);
+            sb.Append(label);
+            //sb.Append(',');
+            //sb.Append(NeighboringChargeObserved);
+            //sb.Append(',');
+            //sb.Append(NeighboringScanObserved);
 
             return sb.ToString();
         }
     }
 
-    public class ClusterPrediction
+    public class ClassificationPrediction
     {
         [ColumnName("PredictedLabel")]
-        public uint PredictedClusterId;
-
-        [ColumnName("Score")]
-        public float[] Distances;
+        public string Prediction { get; set; }
+        public float[] Score { get; set; }
     }
 }

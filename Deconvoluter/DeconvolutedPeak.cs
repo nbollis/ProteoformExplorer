@@ -32,7 +32,8 @@ namespace Deconvoluter
 
         public override string ToString()
         {
-            return TheoreticalIntensity.ToString("F1") + " : " + ExperimentalIntensity.ToString("F1");
+            //return TheoreticalIntensity.ToString("F1") + " : " + ExperimentalIntensity.ToString("F1");
+            return ExperimentalMz.ToMass(Charge).ToString("F2");
         }
     }
 }

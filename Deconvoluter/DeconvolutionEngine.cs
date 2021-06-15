@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UsefulProteomicsDatabases;
 
 namespace Deconvoluter
 {
@@ -21,6 +22,8 @@ namespace Deconvoluter
 
         static DeconvolutionEngine()
         {
+            Loaders.LoadElements();
+
             // AVERAGINE
             const double averageC = 5.0359;
             const double averageH = 7.9273;
@@ -225,6 +228,29 @@ namespace Deconvoluter
                     }
                 }
             }
+
+            // determing which envelopes have neighboring charges
+            //Dictionary<int, List<DeconvolutedEnvelope>> envelopesGroupedByCharge = envelopeCandidates.GroupBy(p => p.Charge).ToDictionary(p => p.Key, v => v.ToList());
+
+            //foreach (var candidate in envelopeCandidates)
+            //{
+            //    for (int z = 1; z <= MaxCharge; z++)
+            //    {
+            //        double mass = candidate.Peaks.First().ExperimentalMz.ToMass(candidate.Charge);
+
+            //        if (!envelopesGroupedByCharge.TryGetValue(z, out var envelopesWithThisCharge))
+            //        {
+            //            continue;
+            //        }
+
+            //        bool chargeAndMassObserved = envelopesWithThisCharge.Any(p => p.Peaks.Any(v => PpmTolerance.Within(v.ExperimentalMz.ToMass(p.Charge), mass)));
+
+            //        if (chargeAndMassObserved)
+            //        {
+            //            candidate.NeighboringCharges++;
+            //        }
+            //    }
+            //}
 
             return envelopeCandidates;
         }
@@ -526,7 +552,7 @@ namespace Deconvoluter
                     harmonicEnvelope.NoiseFwhm = env.NoiseFwhm;
                     harmonicEnvelope.Baseline = env.Baseline;
                     double harmonicSpectralAngle = harmonicEnvelope.GetNormalizedSpectralAngle(spectrum, harmonicAveragineEnvelopeMasses, harmonicAveragineEnvelopeIntensities, PpmTolerance,
-                        originalEnvelopeMzs);
+                        originalEnvelopeMzs, true);
 
                     if (!double.IsNaN(harmonicSpectralAngle))
                     {
@@ -666,6 +692,23 @@ namespace Deconvoluter
             }
 
             return deconvolutedPeaks;
+        }
+
+        public double GetModeMassFromMonoisotopicMass(double monoMass)
+        {
+            int index = GetMassIndex(monoMass) + 1;
+
+            if (index >= allMasses.Length)
+            {
+                index = allMasses.Length - 1;
+            }
+
+            var masses = allMasses[index];
+            int indexOfMostAbundant = Array.IndexOf(masses, 1);
+
+            double modeMass = monoMass + diffToMonoisotopic[index];
+
+            return modeMass;
         }
 
         private int GetMassIndex(double mass)

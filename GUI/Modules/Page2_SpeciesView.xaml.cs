@@ -1,4 +1,5 @@
 ﻿using Chemistry;
+using GUI;
 using MassSpectrometry;
 using MzLibUtil;
 using mzPlot;
@@ -27,6 +28,7 @@ namespace ProteoformExplorer
         private Dictionary<string, DynamicDataConnection> SpectraFiles;
         private KeyValuePair<string, DynamicDataConnection> CurrentlySelectedSpectraFile;
         private ObservableCollection<AnnotatedSpecies> ListOfAnnotatedSpecies;
+        private ObservableCollection<AnnotatedSpecies> SelectableAnnotatedSpecies;
         private MsDataScan CurrentScan;
         private mzPlot.Plot XicPlot;
         private mzPlot.Plot SpectrumPlot;
@@ -36,6 +38,7 @@ namespace ProteoformExplorer
         {
             InitializeComponent();
             ListOfAnnotatedSpecies = loadedAnnotatedSpecies;
+            SelectableAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
             SpectraFiles = spectraFiles;
             SelectedFiles = selectedFiles;
             LoadedSpectraFilePaths = loadedSpectraFilePaths;
@@ -43,7 +46,7 @@ namespace ProteoformExplorer
             selectSpectraFileButton.Click += new RoutedEventHandler(HomePage.SelectDataButton_Click);
             loadFiles.Click += new RoutedEventHandler(HomePage.LoadDataButton_Click);
 
-            SpeciesListView.ItemsSource = ListOfAnnotatedSpecies;
+            SpeciesListView.ItemsSource = SelectableAnnotatedSpecies;
         }
 
         private void Home_Click(object sender, RoutedEventArgs e)
@@ -51,195 +54,115 @@ namespace ProteoformExplorer
             this.NavigationService.Navigate(new Uri("HomePage.xaml", UriKind.Relative));
         }
 
-        private void PlotSpecies(AnnotatedSpecies species, MsDataScan scan)
+        private void PlotSpecies(AnnotatedSpecies species)
         {
-            PlotSpeciesIsotopeXics(species, scan);
-            PlotSpeciesInSpectrum(species, scan);
+            PlotSpeciesIsotopeXics(species, out var apexScan);
+            PlotSpeciesInSpectrum(species, apexScan);
         }
 
-        private void PlotSpeciesIsotopeXics(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
+        private void PlotSpeciesIsotopeXics(AnnotatedSpecies species, out MsDataScan initialScan, int? charge = null)
         {
-            double rtWindowHalfWidth = 2.5;
+            List<int> chargesToPlot = new List<int>();
+            double modeMass;
 
-            MsDataScan startScan = null;
-
-            for (int i = scan.OneBasedScanNumber; i >= 1; i--)
+            // get apex or precursor scan
+            if (species.DeconvolutionFeature != null)
             {
-                var theScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(i);
-
-                if (theScan.RetentionTime < scan.RetentionTime - rtWindowHalfWidth)
-                {
-                    break;
-                }
-
-                startScan = theScan;
+                initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(CurrentlySelectedSpectraFile, species.DeconvolutionFeature.ApexRt);
+                modeMass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
+            }
+            else
+            {
+                initialScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(species.Identification.OneBasedPrecursorScanNumber);
+                modeMass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
             }
 
-            List<MsDataScan> scans = new List<MsDataScan>();
-            for (int i = startScan.OneBasedScanNumber; i < 1000000; i++)
+            // decide on charge to plot
+            if (charge == null)
             {
-                var theScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(i);
-
-                if (theScan.RetentionTime > scan.RetentionTime + rtWindowHalfWidth)
+                if (species.DeconvolutionFeature != null)
                 {
-                    break;
+                    int i = initialScan.OneBasedScanNumber - 1;
+                    while (initialScan.MsnOrder != 1)
+                    {
+                        initialScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(i);
+                        i--;
+                    }
+
+                    int zToPlot = species.DeconvolutionFeature.Charges.First();
+                    double intensityOfMostIntenseCharge = 0;
+
+                    foreach (int z in species.DeconvolutionFeature.Charges)
+                    {
+                        double mz = modeMass.ToMz(z);
+                        int ind = initialScan.MassSpectrum.GetClosestPeakIndex(mz);
+
+                        var env = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
+                            new List<Deconvoluter.DeconvolutedPeak>(), new HashSet<double>(), new List<(double, double)>());
+
+                        if (env != null)
+                        {
+                            double summedIntensity = env.Peaks.Sum(p => p.ExperimentalIntensity);
+
+                            if (summedIntensity > intensityOfMostIntenseCharge)
+                            {
+                                zToPlot = z;
+                            }
+                        }
+                    }
+
+                    chargesToPlot.Add(zToPlot);
                 }
-
-                if (theScan.MsnOrder == 1)
+                else if (species.Identification != null)
                 {
-                    scans.Add(theScan);
+                    chargesToPlot.Add(species.Identification.PrecursorChargeState);
                 }
             }
-
-            int z = species.DeconvolutionFeature.Charges[species.DeconvolutionFeature.Charges.Count / 2];
-            for (int i = 0; i < 10; i++)
+            else
             {
-                List<Datum> xicData = new List<Datum>();
+                chargesToPlot.Add(charge.Value);
+            }
 
-                double isotopeMass = species.DeconvolutionFeature.MonoisotopicMass + i * Constants.C13MinusC12;
-                Tolerance t = new PpmTolerance(5);
+            // decide which isotopes to plot
+            List<(double mz, int z)> peaksToMakeXicsFor = new List<(double mz, int z)>();
+            foreach (var z in chargesToPlot)
+            {
+                double mz = modeMass.ToMz(z);
+                int ind = initialScan.MassSpectrum.GetClosestPeakIndex(mz);
 
-                foreach (var item in scans)
+                var env = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
+                    new List<Deconvoluter.DeconvolutedPeak>(), new HashSet<double>(), new List<(double, double)>());
+
+                if (env != null)
                 {
-                    int index = item.MassSpectrum.GetClosestPeakIndex(isotopeMass.ToMz(z));
-
-                    if (t.Within(item.MassSpectrum.XArray[index], isotopeMass.ToMz(z)))
-                    {
-                        xicData.Add(new Datum(item.RetentionTime, item.MassSpectrum.YArray[index]));
-                    }
-                    else
-                    {
-                        xicData.Add(new Datum(item.RetentionTime, 0));
-                    }
-                }
-
-                if (i == 0)
-                {
-                    XicPlot = new LinePlot(topPlotView, xicData);
+                    peaksToMakeXicsFor.AddRange(env.Peaks.Select(p => (p.ExperimentalMz, p.Charge)));
                 }
                 else
                 {
-                    XicPlot.AddLinePlot(xicData);
+                    peaksToMakeXicsFor.Add((mz, z));
                 }
+            }
+
+            // make the plots
+            for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
+            {
+                var peak = peaksToMakeXicsFor[i];
+                XicPlot = GuiFunctions.PlotSpeciesInXic(peak.mz, peak.z, HomePage.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 2.0, CurrentlySelectedSpectraFile,
+                    XicPlot, topPlotView, i == 0);
             }
         }
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            // add non-annotated peaks
-            List<Datum> spectrumData = new List<Datum>();
-
-            for (int i = 0; i < scan.MassSpectrum.XArray.Length; i++)
-            {
-                spectrumData.Add(new Datum(scan.MassSpectrum.XArray[i], scan.MassSpectrum.YArray[i]));
-            }
-
-            SpectrumPlot = new SpectrumPlot(bottomPlotView, spectrumData);
-
-            // add annotated peaks
-            List<Datum> annotatedData = new List<Datum>();
-            List<int> chargesToPlot = new List<int>();
-
-            if (species.DeconvolutionFeature != null)
-            {
-                double mass = species.DeconvolutionFeature.MonoisotopicMass;
-
-                if (charge == null)
-                {
-                    chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
-                }
-                else
-                {
-                    chargesToPlot.Add(charge.Value);
-                }
-
-                foreach (var z in chargesToPlot)
-                {
-                    Tolerance t = new PpmTolerance(5);
-
-                    bool peakHasBeenObserved = false;
-
-                    for (int i = 0; i < 20; i++)
-                    {
-                        double isotopeMass = (mass + i * Constants.C13MinusC12).ToMz(z);
-                        int index = scan.MassSpectrum.GetClosestPeakIndex(isotopeMass);
-                        double expMz = scan.MassSpectrum.XArray[index];
-
-                        if (t.Within(expMz.ToMass(z), isotopeMass.ToMass(z)))
-                        {
-                            annotatedData.Add(new Datum(scan.MassSpectrum.XArray[index], scan.MassSpectrum.YArray[index]));
-                            peakHasBeenObserved = true;
-                        }
-                        //else if (peakHasBeenObserved)
-                        //{
-                        //    break;
-                        //}
-                    }
-                }
-            }
-            else if (species.Identification != null)
-            {
-                //TODO
-            }
-
-            SpectrumPlot.AddSpectrumPlot(annotatedData, OxyPlot.OxyColors.Blue, 2.0);
-            ZoomAxes(annotatedData, SpectrumPlot);
-        }
-
-        protected void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)
-        {
-            double highestAnnotatedIntensity = 0;
-            double highestAnnotatedMz = double.MinValue;
-            double lowestAnnotatedMz = double.MaxValue;
-
-            foreach (var ion in annotatedIons)
-            {
-                double mz = ion.X;
-                double intensity = ion.Y.Value;
-
-                highestAnnotatedIntensity = Math.Max(highestAnnotatedIntensity, intensity);
-                highestAnnotatedMz = Math.Max(highestAnnotatedMz, mz);
-                lowestAnnotatedMz = Math.Min(lowestAnnotatedMz, mz);
-            }
-
-            if (highestAnnotatedIntensity > 0)
-            {
-                plot.Model.Axes[1].Zoom(0, highestAnnotatedIntensity * yZoom);
-            }
-
-            if (highestAnnotatedMz > double.MinValue && lowestAnnotatedMz < double.MaxValue)
-            {
-                plot.Model.Axes[0].Zoom(lowestAnnotatedMz - 100, highestAnnotatedMz + 100);
-            }
+            SpectrumPlot = GuiFunctions.PlotSpeciesInSpectrum(new List<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, CurrentlySelectedSpectraFile, SpectrumPlot,
+                bottomPlotView, true);
         }
 
         private void SpeciesListView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             AnnotatedSpecies species = ((TreeView)sender).SelectedItem as AnnotatedSpecies;
-            MsDataScan scan = null;
 
-            var file = SpectraFiles.FirstOrDefault(p => System.IO.Path.GetFileNameWithoutExtension(p.Key)
-                == species.DeconvolutionFeature.SpectraFileNameWithoutExtension);
-
-            if (file.Value == null)
-            {
-                MessageBox.Show("The spectra file '" + species.DeconvolutionFeature.SpectraFileNameWithoutExtension + "' has not been loaded");
-            }
-
-            CurrentlySelectedSpectraFile = file;
-
-            for (int i = 1; i < 10000000; i++)
-            {
-                var theScan = file.Value.GetOneBasedScanFromDynamicConnection(i);
-
-                if (theScan.RetentionTime >= species.DeconvolutionFeature.ApexRt && theScan.MsnOrder == 1)
-                {
-                    scan = theScan;
-                    break;
-                }
-            }
-
-            PlotSpecies(species, scan);
+            PlotSpecies(species);
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -249,7 +172,6 @@ namespace ProteoformExplorer
             if (selectedItems != null && selectedItems.Count >= 1)
             {
                 var spectraFilePath = (string)selectedItems[0];
-                var spectraFileNameWithoutExtension = Path.GetFileNameWithoutExtension(spectraFilePath);
 
                 if (SpectraFiles.ContainsKey(spectraFilePath))
                 {
@@ -257,9 +179,16 @@ namespace ProteoformExplorer
                 }
                 else
                 {
-                    //TODO: display an error message
+                    MessageBox.Show("The spectra file " + spectraFilePath + " has not been loaded yet");
                     return;
                 }
+            }
+
+            SelectableAnnotatedSpecies.Clear();
+            var nameWithoutExtension = Path.GetFileNameWithoutExtension(CurrentlySelectedSpectraFile.Key);
+            foreach (AnnotatedSpecies species in ListOfAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
+            {
+                SelectableAnnotatedSpecies.Add(species);
             }
         }
     }

@@ -113,8 +113,10 @@ namespace ProteoformExplorer
             string modSequence = items[SpeciesNameColumn];
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             int charge = int.Parse(items[ChargeColumn]);
+            int precursorScanNumber = int.Parse(items[ScanNumberColumn]);
 
-            var id = new Identification(baseSequence, modSequence, mass, charge);
+            var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber);
+
 
             var species = new AnnotatedSpecies(id);
 
@@ -129,8 +131,9 @@ namespace ProteoformExplorer
             string modSequence = items[SpeciesNameColumn];
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             // TD portal does not report precursor charge
+            //TODO: figure out charge + precursor one based scan num
 
-            var id = new Identification(baseSequence, modSequence, mass, -1);
+            var id = new Identification(baseSequence, modSequence, mass, -1, -1);
 
             var species = new AnnotatedSpecies(id);
 
@@ -224,6 +227,7 @@ namespace ProteoformExplorer
                 MonoisotopicMassColumn = Array.IndexOf(split, "Peptide Monoisotopic Mass");
                 RetentionTimeColumn = Array.IndexOf(split, "Scan Retention Time");
                 ChargeColumn = Array.IndexOf(split, "Precursor Charge");
+                ScanNumberColumn = Array.IndexOf(split, "Precursor Scan Number");
 
                 return InputSourceType.MetaMorpheus;
             }
