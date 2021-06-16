@@ -59,7 +59,8 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
-                <TreeView x:Name="SpeciesListView" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" />
+                <TreeView x:Name="SpeciesListView" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
+                          VirtualizingPanel.IsVirtualizing="True" />
             </Grid>
 
             <Grid Grid.Column="1">

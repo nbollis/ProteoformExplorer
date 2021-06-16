@@ -3,6 +3,7 @@ using MassSpectrometry;
 using MzLibUtil;
 using mzPlot;
 using ProteoformExplorer;
+using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +13,11 @@ namespace GUI
 {
     public class GuiFunctions
     {
-        private static Dictionary<(string, int), MsDataScan> CachedScans = new Dictionary<(string, int), MsDataScan>();
-
-        public static Plot PlotSpeciesInSpectrum(List<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, DynamicDataConnection> data,
-            Plot plot, OxyPlot.Wpf.PlotView plotView, bool clearOldPlot)
+        public static Plot PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data,
+            Plot plot, OxyPlot.Wpf.PlotView plotView)
         {
             // get the scan
-            var scan = data.Value.GetOneBasedScanFromDynamicConnection(oneBasedScan);
+            var scan = data.Value.GetOneBasedScan(oneBasedScan);
 
             // add non-annotated peaks
             List<Datum> spectrumData = new List<Datum>();
@@ -30,6 +29,10 @@ namespace GUI
 
             plot = new SpectrumPlot(plotView, spectrumData, refreshAfterAddingData: false);
 
+            // get annotated envelope colors
+            var colors = plot.Model.DefaultColors.ToList();
+            int colorIndex = 0;
+
             // add annotated peaks
             HashSet<double> claimedMzs = new HashSet<double>();
             foreach (var species in allSpeciesToPlot)
@@ -39,7 +42,7 @@ namespace GUI
 
                 if (species.DeconvolutionFeature != null)
                 {
-                    double mass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
+                    double mass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
                     chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
 
                     foreach (var z in chargesToPlot)
@@ -48,7 +51,7 @@ namespace GUI
                         double expMz = scan.MassSpectrum.XArray[index];
                         double expIntensity = scan.MassSpectrum.YArray[index];
 
-                        var envelope = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
+                        var envelope = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
                             claimedMzs, new List<(double, double)>());
 
                         if (envelope != null)
@@ -68,25 +71,33 @@ namespace GUI
                 }
                 else if (species.Identification != null)
                 {
-                    double mass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
+                    double mass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
                     int z = species.Identification.PrecursorChargeState;
 
                     int index = scan.MassSpectrum.GetClosestPeakIndex(mass.ToMz(z));
                     double expMz = scan.MassSpectrum.XArray[index];
                     double expIntensity = scan.MassSpectrum.YArray[index];
 
-                    var envelope = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
+                    var envelope = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
                         claimedMzs, new List<(double, double)>());
                 }
 
-                plot.AddSpectrumPlot(annotatedData, OxyPlot.OxyColors.Blue, 2.0);
-                ZoomAxes(annotatedData, plot);
+                var color = colors[colorIndex];
+
+                colorIndex++;
+                if (colorIndex >= colors.Count)
+                {
+                    colorIndex = 0;
+                }
+
+                plot.AddSpectrumPlot(annotatedData, color, 2.0);
             }
 
+            ZoomAxes(spectrumData, plot);
             return plot;
         }
 
-        public static Plot PlotSpeciesInXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, DynamicDataConnection> data,
+        public static Plot PlotSpeciesInXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data,
             Plot plot, OxyPlot.Wpf.PlotView plotView, bool clearOldPlot)
         {
             double rtWindowHalfWidth = rtWindow / 2;
@@ -96,7 +107,7 @@ namespace GUI
             List<MsDataScan> scans = new List<MsDataScan>();
             for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
             {
-                var theScan = data.Value.GetOneBasedScanFromDynamicConnection(i);
+                var theScan = data.Value.GetOneBasedScan(i);
 
                 if (theScan.RetentionTime > startScan.RetentionTime + rtWindowHalfWidth)
                 {
@@ -164,15 +175,5 @@ namespace GUI
                 plot.Model.Axes[0].Zoom(lowestAnnotatedMz - 100, highestAnnotatedMz + 100);
             }
         }
-
-        //public static MsDataScan TryGetCachedScan(string fullFilePath, int oneBasedScanNumber, bool autoCache = true)
-        //{
-        //    if (CachedScans.TryGetValue((fullFilePath, oneBasedScanNumber), out var scan))
-        //    {
-        //        return scan;
-        //    }
-
-
-        //}
     }
 }

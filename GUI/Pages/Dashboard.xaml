@@ -1,4 +1,4 @@
-﻿<Page x:Class="ProteoformExplorer.HomePage"
+﻿<Page x:Class="ProteoformExplorer.Dashboard"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -31,7 +31,13 @@
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
 
-        <Button Grid.Row="0" Grid.Column="0" Content="Chart1" Click="Chart1_Click" Style="{StaticResource ButtonStyle}" >
+        <WpfPlot Name="DashboardPlot1" Grid.Row="0" Grid.Column="0" />
+
+        <WpfPlot Name="DashboardPlot2" Grid.Row="0" Grid.Column="1" />
+
+        <WpfPlot Name="DashboardPlot3" Grid.Row="0" Grid.Column="2" />
+
+        <Button Grid.Row="1" Grid.Column="0" Content="TIC View" Click="Chart1_Click" Style="{StaticResource ButtonStyle}" >
             <Button.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="5"/>
@@ -39,7 +45,7 @@
             </Button.Resources>
         </Button>
 
-        <Button Grid.Row="0" Grid.Column="1" Content="Chart2" Click="Chart2_Click" Style="{StaticResource ButtonStyle}" >
+        <Button Grid.Row="1" Grid.Column="1" Content="Species View" Click="Chart2_Click" Style="{StaticResource ButtonStyle}" >
             <Button.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="5"/>
@@ -47,31 +53,7 @@
             </Button.Resources>
         </Button>
 
-        <Button Grid.Row="0" Grid.Column="2" Content="Chart3" Click="Chart3_Click" Style="{StaticResource ButtonStyle}" >
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="5"/>
-                </Style>
-            </Button.Resources>
-        </Button>
-
-        <Button Grid.Row="1" Grid.Column="0" Content="Chart4" Click="Chart4_Click" Style="{StaticResource ButtonStyle}" >
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="5"/>
-                </Style>
-            </Button.Resources>
-        </Button>
-
-        <Button Grid.Row="1" Grid.Column="1" Content="Chart5" Click="Chart5_Click" Style="{StaticResource ButtonStyle}" >
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="5"/>
-                </Style>
-            </Button.Resources>
-        </Button>
-
-        <Button Grid.Row="1" Grid.Column="2" Content="Chart6" Click="Chart6_Click" Style="{StaticResource ButtonStyle}" >
+        <Button Grid.Row="1" Grid.Column="2" Content="Stacked XIC View" Click="Chart3_Click" Style="{StaticResource ButtonStyle}" >
             <Button.Resources>
                 <Style TargetType="Border">
                     <Setter Property="CornerRadius" Value="5"/>

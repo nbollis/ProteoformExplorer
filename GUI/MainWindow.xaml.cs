@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GUI.Modules;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,7 +25,7 @@ namespace ProteoformExplorer
         {
             InitializeComponent();
 
-            _NavigationFrame.Navigate(new HomePage());
+            _NavigationFrame.Navigate(new DataLoading());
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

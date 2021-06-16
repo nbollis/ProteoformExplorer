@@ -2,6 +2,7 @@
 using MassSpectrometry;
 using MzLibUtil;
 using OxyPlot.Axes;
+using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace ProteoformExplorer
             return position.X;
         }
 
-        public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, DynamicDataConnection> data, double rt)
+        public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt)
         {
             if (SpectraFilePathsToRtArray == null)
             {
@@ -44,7 +45,7 @@ namespace ProteoformExplorer
             if (!SpectraFilePathsToRtArray.TryGetValue(data.Key, out var rtArray))
             {
                 var lastScanNumber = GetLastOneBasedScanNumber(data);
-                var lastScan = data.Value.GetOneBasedScanFromDynamicConnection(lastScanNumber);
+                var lastScan = data.Value.GetOneBasedScan(lastScanNumber);
 
                 var arr = new double[lastScan.OneBasedScanNumber];
                 SpectraFilePathsToRtArray.Add(data.Key, arr);
@@ -69,7 +70,7 @@ namespace ProteoformExplorer
 
                 if (double.IsNaN(rtArray[m]))
                 {
-                    rtArray[m] = data.Value.GetOneBasedScanFromDynamicConnection(m + 1).RetentionTime;
+                    rtArray[m] = data.Value.GetOneBasedScan(m + 1).RetentionTime;
                 }
 
                 if (r - l < 2)
@@ -78,12 +79,12 @@ namespace ProteoformExplorer
                     {
                         if (double.IsNaN(rtArray[r]))
                         {
-                            rtArray[r] = data.Value.GetOneBasedScanFromDynamicConnection(r + 1).RetentionTime;
+                            rtArray[r] = data.Value.GetOneBasedScan(r + 1).RetentionTime;
                         }
 
                         if (rtArray[r] <= rt || r == 0)
                         {
-                            return data.Value.GetOneBasedScanFromDynamicConnection(r + 1);
+                            return data.Value.GetOneBasedScan(r + 1);
                         }
                     }
                 }
@@ -102,7 +103,7 @@ namespace ProteoformExplorer
             return null;
         }
 
-        public static int GetLastOneBasedScanNumber(KeyValuePair<string, DynamicDataConnection> data)
+        public static int GetLastOneBasedScanNumber(KeyValuePair<string, CachedSpectraFileData> data)
         {
             int m = 1;
             int l = 1;
@@ -116,14 +117,14 @@ namespace ProteoformExplorer
                 {
                     for (; r >= 0; r--)
                     {
-                        if (data.Value.GetOneBasedScanFromDynamicConnection(r) != null)
+                        if (data.Value.GetOneBasedScan(r) != null)
                         {
                             return r;
                         }
                     }
                 }
 
-                if (data.Value.GetOneBasedScanFromDynamicConnection(m) != null)
+                if (data.Value.GetOneBasedScan(m) != null)
                 {
                     l = m + 1;
                 }

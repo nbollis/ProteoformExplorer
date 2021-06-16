@@ -1,5 +1,6 @@
 ﻿using MassSpectrometry;
 using MzLibUtil;
+using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +28,7 @@ namespace ProteoformExplorer
             this.AnnotatedEnvelopes = annotatedEnvelopes;
         }
 
-        public void PopulateAnnotatedEnvelopes(KeyValuePair<string, DynamicDataConnection> data)
+        public void FindAnnotatedEnvelopesInData(KeyValuePair<string, CachedSpectraFileData> data)
         {
             if (AnnotatedEnvelopes != null)
             {
@@ -40,7 +41,7 @@ namespace ProteoformExplorer
 
             for (int i = start.OneBasedScanNumber; i <= end.OneBasedScanNumber + 1; i++)
             {
-                var scan = data.Value.GetOneBasedScanFromDynamicConnection(i);
+                var scan = data.Value.GetOneBasedScan(i);
 
                 if (scan.MsnOrder != 1)
                 {

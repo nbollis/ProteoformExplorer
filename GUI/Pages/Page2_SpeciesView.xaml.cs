@@ -1,9 +1,11 @@
 ﻿using Chemistry;
 using GUI;
+using GUI.Modules;
 using MassSpectrometry;
 using MzLibUtil;
 using mzPlot;
 using ProteoformExplorer;
+using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,33 +21,23 @@ using System.Windows.Input;
 namespace ProteoformExplorer
 {
     /// <summary>
-    /// Interaction logic for Page2_MassHistogram.xaml
+    /// Interaction logic for Page2_SpeciesView.xaml
     /// </summary>
     public partial class Page2_SpeciesView : Page
     {
-        private ObservableCollection<string> SelectedFiles;
-        private ObservableCollection<string> LoadedSpectraFilePaths;
-        private Dictionary<string, DynamicDataConnection> SpectraFiles;
-        private KeyValuePair<string, DynamicDataConnection> CurrentlySelectedSpectraFile;
-        private ObservableCollection<AnnotatedSpecies> ListOfAnnotatedSpecies;
         private ObservableCollection<AnnotatedSpecies> SelectableAnnotatedSpecies;
         private MsDataScan CurrentScan;
         private mzPlot.Plot XicPlot;
         private mzPlot.Plot SpectrumPlot;
 
-        public Page2_SpeciesView(Dictionary<string, DynamicDataConnection> spectraFiles, ObservableCollection<AnnotatedSpecies> loadedAnnotatedSpecies,
-            ObservableCollection<string> selectedFiles, ObservableCollection<string> loadedSpectraFilePaths)
+        public Page2_SpeciesView()
         {
             InitializeComponent();
-            ListOfAnnotatedSpecies = loadedAnnotatedSpecies;
-            SelectableAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
-            SpectraFiles = spectraFiles;
-            SelectedFiles = selectedFiles;
-            LoadedSpectraFilePaths = loadedSpectraFilePaths;
-            DataListView.ItemsSource = LoadedSpectraFilePaths;
-            selectSpectraFileButton.Click += new RoutedEventHandler(HomePage.SelectDataButton_Click);
-            loadFiles.Click += new RoutedEventHandler(HomePage.LoadDataButton_Click);
+            DataListView.ItemsSource = DataLoading.LoadedSpectraFilePaths;
+            selectSpectraFileButton.Click += new RoutedEventHandler(DataLoading.SelectDataButton_Click);
+            loadFiles.Click += new RoutedEventHandler(DataLoading.LoadDataButton_Click);
 
+            SelectableAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
             SpeciesListView.ItemsSource = SelectableAnnotatedSpecies;
         }
 
@@ -68,13 +60,13 @@ namespace ProteoformExplorer
             // get apex or precursor scan
             if (species.DeconvolutionFeature != null)
             {
-                initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(CurrentlySelectedSpectraFile, species.DeconvolutionFeature.ApexRt);
-                modeMass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
+                initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataLoading.CurrentlySelectedFile, species.DeconvolutionFeature.ApexRt);
+                modeMass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
             }
             else
             {
-                initialScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(species.Identification.OneBasedPrecursorScanNumber);
-                modeMass = HomePage.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
+                initialScan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(species.Identification.OneBasedPrecursorScanNumber);
+                modeMass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
             }
 
             // decide on charge to plot
@@ -85,7 +77,7 @@ namespace ProteoformExplorer
                     int i = initialScan.OneBasedScanNumber - 1;
                     while (initialScan.MsnOrder != 1)
                     {
-                        initialScan = CurrentlySelectedSpectraFile.Value.GetOneBasedScanFromDynamicConnection(i);
+                        initialScan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(i);
                         i--;
                     }
 
@@ -97,7 +89,7 @@ namespace ProteoformExplorer
                         double mz = modeMass.ToMz(z);
                         int ind = initialScan.MassSpectrum.GetClosestPeakIndex(mz);
 
-                        var env = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
+                        var env = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
                             new List<Deconvoluter.DeconvolutedPeak>(), new HashSet<double>(), new List<(double, double)>());
 
                         if (env != null)
@@ -130,7 +122,7 @@ namespace ProteoformExplorer
                 double mz = modeMass.ToMz(z);
                 int ind = initialScan.MassSpectrum.GetClosestPeakIndex(mz);
 
-                var env = HomePage.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
+                var env = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
                     new List<Deconvoluter.DeconvolutedPeak>(), new HashSet<double>(), new List<(double, double)>());
 
                 if (env != null)
@@ -147,15 +139,15 @@ namespace ProteoformExplorer
             for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
             {
                 var peak = peaksToMakeXicsFor[i];
-                XicPlot = GuiFunctions.PlotSpeciesInXic(peak.mz, peak.z, HomePage.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 2.0, CurrentlySelectedSpectraFile,
+                XicPlot = GuiFunctions.PlotSpeciesInXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 2.0, DataLoading.CurrentlySelectedFile,
                     XicPlot, topPlotView, i == 0);
             }
         }
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            SpectrumPlot = GuiFunctions.PlotSpeciesInSpectrum(new List<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, CurrentlySelectedSpectraFile, SpectrumPlot,
-                bottomPlotView, true);
+            SpectrumPlot = GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataLoading.CurrentlySelectedFile, SpectrumPlot,
+                bottomPlotView);
         }
 
         private void SpeciesListView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -173,9 +165,9 @@ namespace ProteoformExplorer
             {
                 var spectraFilePath = (string)selectedItems[0];
 
-                if (SpectraFiles.ContainsKey(spectraFilePath))
+                if (DataLoading.SpectraFiles.ContainsKey(spectraFilePath))
                 {
-                    CurrentlySelectedSpectraFile = SpectraFiles.First(p => p.Key == spectraFilePath);
+                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFilePath);
                 }
                 else
                 {
@@ -185,8 +177,8 @@ namespace ProteoformExplorer
             }
 
             SelectableAnnotatedSpecies.Clear();
-            var nameWithoutExtension = Path.GetFileNameWithoutExtension(CurrentlySelectedSpectraFile.Key);
-            foreach (AnnotatedSpecies species in ListOfAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
+            var nameWithoutExtension = Path.GetFileNameWithoutExtension(DataLoading.CurrentlySelectedFile.Key);
+            foreach (AnnotatedSpecies species in DataLoading.AllLoadedAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
             {
                 SelectableAnnotatedSpecies.Add(species);
             }
