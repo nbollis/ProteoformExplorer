@@ -4,14 +4,11 @@ using IO.MzML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
 using MzLibUtil;
-using OxyPlot;
-using OxyPlot.Annotations;
-using OxyPlot.Axes;
-using OxyPlot.Series;
 using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -28,8 +25,6 @@ namespace ProteoformExplorer
         private MsDataScan CurrentScan;
         private int IntegratedAreaStart;
         private int IntegratedAreaEnd;
-        private mzPlot.Plot TicPlot;
-        private mzPlot.Plot SpectrumPlot;
 
         public Page1_QuantifiedTic()
         {
@@ -67,17 +62,36 @@ namespace ProteoformExplorer
             // display TIC chromatogram
             var ticChromatogram = DataLoading.CurrentlySelectedFile.Value.GetTicChromatogram();
 
-            TicPlot = new mzPlot.LinePlot(topPlotView, ticChromatogram, OxyColors.Black, 1, seriesTitle: "TIC",
-                chartTitle: Path.GetFileName(DataLoading.CurrentlySelectedFile.Key), chartSubtitle: "");
+            topPlotView.Plot.Clear();
+            topPlotView.Plot.Grid(false);
+
+            topPlotView.Plot.AddScatterLines(
+                ticChromatogram.Select(p => p.X).ToArray(),
+                ticChromatogram.Select(p => p.Y.Value).ToArray(),
+                Color.Black, 1f, label: "TIC");
 
             // display identified TIC chromatogram
             if (DataLoading.AllLoadedAnnotatedSpecies.Any())
             {
                 var identifiedTicChromatogram = DataLoading.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram();
-                TicPlot.AddLinePlot(identifiedTicChromatogram, OxyColors.Purple, 1, seriesTitle: "Identified TIC");
+
+                if (identifiedTicChromatogram.Any())
+                {
+                    topPlotView.Plot.AddScatterLines(
+                        identifiedTicChromatogram.Select(p => p.X).ToArray(),
+                        identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
+                        Color.Purple, 1f, label: "Identified TIC");
+                }
 
                 var deconvolutedTicChromatogram = DataLoading.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram();
-                TicPlot.AddLinePlot(deconvolutedTicChromatogram, OxyColors.Blue, 1, seriesTitle: "Deconvoluted TIC");
+
+                if (deconvolutedTicChromatogram.Any())
+                {
+                    topPlotView.Plot.AddScatterLines(
+                        deconvolutedTicChromatogram.Select(p => p.X).ToArray(),
+                        deconvolutedTicChromatogram.Select(p => p.Y.Value).ToArray(),
+                        Color.Blue, 1f, label: "Deconvoluted TIC");
+                }
             }
         }
 
@@ -99,10 +113,7 @@ namespace ProteoformExplorer
 
             var speciesInScan = DataLoading.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
 
-            if (speciesInScan != null)
-            {
-                GuiFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataLoading.CurrentlySelectedFile, SpectrumPlot, bottomPlotView);
-            }
+            GuiFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataLoading.CurrentlySelectedFile, bottomPlotView);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

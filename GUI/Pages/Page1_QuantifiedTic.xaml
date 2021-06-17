@@ -54,8 +54,8 @@
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <oxy:PlotView Name="topPlotView" Grid.Row="0" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown" />
-            <oxy:PlotView Name="bottomPlotView" Grid.Row="1" />
+            <WpfPlot Name="topPlotView" Grid.Row="0" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown" />
+            <WpfPlot Name="bottomPlotView" Grid.Row="1" />
         </Grid>
     </Grid>
 </Page>

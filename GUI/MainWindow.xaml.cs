@@ -27,7 +27,7 @@ namespace ProteoformExplorer
             InitializeComponent();
 
             _NavigationFrame.Navigate(new DataLoading());
-            _NavigationFrame.Navigate(new ML_Trainer());
+            //_NavigationFrame.Navigate(new ML_Trainer());
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

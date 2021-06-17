@@ -9,6 +9,7 @@ using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -27,8 +28,6 @@ namespace ProteoformExplorer
     {
         private ObservableCollection<AnnotatedSpecies> SelectableAnnotatedSpecies;
         private MsDataScan CurrentScan;
-        private mzPlot.Plot XicPlot;
-        private mzPlot.Plot SpectrumPlot;
 
         public Page2_SpeciesView()
         {
@@ -139,14 +138,14 @@ namespace ProteoformExplorer
             for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
             {
                 var peak = peaksToMakeXicsFor[i];
-                XicPlot = GuiFunctions.PlotSpeciesInXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 2.0, DataLoading.CurrentlySelectedFile,
-                    XicPlot, topPlotView, i == 0);
+                GuiFunctions.PlotSpeciesInXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 2.0, DataLoading.CurrentlySelectedFile,
+                    topPlotView, i == 0);
             }
         }
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            SpectrumPlot = GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataLoading.CurrentlySelectedFile, SpectrumPlot,
+            GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataLoading.CurrentlySelectedFile,
                 bottomPlotView);
         }
 

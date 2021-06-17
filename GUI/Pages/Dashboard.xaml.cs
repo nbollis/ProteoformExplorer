@@ -17,7 +17,7 @@ using System.Windows.Controls;
 namespace ProteoformExplorer
 {
     /// <summary>
-    /// Interaction logic for HomePage.xaml
+    /// Interaction logic for Dashboard.xaml
     /// </summary>
     public partial class Dashboard : Page
     {

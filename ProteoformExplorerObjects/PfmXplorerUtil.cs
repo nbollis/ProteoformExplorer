@@ -1,8 +1,8 @@
 ﻿using Chemistry;
 using MassSpectrometry;
 using MzLibUtil;
-using OxyPlot.Axes;
 using ProteoformExplorerObjects;
+using ScottPlot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,22 +17,19 @@ namespace ProteoformExplorer
 
         public static double GetXPositionFromMouseClickOnChart(object sender, MouseButtonEventArgs e)
         {
-            var plotModel = (OxyPlot.Wpf.PlotView)sender;
+            var plot = (WpfPlot)sender;
 
-            if (plotModel == null)
+            if (plot == null)
             {
                 return double.NaN;
             }
 
-            OxyPlot.ElementCollection<OxyPlot.Axes.Axis> axisList = plotModel.Model.Axes;
+            int pixelX = (int)e.MouseDevice.GetPosition(plot).X;
+            int pixelY = (int)e.MouseDevice.GetPosition(plot).Y;
 
-            Axis xAxis = axisList.FirstOrDefault(ax => ax.Position == AxisPosition.Bottom);
-            Axis yAxis = axisList.FirstOrDefault(ax => ax.Position == AxisPosition.Left);
+            (double coordinateX, double coordinateY) = plot.GetMouseCoordinates();
 
-            var relative = Mouse.GetPosition(plotModel);
-            var position = xAxis.InverseTransform(relative.X, relative.Y, yAxis);
-
-            return position.X;
+            return coordinateX;
         }
 
         public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt)

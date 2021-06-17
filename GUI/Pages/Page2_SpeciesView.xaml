@@ -69,8 +69,8 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
-                <oxy:PlotView Name="topPlotView" Grid.Row="0"/>
-                <oxy:PlotView Name="bottomPlotView" Grid.Row="1" />
+                <WpfPlot Name="topPlotView" Grid.Row="0"/>
+                <WpfPlot Name="bottomPlotView" Grid.Row="1" />
             </Grid>
         </Grid>
     </Grid>
