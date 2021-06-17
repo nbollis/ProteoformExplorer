@@ -1,4 +1,5 @@
 ﻿using Chemistry;
+using GUI.Modules;
 using MassSpectrometry;
 using MzLibUtil;
 using mzPlot;
@@ -6,6 +7,7 @@ using ProteoformExplorer;
 using ProteoformExplorerObjects;
 using ScottPlot;
 using ScottPlot.Drawing;
+using ScottPlot.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -18,7 +20,7 @@ namespace GUI
     public class GuiFunctions
     {
         // from: http://seaborn.pydata.org/tutorial/color_palettes.html (qualitative bright palette)
-        public static string[] ColorPalette = new string[] 
+        public static string[] ColorPalette = new string[]
         {
             @"#00ca3d",  // green
             @"#e91405",  // red
@@ -30,7 +32,7 @@ namespace GUI
             @"#3729fe",  // blue
             @"#ff8000",  // orange
         };
- 
+
         public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot spectrumPlot)
         {
             // set color palette
@@ -187,6 +189,104 @@ namespace GUI
             //}
 
             //return plot;
+        }
+
+        public static void DrawPercentTicInfo(WpfPlot plot)
+        {
+            plot.Plot.Title(@"MS1 TIC");
+
+            // set color palette
+            plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+
+            List<(string file, double tic, double deconvolutedTic, double identifiedTic)> ticValues
+                = new List<(string file, double tic, double deconvolutedTic, double identifiedTic)>();
+
+            foreach (var file in DataLoading.SpectraFiles)
+            {
+                double tic = 0;
+                double deconvolutedTic = 0;
+                double identifiedTic = 0;
+
+                var ticChromatogram = file.Value.GetTicChromatogram();
+                if (ticChromatogram != null)
+                {
+                    tic = ticChromatogram.Sum(p => p.Y.Value);
+                }
+
+                var deconvolutedTicChromatogram = file.Value.GetDeconvolutedTicChromatogram();
+                if (deconvolutedTicChromatogram != null)
+                {
+                    deconvolutedTic = deconvolutedTicChromatogram.Sum(p => p.Y.Value);
+                }
+
+                var identifiedTicChromatogram = file.Value.GetIdentifiedTicChromatogram();
+                if (identifiedTicChromatogram != null)
+                {
+                    identifiedTic = identifiedTicChromatogram.Sum(p => p.Y.Value);
+                }
+
+                ticValues.Add((Path.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTic));
+            }
+
+            double[] positions = Enumerable.Range(0, ticValues.Count).Select(p => (double)p).ToArray();
+            string[] labels = ticValues.Select(p => p.file).ToArray();
+
+            plot.Plot.AddLollipop(ticValues.Select(p => p.tic).ToArray());
+            plot.Plot.AddLollipop(ticValues.Select(p => p.deconvolutedTic).ToArray());
+            plot.Plot.AddLollipop(ticValues.Select(p => p.identifiedTic).ToArray());
+
+            plot.Plot.XTicks(positions, labels);
+            plot.Plot.YAxis.TickLabelNotation(multiplier: true);
+        }
+
+        public static void DrawNumEnvelopes(WpfPlot plot)
+        {
+            plot.Plot.Title(@"MS1 Envelope Counts");
+            // set color palette
+            plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+
+            var numFilteredEnvelopesPerFile = new List<(string file, int numFilteredEnvs)>();
+
+            foreach (var file in DataLoading.SpectraFiles)
+            {
+                int envs = file.Value.OneBasedScanToAnnotatedEnvelopes.Sum(p => p.Value.Count);
+                numFilteredEnvelopesPerFile.Add((Path.GetFileNameWithoutExtension(file.Key), envs));
+            }
+
+            double[] positions = Enumerable.Range(0, numFilteredEnvelopesPerFile.Count).Select(p => (double)p).ToArray();
+            string[] labels = numFilteredEnvelopesPerFile.Select(p => p.file).ToArray();
+
+            plot.Plot.AddLollipop(numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray());
+
+            plot.Plot.XTicks(positions, labels);
+            plot.Plot.YAxis.TickLabelNotation();
+        }
+
+        public static void DrawMassDistributions(WpfPlot plot)
+        {
+            plot.Plot.Title(@"MS1 Envelope Mass Histograms");
+            plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+
+            var massPopulations = new List<(string file, double[] masses)>();
+
+            int fileNum = 0;
+            foreach (var file in DataLoading.SpectraFiles)
+            {
+                //TODO: decon feature could be null
+                var envelopeMasses = file.Value.OneBasedScanToAnnotatedEnvelopes.SelectMany(p => p.Value.Select(v => v.PeakMzs.First().ToMass(v.Charge))).ToArray();
+
+                var color = plot.Plot.GetNextColor();
+                var hist = new ScottPlot.Statistics.Histogram(envelopeMasses, binSize: 1000);
+
+                var bar = plot.Plot.AddBar(values: hist.countsFrac, positions: hist.bins);
+                bar.BarWidth = hist.binSize;
+                bar.FillColor = Color.FromArgb(50, color);
+                bar.BorderLineWidth = 0;
+                bar.Orientation = ScottPlot.Orientation.Horizontal;
+                bar.ValueOffsets = hist.countsFrac.Select(p => (double)fileNum).ToArray();
+
+                fileNum++;
+            }
         }
 
         //public static void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)
