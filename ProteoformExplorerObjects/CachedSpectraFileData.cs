@@ -18,6 +18,7 @@ namespace ProteoformExplorerObjects
         private List<Datum> DeconvolutedTicData;
         private Dictionary<int, MsDataScan> CachedScans;
         private int ScansToCache;
+        private Queue<int> CachedScanNumberQueue;
 
         public CachedSpectraFileData(KeyValuePair<string, DynamicDataConnection> loadedDataFile)
         {
@@ -29,6 +30,7 @@ namespace ProteoformExplorerObjects
             OneBasedScanToAnnotatedEnvelopes = new Dictionary<int, List<AnnotatedEnvelope>>();
             CachedScans = new Dictionary<int, MsDataScan>();
             ScansToCache = 1000;
+            CachedScanNumberQueue = new Queue<int>();
         }
 
         public void BuildScanToSpeciesDictionary(List<AnnotatedSpecies> allAnnotatedSpecies)
@@ -84,11 +86,14 @@ namespace ProteoformExplorerObjects
 
                 while (CachedScans.Count > ScansToCache)
                 {
-                    int minKey = CachedScans.Min(p => p.Key);
-                    CachedScans.Remove(minKey);
+                    int scanToRemove = CachedScanNumberQueue.Dequeue();
+                    CachedScans.Remove(scanToRemove);
                 }
 
-                CachedScans.Add(scan.OneBasedScanNumber, scan);
+                if (CachedScans.TryAdd(scan.OneBasedScanNumber, scan))
+                {
+                    CachedScanNumberQueue.Enqueue(oneBasedScanNum);
+                }
             }
 
             return scan;
@@ -135,7 +140,7 @@ namespace ProteoformExplorerObjects
 
                         DeconvolutedTicData.Add(new Datum(scan.RetentionTime, deconvolutedTic));
                     }
-                    
+
                     // TODO: identified tic
                 }
             }
