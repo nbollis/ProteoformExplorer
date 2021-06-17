@@ -118,10 +118,10 @@ namespace ProteoformExplorer
             double[] positions = Enumerable.Range(0, numFilteredEnvelopesPerFile.Count).Select(p => (double)p).ToArray();
             string[] labels = numFilteredEnvelopesPerFile.Select(p => p.file).ToArray();
 
-            DashboardPlot1.Plot.AddLollipop(numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray());
+            DashboardPlot2.Plot.AddLollipop(numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray());
 
-            DashboardPlot1.Plot.XTicks(positions, labels);
-            DashboardPlot1.Plot.YAxis.TickLabelNotation();
+            DashboardPlot2.Plot.XTicks(positions, labels);
+            DashboardPlot2.Plot.YAxis.TickLabelNotation();
         }
 
         private void DrawMassDistributions()
