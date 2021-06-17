@@ -3,6 +3,7 @@ using MzLibUtil;
 using ProteoformExplorer;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -37,7 +38,7 @@ namespace ProteoformExplorerObjects
         {
             OneBasedScanToAnnotatedSpecies.Clear();
 
-            foreach (var species in allAnnotatedSpecies)
+            foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(DataFile.Key)))
             {
                 if (species.DeconvolutionFeature != null)
                 {

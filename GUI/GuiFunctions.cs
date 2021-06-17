@@ -5,6 +5,7 @@ using mzPlot;
 using ProteoformExplorer;
 using ProteoformExplorerObjects;
 using ScottPlot;
+using ScottPlot.Drawing;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -17,21 +18,23 @@ namespace GUI
     public class GuiFunctions
     {
         // from: http://seaborn.pydata.org/tutorial/color_palettes.html (qualitative bright palette)
-        //public static List<Color> Colors = new List<Color>
-        //    {
-        //        Color.FromArgb(0, 202, 59), // green
-        //        Color.FromArgb(233, 22, 5), // red
-        //        Color.FromArgb(146, 20, 225), // purple
-        //        Color.FromArgb(159, 74, 0), // brown
-        //        Color.FromArgb(244, 74, 192), // pink
-        //        Color.FromArgb(253, 199, 7), // gold
-        //        Color.FromArgb(23, 213, 255), // teal
-        //        Color.FromArgb(54, 41, 254), // blue
-        //        Color.FromArgb(255, 128, 0), // orange
-        //    };
-
+        public static string[] ColorPalette = new string[] 
+        {
+            @"#00ca3d",  // green
+            @"#e91405",  // red
+            @"#9214e1",  // purple
+            @"#9f4a00",  // brown
+            @"#f44ac1",  // pink
+            @"#fdc807",  // gold
+            @"#17d4ff",  // teal
+            @"#3729fe",  // blue
+            @"#ff8000",  // orange
+        };
+ 
         public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot spectrumPlot)
         {
+            // set color palette
+            spectrumPlot.Plot.Palette = new Palette(ColorPalette);
             spectrumPlot.Plot.Clear();
             spectrumPlot.Plot.Grid(false);
             spectrumPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
@@ -130,6 +133,7 @@ namespace GUI
                 xicPlot.Plot.Clear();
             }
 
+            xicPlot.Plot.Palette = new Palette(ColorPalette);
             xicPlot.Plot.Grid(false);
             xicPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
             xicPlot.Plot.YAxis.Label("Intensity");

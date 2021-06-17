@@ -1,13 +1,18 @@
-﻿using Deconvoluter;
+﻿using Chemistry;
+using Deconvoluter;
+using GUI;
 using GUI.Modules;
 using IO.MzML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
 using ProteoformExplorerObjects;
 using Proteomics.ProteolyticDigestion;
+using ScottPlot.Drawing;
+using ScottPlot.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -64,6 +69,9 @@ namespace ProteoformExplorer
 
         private void DrawPercentTicInfo()
         {
+            // set color palette
+            DashboardPlot1.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+
             List<(string file, double tic, double deconvolutedTic, double identifiedTic)> ticValues
                 = new List<(string file, double tic, double deconvolutedTic, double identifiedTic)>();
 
@@ -107,6 +115,9 @@ namespace ProteoformExplorer
 
         private void DrawNumEnvelopes()
         {
+            // set color palette
+            DashboardPlot2.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+
             var numFilteredEnvelopesPerFile = new List<(string file, int numFilteredEnvs)>();
 
             foreach (var file in DataLoading.SpectraFiles)
@@ -126,7 +137,44 @@ namespace ProteoformExplorer
 
         private void DrawMassDistributions()
         {
+            DashboardPlot3.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
 
+            var massPopulations = new List<(string file, double[] masses)>();
+
+            int fileNum = 0;
+            foreach (var file in DataLoading.SpectraFiles)
+            {
+                //TODO: decon feature could be null
+                var envelopeMasses = file.Value.OneBasedScanToAnnotatedEnvelopes.SelectMany(p => p.Value.Select(v => v.PeakMzs.First().ToMass(v.Charge))).ToArray();
+
+                var color = DashboardPlot3.Plot.GetNextColor();
+                var hist = new Histogram(envelopeMasses, binSize: 1000);
+
+                var bar = DashboardPlot3.Plot.AddBar(values: hist.countsFrac, positions: hist.bins);
+                bar.BarWidth = hist.binSize;
+                bar.FillColor = Color.FromArgb(50, color);
+                bar.BorderLineWidth = 0;
+                bar.Orientation = ScottPlot.Orientation.Horizontal;
+                bar.ValueOffsets = hist.countsFrac.Select(p => (double)fileNum).ToArray();
+
+                fileNum++;
+            }
+
+            
+
+
+            //DashboardPlot3.Plot.AddScatterLines(ys: hist.bins, xs: hist.probability, color: Color.FromArgb(150, color), lineWidth: 3);
+
+            //var populations = massPopulations.Select(p => p.pop).ToArray();
+            //string[] labels = massPopulations.Select(p => p.file).ToArray();
+
+            //DashboardPlot3.Plot.AddPopulations(populations);
+            //DashboardPlot3.Plot.XTicks(labels);
+
+            //var new popSeries = new PopulationSeries(populations);
+            //var item = new PopulationMultiSeries();
+            //DashboardPlot3.Plot.PlotPopulations();
+            //DashboardPlot3.Plot.YAxis.TickLabelNotation();
         }
     }
 }
