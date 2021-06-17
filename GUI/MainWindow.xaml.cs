@@ -1,4 +1,5 @@
 ﻿using GUI.Modules;
+using GUI.Pages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,7 @@ namespace ProteoformExplorer
             InitializeComponent();
 
             _NavigationFrame.Navigate(new DataLoading());
+            _NavigationFrame.Navigate(new ML_Trainer());
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

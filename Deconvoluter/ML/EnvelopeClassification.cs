@@ -11,6 +11,9 @@ namespace Deconvoluter.ML
 {
     public class EnvelopeClassification
     {
+
+        public static string pathToTrainingFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"TrainingAndTestingData");
+        public static string pathToModelFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"TrainedModels");
         private IDataView _trainingDataView;
         private PredictionEngine<EnvelopeData, ClassificationPrediction> _predictionEngine;
         private ITransformer _trainedModel;
