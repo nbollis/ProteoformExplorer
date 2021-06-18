@@ -17,9 +17,9 @@ namespace ProteoformExplorerObjects
         private List<Datum> TicData;
         private List<Datum> IdentifiedTicData;
         private List<Datum> DeconvolutedTicData;
-        private Dictionary<int, MsDataScan> CachedScans;
-        private int ScansToCache;
-        private Queue<int> CachedScanNumberQueue;
+        private static Dictionary<(string, int), MsDataScan> CachedScans;
+        private static int NumScansToCache;
+        private static Queue<(string, int)> CachedScanNumberQueue;
 
         public CachedSpectraFileData(KeyValuePair<string, DynamicDataConnection> loadedDataFile)
         {
@@ -29,9 +29,9 @@ namespace ProteoformExplorerObjects
             DeconvolutedTicData = new List<Datum>();
             OneBasedScanToAnnotatedSpecies = new Dictionary<int, HashSet<AnnotatedSpecies>>();
             OneBasedScanToAnnotatedEnvelopes = new Dictionary<int, List<AnnotatedEnvelope>>();
-            CachedScans = new Dictionary<int, MsDataScan>();
-            ScansToCache = 1000;
-            CachedScanNumberQueue = new Queue<int>();
+            CachedScans = new Dictionary<(string, int), MsDataScan>();
+            NumScansToCache = 1000;
+            CachedScanNumberQueue = new Queue<(string, int)>();
         }
 
         public void BuildScanToSpeciesDictionary(List<AnnotatedSpecies> allAnnotatedSpecies)
@@ -76,28 +76,31 @@ namespace ProteoformExplorerObjects
 
         public MsDataScan GetOneBasedScan(int oneBasedScanNum)
         {
-            if (!CachedScans.TryGetValue(oneBasedScanNum, out var scan))
+            lock (CachedScans)
             {
-                scan = DataFile.Value.GetOneBasedScanFromDynamicConnection(oneBasedScanNum);
-
-                if (scan == null)
+                if (!CachedScans.TryGetValue((this.DataFile.Key, oneBasedScanNum), out var scan))
                 {
-                    return scan;
+                    scan = DataFile.Value.GetOneBasedScanFromDynamicConnection(oneBasedScanNum);
+
+                    if (scan == null)
+                    {
+                        return scan;
+                    }
+
+                    while (CachedScans.Count > NumScansToCache)
+                    {
+                        var scanToRemove = CachedScanNumberQueue.Dequeue();
+                        CachedScans.Remove(scanToRemove);
+                    }
+
+                    if (CachedScans.TryAdd((this.DataFile.Key, scan.OneBasedScanNumber), scan))
+                    {
+                        CachedScanNumberQueue.Enqueue((this.DataFile.Key, oneBasedScanNum));
+                    }
                 }
 
-                while (CachedScans.Count > ScansToCache)
-                {
-                    int scanToRemove = CachedScanNumberQueue.Dequeue();
-                    CachedScans.Remove(scanToRemove);
-                }
-
-                if (CachedScans.TryAdd(scan.OneBasedScanNumber, scan))
-                {
-                    CachedScanNumberQueue.Enqueue(oneBasedScanNum);
-                }
+                return scan;
             }
-
-            return scan;
         }
 
         public List<Datum> GetTicChromatogram()

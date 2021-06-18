@@ -231,10 +231,28 @@ namespace GUI
             double[] positions = Enumerable.Range(0, ticValues.Count).Select(p => (double)p).ToArray();
             string[] labels = ticValues.Select(p => p.file).ToArray();
 
-            plot.Plot.AddLollipop(ticValues.Select(p => p.tic).ToArray());
-            plot.Plot.AddLollipop(ticValues.Select(p => p.deconvolutedTic).ToArray());
-            plot.Plot.AddLollipop(ticValues.Select(p => p.identifiedTic).ToArray());
+            var ticPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.tic).ToArray());
+            ticPlot.Label = @"TIC";
+            ticPlot.LollipopColor = Color.Black;
+            ticPlot.LollipopRadius = 10;
+            plot.Plot.Add(ticPlot);
 
+            var deconTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.deconvolutedTic).ToArray());
+            deconTicPlot.Label = @"Deconvoluted TIC";
+            deconTicPlot.LollipopColor = Color.Blue;
+            deconTicPlot.LollipopRadius = 10;
+            plot.Plot.Add(deconTicPlot);
+
+            var identTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.identifiedTic).ToArray());
+            identTicPlot.Label = @"Identified TIC";
+            identTicPlot.LollipopColor = Color.Purple;
+            identTicPlot.LollipopRadius = 10;
+            plot.Plot.Add(identTicPlot);
+
+            plot.Plot.Legend(location: Alignment.UpperRight);
+
+            plot.Plot.YAxis.Label("Intensity");
+            plot.Plot.SetAxisLimitsY(0, ticValues.Max(p => p.tic) * 1.2);
             plot.Plot.XTicks(positions, labels);
             plot.Plot.YAxis.TickLabelNotation(multiplier: true);
         }
@@ -253,11 +271,20 @@ namespace GUI
                 numFilteredEnvelopesPerFile.Add((Path.GetFileNameWithoutExtension(file.Key), envs));
             }
 
+            double[] values = numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray();
             double[] positions = Enumerable.Range(0, numFilteredEnvelopesPerFile.Count).Select(p => (double)p).ToArray();
             string[] labels = numFilteredEnvelopesPerFile.Select(p => p.file).ToArray();
 
-            plot.Plot.AddLollipop(numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray());
+            var envsCountPlot = new ScottPlot.Plottable.LollipopPlot(positions, values);
+            envsCountPlot.Label = @"Deconvoluted Envelopes";
+            envsCountPlot.LollipopColor = Color.Blue;
+            envsCountPlot.LollipopRadius = 10;
+            plot.Plot.Add(envsCountPlot);
 
+            plot.Plot.Legend(location: Alignment.UpperRight);
+
+            plot.Plot.YAxis.Label("Count");
+            plot.Plot.SetAxisLimitsY(0, numFilteredEnvelopesPerFile.Max(p => p.numFilteredEnvs) * 1.2);
             plot.Plot.XTicks(positions, labels);
             plot.Plot.YAxis.TickLabelNotation();
         }
@@ -266,17 +293,17 @@ namespace GUI
         {
             plot.Plot.Title(@"MS1 Envelope Mass Histograms");
             plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
-
-            var massPopulations = new List<(string file, double[] masses)>();
+            var color = Color.Blue;
 
             int fileNum = 0;
+            double maxMass = 0;
             foreach (var file in DataLoading.SpectraFiles)
             {
                 //TODO: decon feature could be null
                 var envelopeMasses = file.Value.OneBasedScanToAnnotatedEnvelopes.SelectMany(p => p.Value.Select(v => v.PeakMzs.First().ToMass(v.Charge))).ToArray();
+                maxMass = Math.Max(maxMass, envelopeMasses.Max());
 
-                var color = plot.Plot.GetNextColor();
-                var hist = new ScottPlot.Statistics.Histogram(envelopeMasses, binSize: 1000);
+                var hist = new ScottPlot.Statistics.Histogram(envelopeMasses, binSize: 500);
 
                 var bar = plot.Plot.AddBar(values: hist.countsFrac, positions: hist.bins);
                 bar.BarWidth = hist.binSize;
@@ -284,9 +311,17 @@ namespace GUI
                 bar.BorderLineWidth = 0;
                 bar.Orientation = ScottPlot.Orientation.Horizontal;
                 bar.ValueOffsets = hist.countsFrac.Select(p => (double)fileNum).ToArray();
+                bar.Label = Path.GetFileNameWithoutExtension(file.Key);
 
                 fileNum++;
             }
+
+            plot.Plot.YAxis.Label("Daltons");
+            plot.Plot.SetAxisLimitsY(0, maxMass * 1.2);
+
+            double[] xPositions = Enumerable.Range(0, DataLoading.SpectraFiles.Count).Select(p => (double)p).ToArray();
+            string[] xLabels = DataLoading.SpectraFiles.Select(p => Path.GetFileNameWithoutExtension(p.Key)).ToArray();
+            plot.Plot.XTicks(xPositions, xLabels);
         }
 
         //public static void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)

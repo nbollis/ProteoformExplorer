@@ -101,8 +101,8 @@ namespace Deconvoluter
                 sb.Append("Interstitial Spectral Angle");
                 sb.Append('\t');
                 sb.Append("Machine Learning Classifier");
-                sb.Append('\t');
-                sb.Append("Machine Learning Classifier Scores");
+                //sb.Append('\t');
+                //sb.Append("Machine Learning Classifier Scores");
 
                 return sb.ToString();
             }
@@ -143,8 +143,8 @@ namespace Deconvoluter
             sb.Append(InterstitialSpectralAngle);
             sb.Append('\t');
             sb.Append(MachineLearningClassification);
-            sb.Append('\t');
-            sb.Append(string.Join("\t", MachineLearningClassificationScores.Select(p => p.ToString("F4"))));
+            //sb.Append('\t');
+            //sb.Append(string.Join("\t", MachineLearningClassificationScores.Select(p => p.ToString("F4"))));
 
             return sb.ToString();
         }
