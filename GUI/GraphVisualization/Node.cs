@@ -13,7 +13,7 @@ namespace GUI
         public double X { get; private set; }
         public double Y { get; private set; }
         private List<Edge> _edges;
-        public ScatterPlot VisualRepresentation { get; set; }
+        public List<IPlottable> VisualRepresentation { get; set; }
         public Text TextAnnotation;
 
         public Node(double x, double y, string textAnnotation = null)
@@ -22,9 +22,7 @@ namespace GUI
             this.Y = y;
             _edges = new List<Edge>();
 
-            VisualRepresentation = new ScatterPlot(new double[] { x }, new double[] { y });
-            VisualRepresentation.LineWidth = 0;
-            VisualRepresentation.MarkerSize = 70;
+            VisualRepresentation = new List<IPlottable> { new ScatterPlot(new double[] { x }, new double[] { y }) };
 
             TextAnnotation = new Text();
             TextAnnotation.X = X;
