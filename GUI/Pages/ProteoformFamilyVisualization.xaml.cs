@@ -27,11 +27,12 @@ namespace GUI.Pages
                 new VisualizedProteoformFamilyMember(VisualizedType.TheoreticalProteoform, @"Unmodified", 15, 5),
                 new VisualizedProteoformFamilyMember(VisualizedType.TopDownExperimentalProteoform, @"Unmodified", 15, 10),
                 new VisualizedProteoformFamilyMember(VisualizedType.IntactMassExperimentalProteoform, @"Acetyl", 5, 5),
-                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Acetyl", 0, 0, new List<double> { 10.0, 30.0 }, isStatisticallySignificant: true),
+                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Unmodified", 7, 7, new List<double> { 1.0, 2.0 }, isStatisticallySignificant: true),
             };
 
             exampleFamily[0].Node.AddConnection(exampleFamily[1].Node, "0 Da");
             exampleFamily[0].Node.AddConnection(exampleFamily[2].Node, "0 Da");
+            exampleFamily[1].Node.AddConnection(exampleFamily[4].Node, "0 Da");
             exampleFamily[1].Node.AddConnection(exampleFamily[3].Node, "42 Da");
 
             DrawProteoformFamily(exampleFamily);
@@ -39,7 +40,7 @@ namespace GUI.Pages
 
         public void DrawProteoformFamily(List<VisualizedProteoformFamilyMember> proteoformFamily)
         {
-
+            pfmFamilyVisualizationChart.Plot.AxisScaleLock(true);
             pfmFamilyVisualizationChart.Plot.Grid(false);
 
             foreach (var proteoform in proteoformFamily)
@@ -171,7 +172,7 @@ namespace GUI.Pages
 
                     if (IsStatisticallySignificantlyDifferent)
                     {
-                        // add a red ring around the proteoform
+                        // add an orange ring around the proteoform
                         List<double> thetas = new List<double>();
 
                         for (double theta = 0; theta <= 2.0 * Math.PI; theta += radiansStep)
