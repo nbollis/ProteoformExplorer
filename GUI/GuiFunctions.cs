@@ -154,7 +154,23 @@ namespace GUI
             var color = xicPlot.Plot.GetNextColor();
 
             xicPlot.Plot.AddScatterLines(xs, ys, color, lineWidth: 2);
-            xicPlot.Plot.SetAxisLimitsY(0, ys.Max());
+
+            if (clearOldPlot)
+            {
+                xicPlot.Plot.SetAxisLimitsY(Math.Min(0, ys.Min()), ys.Max());
+                xicPlot.Plot.SetAxisLimitsX(xs.Min(), xs.Max());
+            }
+            else
+            {
+                var axisLimits = xicPlot.Plot.GetAxisLimits(xicPlot.Plot.XAxis.AxisIndex, xicPlot.Plot.YAxis.AxisIndex);
+                double yMin = Math.Max(axisLimits.YMin, ys.Min());
+                double yMax = Math.Max(axisLimits.YMax, ys.Max());
+                double xMin = Math.Max(axisLimits.XMin, xs.Min());
+                double xMax = Math.Max(axisLimits.XMax, xs.Max());
+
+                xicPlot.Plot.SetAxisLimitsY(yMin, yMax);
+                xicPlot.Plot.SetAxisLimitsX(xMin, xMax);
+            }
         }
 
         public static void DrawPercentTicInfo(WpfPlot plot)
@@ -358,16 +374,14 @@ namespace GUI
             xicPlot.Plot.XAxis.Label("Retention Time");
 
             double rtWindowHalfWidth = rtWindow / 2;
-            //var startScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt - rtWindowHalfWidth);
-            //var endScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt + rtWindowHalfWidth);
 
-            var test = data.Value.GetTicChromatogram();
-            var firstScan = test.First(p => p.X > rt - rtWindowHalfWidth);
+            var xic = data.Value.GetTicChromatogram();
+            var firstScan = xic.First(p => p.X > rt - rtWindowHalfWidth);
 
             scans = new List<MsDataScan>();
-            for (int i = test.IndexOf(firstScan); i < test.Count; i++)
+            for (int i = xic.IndexOf(firstScan); i < xic.Count; i++)
             {
-                int scanNum = (int)Math.Round(test[i].Z.Value);
+                int scanNum = (int)Math.Round(xic[i].Z.Value);
                 var theScan = data.Value.GetOneBasedScan(scanNum);
 
                 if (theScan.MsnOrder == 1)
@@ -380,43 +394,6 @@ namespace GUI
                     break;
                 }
             }
-
-            //for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
-            //{
-            //    var theScan = data.Value.GetOneBasedScan(i);
-
-            //    if (theScan.MsnOrder == 1)
-            //    {
-            //        scans.Add(theScan);
-            //    }
-            //}
         }
-
-        //public static void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)
-        //{
-        //    double highestAnnotatedIntensity = 0;
-        //    double highestAnnotatedMz = double.MinValue;
-        //    double lowestAnnotatedMz = double.MaxValue;
-
-        //    foreach (var ion in annotatedIons)
-        //    {
-        //        double mz = ion.X;
-        //        double intensity = ion.Y.Value;
-
-        //        highestAnnotatedIntensity = Math.Max(highestAnnotatedIntensity, intensity);
-        //        highestAnnotatedMz = Math.Max(highestAnnotatedMz, mz);
-        //        lowestAnnotatedMz = Math.Min(lowestAnnotatedMz, mz);
-        //    }
-
-        //    if (highestAnnotatedIntensity > 0)
-        //    {
-        //        plot.Model.Axes[1].Zoom(0, highestAnnotatedIntensity * yZoom);
-        //    }
-
-        //    if (highestAnnotatedMz > double.MinValue && lowestAnnotatedMz < double.MaxValue)
-        //    {
-        //        plot.Model.Axes[0].Zoom(lowestAnnotatedMz - 100, highestAnnotatedMz + 100);
-        //    }
-        //}
     }
 }

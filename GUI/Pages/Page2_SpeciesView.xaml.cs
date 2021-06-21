@@ -122,7 +122,7 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
-                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, 5.0, DataLoading.CurrentlySelectedFile,
+                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, rtWindow, DataLoading.CurrentlySelectedFile,
                         topPlotView, i == 0);
                 }
             }

@@ -90,6 +90,8 @@ namespace ProteoformExplorer
                 }
             }
 
+            // figure out offsets and replot. have to do it 2x because we don't know what the max intensity is until we get the data,
+            // so it's hard to scale/offset the plots correctly until it's already plotted
             PresentationSource source = PresentationSource.FromVisual(topPlotView);
 
             double dpiX = 0;
@@ -135,6 +137,14 @@ namespace ProteoformExplorer
 
                 }
             }
+
+            // zoom axes
+            axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
+            topPlotView.Plot.SetAxisLimits(
+                axisLimits.XMin - axisLimits.XSpan / 2, 
+                axisLimits.XMax + axisLimits.XSpan / 2, 
+                axisLimits.YMin - axisLimits.YSpan / 2,
+                axisLimits.YMax + axisLimits.YSpan / 2);
         }
 
         private void SpeciesListView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
