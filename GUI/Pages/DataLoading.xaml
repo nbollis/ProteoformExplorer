@@ -5,28 +5,35 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:GUI.Modules"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
-      Title="DataLoading">
+      d:DesignHeight="450" d:DesignWidth="600"
+      Title="DataLoading" 
+      AllowDrop="True" 
+      Drop="Window_Drop">
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="1*"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
-            </Grid.RowDefinitions>
+        <Border Grid.Row="0" BorderThickness="2" Margin="40" Background="#f5f6fa" Name="dragAndDropFileLoadingArea">
+            <Border.BorderBrush>
+                <VisualBrush>
+                    <VisualBrush.Visual>
+                        <Rectangle StrokeDashArray="4 2" Stroke="#00a8ff" StrokeThickness="2"
+                            Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
+                            Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Border.BorderBrush>
 
-            <Button Grid.Row="0" Name="selectSpectraFileButton" Content="Select" Width="70"/>
-            <Button Grid.Row="1" Name="loadFiles" Content="Load" Width="70"/>
-            <ListView Grid.Row="2" Name="selectedFiles" Width="200" />
-            <ProgressBar Grid.Row="3" Name="dataLoadingProgressBar" Width="300" />
-            <Button Grid.Row="4" Name="goToDashboard" Content="Go to dashboard" Width="120"/>
-        </Grid>
+            <Label Content="Drag and drop files here" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00a8ff" FontWeight="Bold"/>
+        </Border>
+
+        <ListView Grid.Row="0" Name="selectedFiles" Margin="10" Visibility="Hidden" />
+
+        <Button x:Name="loadFiles" Content="Load" Grid.Row="1" Visibility="Hidden" VerticalAlignment="Center" />
+        <Button x:Name="goToDashboard" Content="Go to dashboard" Grid.Row="1" Visibility="Hidden" VerticalAlignment="Center" />
+        <ProgressBar Name="dataLoadingProgressBar" Grid.Row="1" Width="300" Visibility="Hidden" Foreground="#00a8ff" Background="#f5f6fa" VerticalAlignment="Center" />
     </Grid>
 </Page>

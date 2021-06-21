@@ -4,6 +4,57 @@
              xmlns:local="clr-namespace:ProteoformExplorer"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <!--Colors used in the GUI-->
+        <!--https://flatuicolors.com/palette/gb-->
+        <SolidColorBrush x:Key="ProtossPylon" Color="#00a8ff" />
+        <SolidColorBrush x:Key="Periwinkle" Color="#9c88ff" />
+        <SolidColorBrush x:Key="RiseNShine" Color="#fbc531" />
+        <SolidColorBrush x:Key="DownloadProgress" Color="#4cd137" />
+        <SolidColorBrush x:Key="Seabrook" Color="#487eb0" />
+
+        <SolidColorBrush x:Key="VanadylBlue" Color="#0097e6" />
+        <SolidColorBrush x:Key="MattPurple" Color="#8c7ae6" />
+        <SolidColorBrush x:Key="NanohanachaGold" Color="#e1b12c" />
+        <SolidColorBrush x:Key="SkirretGreen" Color="#44bd32" />
+        <SolidColorBrush x:Key="Naval" Color="#40739e" />
+
+        <SolidColorBrush x:Key="NasturcianFlower" Color="#e84118" />
+        <SolidColorBrush x:Key="LynxWhite" Color="#f5f6fa" />
+        <SolidColorBrush x:Key="BlueberrySoda" Color="#7f8fa6" />
+        <SolidColorBrush x:Key="MazarineBlue" Color="#273c75" />
+        <SolidColorBrush x:Key="BlueNights" Color="#353b48" />
+
+        <SolidColorBrush x:Key="HarleyDavidsonOrange" Color="#c23616" />
+        <SolidColorBrush x:Key="HindOfPensive" Color="#dcdde1" />
+        <SolidColorBrush x:Key="ChainGangGrey" Color="#718093" />
+        <SolidColorBrush x:Key="PicoVoid" Color="#192a56" />
+        <SolidColorBrush x:Key="Electromagnetic" Color="#2f3640" />
+
+        <!--Default button style-->
+        <Style TargetType="Button">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="200"/>
+            <Setter Property="Background" Value="{StaticResource MazarineBlue}"/>
+            <Setter Property="Foreground" Value="{StaticResource LynxWhite}"/>
+            <Setter Property="FontSize" Value="12"/>
+
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <!--Default ListView style-->
+        <Style TargetType="ListView">
+            
+        </Style>
+
+        <!--Default ListViewItem style-->
+        <Style TargetType="ListViewItem">
+            <Setter Property="Foreground" Value="{StaticResource MazarineBlue}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
     </Application.Resources>
 </Application>

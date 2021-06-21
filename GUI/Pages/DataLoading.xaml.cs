@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Navigation;
 using UsefulProteomicsDatabases;
 
 namespace GUI.Modules
@@ -37,9 +38,8 @@ namespace GUI.Modules
             SelectedFilePaths = new ObservableCollection<string>();
             LoadedSpectraFileNamesWithExtensions = new ObservableCollection<string>();
 
-            selectedFiles.ItemsSource = LoadedSpectraFileNamesWithExtensions;
+            selectedFiles.ItemsSource = SelectedFilePaths;
 
-            selectSpectraFileButton.Click += new RoutedEventHandler(SelectDataButton_Click);
             loadFiles.Click += new RoutedEventHandler(LoadDataButton_Click);
             goToDashboard.Click += new RoutedEventHandler(GoToDashboard_Click);
 
@@ -47,6 +47,8 @@ namespace GUI.Modules
             worker.DoWork += new DoWorkEventHandler(LoadFilesInBackground);
             worker.ProgressChanged += new ProgressChangedEventHandler(WorkerProgressChanged);
             worker.WorkerReportsProgress = true;
+
+            RefreshPage();
         }
 
         public static void LoadDataButton_Click(object sender, RoutedEventArgs e)
@@ -62,6 +64,36 @@ namespace GUI.Modules
 
             // load files in the background
             worker.RunWorkerAsync();
+        }
+
+        public void RefreshPage()
+        {
+            App.Current.Dispatcher.Invoke((Action)delegate
+            {
+                dataLoadingProgressBar.Visibility = Visibility.Hidden;
+
+                if (SelectedFilePaths.Any())
+                {
+                    dragAndDropFileLoadingArea.Visibility = Visibility.Hidden;
+                    selectedFiles.Visibility = Visibility.Visible;
+
+                    if (SpectraFiles.Any())
+                    {
+                        goToDashboard.Visibility = Visibility.Visible;
+                        loadFiles.Visibility = Visibility.Hidden;
+                    }
+                    else
+                    {
+                        goToDashboard.Visibility = Visibility.Hidden;
+                        loadFiles.Visibility = Visibility.Visible;
+                    }
+                }
+                else
+                {
+                    dragAndDropFileLoadingArea.Visibility = Visibility.Visible;
+                    selectedFiles.Visibility = Visibility.Hidden;
+                }
+            });
         }
 
         public static void SelectDataButton_Click(object sender, RoutedEventArgs e)
@@ -94,7 +126,7 @@ namespace GUI.Modules
 
         private static void LoadFile(string path)
         {
-            var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+            var ext = Path.GetExtension(path).ToLowerInvariant();
             var fileName = Path.GetFileName(path);
 
             if (ext == ".raw")
@@ -134,9 +166,37 @@ namespace GUI.Modules
             }
         }
 
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+            if (files != null)
+            {
+                foreach (var filePath in files.OrderBy(p => p))
+                {
+                    var ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+                    if (InputReaderParser.AcceptedFileFormats.Contains(ext))
+                    {
+                        SelectedFilePaths.Add(filePath);
+                    }
+                }
+            }
+
+            RefreshPage();
+        }
+
         private void LoadFilesInBackground(object sender, DoWorkEventArgs e)
         {
+            RefreshPage();
+
+            // double-count spectra files for transparency because we're going to load some extra stuff from them
+            double itemsLoaded = 0;
+            double itemsToLoad = SelectedFilePaths.Count + 
+                SelectedFilePaths.Count(p => Path.GetExtension(p).ToLowerInvariant() == ".raw" || Path.GetExtension(p).ToLowerInvariant() == ".mzml");
+
             BackgroundWorker worker = (BackgroundWorker)sender;
+            worker.ReportProgress(0);
 
             // this calculates all the stuff needed for deconvolution, like averagine distributions
             Loaders.LoadElements();
@@ -146,25 +206,34 @@ namespace GUI.Modules
             foreach (var file in SelectedFilePaths)
             {
                 LoadFile(file);
+                itemsLoaded++;
+
+                int progress = (int)(itemsLoaded / itemsToLoad * 100);
+                worker.ReportProgress(progress);
             }
 
             // pre-compute TIC stuff and report loading progress
-            double filesComplete = 0;
             foreach (var file in SpectraFiles)
             {
                 file.Value.BuildScanToSpeciesDictionary(AllLoadedAnnotatedSpecies.ToList());
                 file.Value.GetTicChromatogram();
+                itemsLoaded++;
 
-                filesComplete++;
-                int progress = (int)(filesComplete / SelectedFilePaths.Count * 100);
+                int progress = (int)(itemsLoaded / itemsToLoad * 100);
                 worker.ReportProgress(progress);
             }
 
+            RefreshPage();
             MessageBox.Show("Files successfully loaded");
         }
 
         private void WorkerProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            App.Current.Dispatcher.Invoke((Action)delegate
+            {
+                dataLoadingProgressBar.Visibility = Visibility.Visible;
+            });
+
             dataLoadingProgressBar.Maximum = 100;
             dataLoadingProgressBar.Value = e.ProgressPercentage;
         }

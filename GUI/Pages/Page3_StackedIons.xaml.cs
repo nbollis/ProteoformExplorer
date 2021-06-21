@@ -18,6 +18,8 @@ namespace ProteoformExplorer
     public partial class Page3_StackedIons : Page
     {
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
+        private const double mmPerInch = 25.4;
+        private double mmOffsetSpacing = 12;
 
         public Page3_StackedIons()
         {
@@ -102,7 +104,7 @@ namespace ProteoformExplorer
                 dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
             }
 
-            double inchOffset = 0.5;
+            double inchOffset = mmOffsetSpacing / mmPerInch;
             var axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
 
             // y axis offset
