@@ -73,6 +73,47 @@ namespace ProteoformExplorer
             double rtWindow = 5.0;
 
             int fileNum = 0;
+            foreach (var file in DataLoading.SpectraFiles)
+            {
+                if (charge == null)
+                {
+                    // plot summed charge states, one line per file
+                    //TODO
+                }
+                else
+                {
+                    // plot the charge state envelope, one line per file
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, rtWindow, file, topPlotView,
+                        clearOldPlot: fileNum == 0);
+
+                    fileNum++;
+                }
+            }
+
+            PresentationSource source = PresentationSource.FromVisual(topPlotView);
+
+            double dpiX = 0;
+            double dpiY = 0;
+            if (source != null)
+            {
+                dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
+                dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
+            }
+
+            double inchOffset = 0.5;
+            var axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
+
+            // y axis offset
+            double yAxisRange = topPlotView.Plot.GetPixelY(axisLimits.YMax) - topPlotView.Plot.GetPixelY(axisLimits.YMin);
+            double yUnitsPerDot = (axisLimits.YMax - axisLimits.YMin) / yAxisRange;
+            double offsetUnitStepY = inchOffset * dpiY * yUnitsPerDot;
+
+            // x axis offset
+            double xAxisRange = topPlotView.Plot.GetPixelX(axisLimits.XMax) - topPlotView.Plot.GetPixelX(axisLimits.XMin);
+            double xUnitsPerDot = (axisLimits.XMax - axisLimits.XMin) / xAxisRange;
+            double offsetUnitStepX = inchOffset * dpiX * xUnitsPerDot;
+
+            fileNum = 0;
             double xOffset = 0;
             double yOffset = 0;
             foreach (var file in DataLoading.SpectraFiles)
@@ -89,8 +130,9 @@ namespace ProteoformExplorer
                         clearOldPlot: fileNum == 0, xOffset, yOffset);
 
                     fileNum++;
-                    xOffset -= 0.2;
-                    yOffset -= 1e4;
+                    xOffset -= offsetUnitStepX;
+                    yOffset -= offsetUnitStepY;
+
                 }
             }
         }

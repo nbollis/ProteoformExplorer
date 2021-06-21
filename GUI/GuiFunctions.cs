@@ -153,7 +153,8 @@ namespace GUI
             var ys = xicData.Select(p => p.Y.Value + yOffset).ToArray();
             var color = xicPlot.Plot.GetNextColor();
 
-            xicPlot.Plot.AddScatterLines(xs, ys, color);
+            xicPlot.Plot.AddScatterLines(xs, ys, color, lineWidth: 2);
+            xicPlot.Plot.SetAxisLimitsY(0, ys.Max());
         }
 
         public static void DrawPercentTicInfo(WpfPlot plot)

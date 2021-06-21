@@ -84,7 +84,7 @@ namespace ProteoformExplorer
                 chargesToPlot.Add(charge.Value);
             }
 
-            double rtWindow = 5.0;
+            double rtWindow = 10.0;
             if (charge == null)
             {
                 // plot summed isotopes, one line per charge
