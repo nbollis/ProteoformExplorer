@@ -9,6 +9,78 @@
       Title="Page3_StackedIons">
 
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+
+        <!--Data loading area (left side)-->
+        <Expander Grid.Column="0" ExpandDirection="Left" IsExpanded="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="22"/>
+                    <RowDefinition Height="1*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!--Select files to load-->
+                <DockPanel Grid.Row="0" Grid.Column="0" LastChildFill="True" Margin="0 1 0 1">
+                    <Label Content="Files: " Width="75" />
+                    <Button Name="selectSpectraFileButton" Content="Select" DockPanel.Dock="Right" Width="40" />
+                    <Label BorderThickness="1" MaxWidth="90">
+                        <TextBlock Name="spectraFileNameLabel" Text="None Selected" TextTrimming="CharacterEllipsis" />
+                    </Label>
+                </DockPanel>
+
+                <!--Button to load files-->
+                <DockPanel Grid.Row="1" HorizontalAlignment="Center">
+                    <Button Name="loadFiles" Content="Load Files" Width="80" />
+                </DockPanel>
+
+                <!--User can select/deselect spectra files here-->
+                <ListView Grid.Row="2" Width="200" Name="DataListView" SelectionChanged="DataListView_SelectionChanged" />
+            </Grid>
+        </Expander>
+
+        <Grid Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="4*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="100" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+
+                <TreeView Name="SpeciesListView" ItemsSource="{Binding SelectableAnnotatedSpecies}" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
+                          VirtualizingPanel.IsVirtualizing="True">
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate DataType="{x:Type local:AnnotatedSpeciesNode}" ItemsSource="{Binding Charges}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                        <DataTemplate DataType="{x:Type local:AnnotatedSpeciesNodeSpecificCharge}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </TreeView.Resources>
+                </TreeView>
+            </Grid>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+
+                <WpfPlot Name="topPlotView" Grid.Row="0"/>
+            </Grid>
+        </Grid>
     </Grid>
 </Page>

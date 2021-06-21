@@ -59,9 +59,6 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
-                <!--<TreeView x:Name="SpeciesListView" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
-                          VirtualizingPanel.IsVirtualizing="True" />-->
-
                 <TreeView Name="SpeciesListView" ItemsSource="{Binding SelectableAnnotatedSpecies}" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
                           VirtualizingPanel.IsVirtualizing="True">
                     <TreeView.Resources>

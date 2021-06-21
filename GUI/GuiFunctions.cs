@@ -143,14 +143,14 @@ namespace GUI
         }
 
         public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot)
+            bool clearOldPlot, double xOffset = 0, double yOffset = 0)
         {
             SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
 
             var xicData = GetSummedChargeXis(scans, modeMass, z);
 
-            var xs = xicData.Select(p => p.X).ToArray();
-            var ys = xicData.Select(p => p.Y.Value).ToArray();
+            var xs = xicData.Select(p => p.X + xOffset).ToArray();
+            var ys = xicData.Select(p => p.Y.Value + yOffset).ToArray();
             var color = xicPlot.Plot.GetNextColor();
 
             xicPlot.Plot.AddScatterLines(xs, ys, color);
