@@ -29,7 +29,7 @@ namespace ProteoformExplorer
         public Page1_QuantifiedTic()
         {
             InitializeComponent();
-            DataListView.ItemsSource = DataLoading.LoadedSpectraFilePaths;
+            DataListView.ItemsSource = DataLoading.LoadedSpectraFileNamesWithExtensions;
             selectSpectraFileButton.Click += new RoutedEventHandler(DataLoading.SelectDataButton_Click);
             loadFiles.Click += new RoutedEventHandler(DataLoading.LoadDataButton_Click);
         }
@@ -159,12 +159,11 @@ namespace ProteoformExplorer
 
             if (selectedItems != null && selectedItems.Count >= 1)
             {
-                var spectraFilePath = (string)selectedItems[0];
-                var spectraFileNameWithoutExtension = Path.GetFileNameWithoutExtension(spectraFilePath);
+                var spectraFileName = (string)selectedItems[0];
 
-                if (DataLoading.SpectraFiles.ContainsKey(spectraFilePath))
+                if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
                 {
-                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFilePath);
+                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFileName);
                 }
                 else
                 {

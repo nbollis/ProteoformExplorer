@@ -128,7 +128,7 @@ namespace GUI
             //ZoomAxes(spectrumData, spectrumPlot);
         }
 
-        public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot, 
+        public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
             bool clearOldPlot)
         {
             SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
@@ -221,6 +221,7 @@ namespace GUI
             plot.Plot.SetAxisLimitsY(0, ticValues.Max(p => p.tic) * 1.2);
             plot.Plot.XTicks(positions, labels);
             plot.Plot.YAxis.TickLabelNotation(multiplier: true);
+            plot.Plot.XAxis.TickLabelStyle(rotation: 30);
         }
 
         public static void DrawNumEnvelopes(WpfPlot plot)
@@ -253,6 +254,7 @@ namespace GUI
             plot.Plot.SetAxisLimitsY(0, numFilteredEnvelopesPerFile.Max(p => p.numFilteredEnvs) * 1.2);
             plot.Plot.XTicks(positions, labels);
             plot.Plot.YAxis.TickLabelNotation();
+            plot.Plot.XAxis.TickLabelStyle(rotation: 30);
         }
 
         public static void DrawMassDistributions(WpfPlot plot)
@@ -288,6 +290,7 @@ namespace GUI
             double[] xPositions = Enumerable.Range(0, DataLoading.SpectraFiles.Count).Select(p => (double)p).ToArray();
             string[] xLabels = DataLoading.SpectraFiles.Select(p => Path.GetFileNameWithoutExtension(p.Key)).ToArray();
             plot.Plot.XTicks(xPositions, xLabels);
+            plot.Plot.XAxis.TickLabelStyle(rotation: 30);
         }
 
         private static List<Datum> GetXicData(List<MsDataScan> scans, double mz, int z, Tolerance tolerance)
@@ -355,19 +358,38 @@ namespace GUI
             xicPlot.Plot.XAxis.Label("Retention Time");
 
             double rtWindowHalfWidth = rtWindow / 2;
-            var startScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt - rtWindowHalfWidth);
-            var endScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt + rtWindowHalfWidth);
+            //var startScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt - rtWindowHalfWidth);
+            //var endScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt + rtWindowHalfWidth);
+
+            var test = data.Value.GetTicChromatogram();
+            var firstScan = test.First(p => p.X > rt - rtWindowHalfWidth);
 
             scans = new List<MsDataScan>();
-            for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
+            for (int i = test.IndexOf(firstScan); i < test.Count; i++)
             {
-                var theScan = data.Value.GetOneBasedScan(i);
+                int scanNum = (int)Math.Round(test[i].Z.Value);
+                var theScan = data.Value.GetOneBasedScan(scanNum);
 
                 if (theScan.MsnOrder == 1)
                 {
                     scans.Add(theScan);
                 }
+
+                if (theScan.RetentionTime >= rt + rtWindowHalfWidth)
+                {
+                    break;
+                }
             }
+
+            //for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
+            //{
+            //    var theScan = data.Value.GetOneBasedScan(i);
+
+            //    if (theScan.MsnOrder == 1)
+            //    {
+            //        scans.Add(theScan);
+            //    }
+            //}
         }
 
         //public static void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)

@@ -119,7 +119,7 @@ namespace ProteoformExplorerObjects
                     // tic
                     if (scan != null && scan.MsnOrder == 1)
                     {
-                        TicData.Add(new Datum(scan.RetentionTime, scan.TotalIonCurrent));
+                        TicData.Add(new Datum(scan.RetentionTime, scan.TotalIonCurrent, scan.OneBasedScanNumber));
                     }
 
                     // deconvoluted tic
@@ -142,7 +142,7 @@ namespace ProteoformExplorerObjects
                             }
                         }
 
-                        DeconvolutedTicData.Add(new Datum(scan.RetentionTime, deconvolutedTic));
+                        DeconvolutedTicData.Add(new Datum(scan.RetentionTime, deconvolutedTic, scan.OneBasedScanNumber));
                     }
 
                     // TODO: identified tic

@@ -31,7 +31,7 @@ namespace ProteoformExplorer
         public Page2_SpeciesView()
         {
             InitializeComponent();
-            DataListView.ItemsSource = DataLoading.LoadedSpectraFilePaths;
+            DataListView.ItemsSource = DataLoading.LoadedSpectraFileNamesWithExtensions;
             selectSpectraFileButton.Click += new RoutedEventHandler(DataLoading.SelectDataButton_Click);
             loadFiles.Click += new RoutedEventHandler(DataLoading.LoadDataButton_Click);
 
@@ -154,15 +154,15 @@ namespace ProteoformExplorer
 
             if (selectedItems != null && selectedItems.Count >= 1)
             {
-                var spectraFilePath = (string)selectedItems[0];
+                var spectraFileName = (string)selectedItems[0];
 
-                if (DataLoading.SpectraFiles.ContainsKey(spectraFilePath))
+                if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
                 {
-                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFilePath);
+                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFileName);
                 }
                 else
                 {
-                    MessageBox.Show("The spectra file " + spectraFilePath + " has not been loaded yet");
+                    MessageBox.Show("The spectra file " + spectraFileName + " has not been loaded yet");
                     return;
                 }
             }

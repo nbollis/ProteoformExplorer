@@ -7,17 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using UsefulProteomicsDatabases;
 
 namespace GUI.Modules
@@ -28,7 +22,7 @@ namespace GUI.Modules
     public partial class DataLoading : Page
     {
         public static ObservableCollection<string> SelectedFilePaths;
-        public static ObservableCollection<string> LoadedSpectraFilePaths;
+        public static ObservableCollection<string> LoadedSpectraFileNamesWithExtensions;
         public static Dictionary<string, CachedSpectraFileData> SpectraFiles;
         public static ObservableCollection<AnnotatedSpecies> AllLoadedAnnotatedSpecies;
         public static KeyValuePair<string, CachedSpectraFileData> CurrentlySelectedFile;
@@ -41,9 +35,9 @@ namespace GUI.Modules
             AllLoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
             SpectraFiles = new Dictionary<string, CachedSpectraFileData>();
             SelectedFilePaths = new ObservableCollection<string>();
-            LoadedSpectraFilePaths = new ObservableCollection<string>();
+            LoadedSpectraFileNamesWithExtensions = new ObservableCollection<string>();
 
-            selectedFiles.ItemsSource = LoadedSpectraFilePaths;
+            selectedFiles.ItemsSource = LoadedSpectraFileNamesWithExtensions;
 
             selectSpectraFileButton.Click += new RoutedEventHandler(SelectDataButton_Click);
             loadFiles.Click += new RoutedEventHandler(LoadDataButton_Click);
@@ -57,7 +51,7 @@ namespace GUI.Modules
 
         public static void LoadDataButton_Click(object sender, RoutedEventArgs e)
         {
-            LoadedSpectraFilePaths.Clear();
+            LoadedSpectraFileNamesWithExtensions.Clear();
 
             foreach (var item in SpectraFiles)
             {
@@ -101,28 +95,29 @@ namespace GUI.Modules
         private static void LoadFile(string path)
         {
             var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+            var fileName = Path.GetFileName(path);
 
             if (ext == ".raw")
             {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(path, new ThermoDynamicData(path));
+                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new ThermoDynamicData(path));
 
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    LoadedSpectraFilePaths.Add(path);
+                    LoadedSpectraFileNamesWithExtensions.Add(fileName);
                 });
 
-                SpectraFiles.Add(path, new CachedSpectraFileData(kvp));
+                SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
             else if (ext == ".mzml")
             {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(path, new MzmlDynamicData(path));
+                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new MzmlDynamicData(path));
 
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    LoadedSpectraFilePaths.Add(path);
+                    LoadedSpectraFileNamesWithExtensions.Add(fileName);
                 });
 
-                SpectraFiles.Add(path, new CachedSpectraFileData(kvp));
+                SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
             else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt")
             {
