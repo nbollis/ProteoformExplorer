@@ -59,8 +59,24 @@
                     <RowDefinition Height="1*" />
                 </Grid.RowDefinitions>
 
-                <TreeView x:Name="SpeciesListView" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
-                          VirtualizingPanel.IsVirtualizing="True" />
+                <!--<TreeView x:Name="SpeciesListView" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
+                          VirtualizingPanel.IsVirtualizing="True" />-->
+
+                <TreeView Name="SpeciesListView" ItemsSource="{Binding SelectableAnnotatedSpecies}" Grid.Row="1" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
+                          VirtualizingPanel.IsVirtualizing="True">
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate DataType="{x:Type local:AnnotatedSpeciesNode}" ItemsSource="{Binding Charges}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                        <DataTemplate DataType="{x:Type local:AnnotatedSpeciesNodeSpecificCharge}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </TreeView.Resources>
+                </TreeView>
             </Grid>
 
             <Grid Grid.Column="1">

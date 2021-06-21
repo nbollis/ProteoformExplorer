@@ -183,7 +183,7 @@ namespace GUI.Pages
                         // convert radians to cartesian
                         (double[] xs, double[] ys) = ScottPlot.Tools.ConvertPolarCoordinates(thetas.Select(p => radius).ToArray(), thetas.ToArray());
                         var scatter = new ScatterPlot(xs.Select(p => p + centerOfCircle.x).ToArray(), ys.Select(p => p + centerOfCircle.y).ToArray());
-                        scatter.LineWidth = 20;
+                        scatter.LineWidth = 10;
                         scatter.MarkerSize = 0;
                         scatter.Color = Color.FromArgb(243, 112, 84); // orange
                         polygons.Add(scatter);

@@ -26,8 +26,8 @@ namespace ProteoformExplorer
         {
             InitializeComponent();
 
-            _NavigationFrame.Navigate(new ProteoformFamilyVisualization());
-            //_NavigationFrame.Navigate(new DataLoading());
+            //_NavigationFrame.Navigate(new ProteoformFamilyVisualization());
+            _NavigationFrame.Navigate(new DataLoading());
             //_NavigationFrame.Navigate(new ML_Trainer());
         }
 

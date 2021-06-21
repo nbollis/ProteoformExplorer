@@ -1,4 +1,5 @@
 ﻿using Chemistry;
+using Deconvoluter;
 using GUI.Modules;
 using MassSpectrometry;
 using MzLibUtil;
@@ -127,68 +128,32 @@ namespace GUI
             //ZoomAxes(spectrumData, spectrumPlot);
         }
 
-        public static void PlotSpeciesInXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data,
-            WpfPlot xicPlot, bool clearOldPlot)
+        public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot, 
+            bool clearOldPlot)
         {
-            if (clearOldPlot)
-            {
-                xicPlot.Plot.Clear();
-            }
+            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
 
-            xicPlot.Plot.Palette = new Palette(ColorPalette);
-            xicPlot.Plot.Grid(false);
-            xicPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
-            xicPlot.Plot.YAxis.Label("Intensity");
-            xicPlot.Plot.XAxis.Label("Retention Time");
-
-            double rtWindowHalfWidth = rtWindow / 2;
-            var startScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt - rtWindowHalfWidth);
-            var endScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt + rtWindowHalfWidth);
-
-            List<MsDataScan> scans = new List<MsDataScan>();
-            for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
-            {
-                var theScan = data.Value.GetOneBasedScan(i);
-
-                if (theScan.MsnOrder == 1)
-                {
-                    scans.Add(theScan);
-                }
-            }
-
-            List<Datum> xicData = new List<Datum>();
-            foreach (var scan in scans)
-            {
-                int ind = scan.MassSpectrum.GetClosestPeakIndex(mz);
-                double expMz = scan.MassSpectrum.XArray[ind];
-                double expIntensity = scan.MassSpectrum.YArray[ind];
-
-                if (tolerance.Within(expMz.ToMass(z), mz.ToMass(z)))
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, expIntensity));
-                }
-                else
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, 0));
-                }
-            }
+            var xicData = GetXicData(scans, mz, z, tolerance);
 
             var xs = xicData.Select(p => p.X).ToArray();
             var ys = xicData.Select(p => p.Y.Value).ToArray();
             var color = xicPlot.Plot.GetNextColor();
 
             xicPlot.Plot.AddScatterLines(xs, ys, color);
+        }
 
-            //if (clearOldPlot)
-            //{
-            //    plot = new LinePlot(plotView, xicData);
-            //}
-            //else
-            //{
-            //    plot.AddLinePlot(xicData);
-            //}
+        public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
+            bool clearOldPlot)
+        {
+            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
 
-            //return plot;
+            var xicData = GetSummedChargeXis(scans, modeMass, z);
+
+            var xs = xicData.Select(p => p.X).ToArray();
+            var ys = xicData.Select(p => p.Y.Value).ToArray();
+            var color = xicPlot.Plot.GetNextColor();
+
+            xicPlot.Plot.AddScatterLines(xs, ys, color);
         }
 
         public static void DrawPercentTicInfo(WpfPlot plot)
@@ -322,6 +287,86 @@ namespace GUI
             double[] xPositions = Enumerable.Range(0, DataLoading.SpectraFiles.Count).Select(p => (double)p).ToArray();
             string[] xLabels = DataLoading.SpectraFiles.Select(p => Path.GetFileNameWithoutExtension(p.Key)).ToArray();
             plot.Plot.XTicks(xPositions, xLabels);
+        }
+
+        private static List<Datum> GetXicData(List<MsDataScan> scans, double mz, int z, Tolerance tolerance)
+        {
+            List<Datum> xicData = new List<Datum>();
+            foreach (var scan in scans)
+            {
+                int ind = scan.MassSpectrum.GetClosestPeakIndex(mz);
+                double expMz = scan.MassSpectrum.XArray[ind];
+                double expIntensity = scan.MassSpectrum.YArray[ind];
+
+                if (tolerance.Within(expMz.ToMass(z), mz.ToMass(z)))
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, expIntensity));
+                }
+                else
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, 0));
+                }
+            }
+
+            return xicData;
+        }
+
+        private static List<Datum> GetSummedChargeXis(List<MsDataScan> scans, double modeMass, int z)
+        {
+            List<Datum> xicData = new List<Datum>();
+            List<DeconvolutedPeak> peaks = new List<DeconvolutedPeak>();
+            HashSet<double> temp = new HashSet<double>();
+            List<(double, double)> temp2 = new List<(double, double)>();
+
+            foreach (var scan in scans)
+            {
+                int ind = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(z));
+                double expMz = scan.MassSpectrum.XArray[ind];
+                double expIntensity = scan.MassSpectrum.YArray[ind];
+
+                var env = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, ind, z, peaks, temp, temp2);
+
+                if (env != null)
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, env.Peaks.Sum(p => p.ExperimentalIntensity)));
+                }
+                else
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, 0));
+                }
+            }
+
+            return xicData;
+        }
+
+        private static void SetUpXicPlot(double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data,
+            WpfPlot xicPlot, bool clearOldPlot, out List<MsDataScan> scans)
+        {
+            if (clearOldPlot)
+            {
+                xicPlot.Plot.Clear();
+            }
+
+            xicPlot.Plot.Palette = new Palette(ColorPalette);
+            xicPlot.Plot.Grid(false);
+            xicPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
+            xicPlot.Plot.YAxis.Label("Intensity");
+            xicPlot.Plot.XAxis.Label("Retention Time");
+
+            double rtWindowHalfWidth = rtWindow / 2;
+            var startScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt - rtWindowHalfWidth);
+            var endScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, rt + rtWindowHalfWidth);
+
+            scans = new List<MsDataScan>();
+            for (int i = startScan.OneBasedScanNumber; i <= endScan.OneBasedScanNumber; i++)
+            {
+                var theScan = data.Value.GetOneBasedScan(i);
+
+                if (theScan.MsnOrder == 1)
+                {
+                    scans.Add(theScan);
+                }
+            }
         }
 
         //public static void ZoomAxes(List<Datum> annotatedIons, Plot plot, double yZoom = 1.2)
