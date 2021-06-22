@@ -39,6 +39,8 @@ namespace GUI
             // set color palette
             spectrumPlot.Plot.Palette = new Palette(ColorPalette);
             spectrumPlot.Plot.Clear();
+            spectrumPlot.Plot.YAxis.Ticks(major: true, minor: false);
+            spectrumPlot.Plot.XAxis.Ticks(major: true, minor: false);
             spectrumPlot.Plot.Grid(false);
             spectrumPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
             spectrumPlot.Plot.YAxis.Label("Intensity");
@@ -236,12 +238,16 @@ namespace GUI
                 plot.Plot.Legend(location: Alignment.UpperRight);
 
                 plot.Plot.YAxis.Label("Intensity");
-                plot.Plot.SetAxisLimitsY(ticValues.Max(p => p.tic) * -0.1, ticValues.Max(p => p.tic) * 1.4);
+                plot.Plot.SetAxisLimitsY(ticValues.Max(p => p.tic) * -0.03, ticValues.Max(p => p.tic) * 1.4);
                 plot.Plot.XTicks(positions, labels);
                 plot.Plot.YAxis.TickLabelNotation(multiplier: true);
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
                 plot.Plot.Grid(false);
                 plot.Plot.YAxis.Ticks(major: true, minor: false);
+                plot.Plot.Frame(top: false, right: false);
+                plot.Plot.XAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.Line(visible: false);
             }
             catch (Exception e)
             {
@@ -285,6 +291,10 @@ namespace GUI
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
                 plot.Plot.Grid(false);
                 plot.Plot.YAxis.Ticks(major: true, minor: false);
+                plot.Plot.Frame(top: false, right: false);
+                plot.Plot.XAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.Line(visible: false);
             }
             catch (Exception e)
             {
@@ -332,6 +342,10 @@ namespace GUI
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
                 plot.Plot.Grid(false);
                 plot.Plot.YAxis.Ticks(major: true, minor: false);
+                plot.Plot.Frame(top: false, right: false);
+                plot.Plot.XAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.TickMarkColor(Color.White);
+                plot.Plot.YAxis.Line(visible: false);
             }
             catch (Exception e)
             {
@@ -402,6 +416,8 @@ namespace GUI
             xicPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
             xicPlot.Plot.YAxis.Label("Intensity");
             xicPlot.Plot.XAxis.Label("Retention Time");
+            xicPlot.Plot.XAxis.Ticks(major: true, minor: false);
+            xicPlot.Plot.YAxis.Ticks(major: true, minor: false);
 
             double rtWindowHalfWidth = rtWindow / 2;
 
