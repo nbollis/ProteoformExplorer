@@ -1,15 +1,8 @@
 ﻿using GUI;
 using GUI.Modules;
-using IO.MzML;
-using IO.ThermoRawFileReader;
 using MassSpectrometry;
-using MzLibUtil;
-using ProteoformExplorerObjects;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,27 +22,11 @@ namespace ProteoformExplorer
         public Page1_QuantifiedTic()
         {
             InitializeComponent();
-            DataListView.ItemsSource = DataLoading.LoadedSpectraFileNamesWithExtensions;
-            selectSpectraFileButton.Click += new RoutedEventHandler(DataLoading.SelectDataButton_Click);
-            loadFiles.Click += new RoutedEventHandler(DataLoading.LoadDataButton_Click);
+            DataListView.ItemsSource = DataLoading.LoadedSpectraFiles;
         }
-
-        public void RefreshPage()
+        private void Home_Click(object sender, RoutedEventArgs e)
         {
-            if (DataLoading.SelectedFilePaths.Count == 0)
-            {
-                spectraFileNameLabel.Text = "None Selected";
-            }
-            else if (DataLoading.SelectedFilePaths.Count == 1)
-            {
-                spectraFileNameLabel.Text = DataLoading.SelectedFilePaths.First();
-                spectraFileNameLabel.ToolTip = DataLoading.SelectedFilePaths.First();
-            }
-            else if (DataLoading.SelectedFilePaths.Count > 1)
-            {
-                spectraFileNameLabel.Text = "[Mouse over to view]";
-                spectraFileNameLabel.ToolTip = string.Join('\n', DataLoading.SelectedFilePaths);
-            }
+            this.NavigationService.Navigate(new Dashboard());
         }
 
         private void DisplayTic()
@@ -136,11 +113,6 @@ namespace ProteoformExplorer
             }
         }
 
-        private void Home_Click(object sender, RoutedEventArgs e)
-        {
-            this.NavigationService.Navigate(new Uri("HomePage.xaml", UriKind.Relative));
-        }
-
         private void topPlotView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (DataLoading.CurrentlySelectedFile.Value == null)
@@ -159,7 +131,7 @@ namespace ProteoformExplorer
 
             if (selectedItems != null && selectedItems.Count >= 1)
             {
-                var spectraFileName = (string)selectedItems[0];
+                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
 
                 if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
                 {
@@ -167,11 +139,25 @@ namespace ProteoformExplorer
                 }
                 else
                 {
-                    //TODO: display an error message
+                    MessageBox.Show("The spectra file " + spectraFileName + " has not been loaded yet");
                     return;
                 }
+            }
 
-                DisplayTic();
+            DisplayTic();
+        }
+
+        private void openFileListViewButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataListView.Visibility == Visibility.Collapsed)
+            {
+                DataListView.Visibility = Visibility.Visible;
+                gridSplitter.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                DataListView.Visibility = Visibility.Collapsed;
+                gridSplitter.Visibility = Visibility.Hidden;
             }
         }
     }

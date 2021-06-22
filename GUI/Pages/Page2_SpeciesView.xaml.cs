@@ -2,22 +2,13 @@
 using GUI;
 using GUI.Modules;
 using MassSpectrometry;
-using MzLibUtil;
-using mzPlot;
-using ProteoformExplorer;
-using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 
 namespace ProteoformExplorer
 {
@@ -31,9 +22,7 @@ namespace ProteoformExplorer
         public Page2_SpeciesView()
         {
             InitializeComponent();
-            DataListView.ItemsSource = DataLoading.LoadedSpectraFileNamesWithExtensions;
-            selectSpectraFileButton.Click += new RoutedEventHandler(DataLoading.SelectDataButton_Click);
-            loadFiles.Click += new RoutedEventHandler(DataLoading.LoadDataButton_Click);
+            DataListView.ItemsSource = DataLoading.LoadedSpectraFiles;
 
             SelectableAnnotatedSpecies = new ObservableCollection<INode>();
             SpeciesListView.ItemsSource = SelectableAnnotatedSpecies;
@@ -41,7 +30,7 @@ namespace ProteoformExplorer
 
         private void Home_Click(object sender, RoutedEventArgs e)
         {
-            this.NavigationService.Navigate(new Uri("HomePage.xaml", UriKind.Relative));
+            this.NavigationService.Navigate(new Dashboard());
         }
 
         private void PlotSpecies(AnnotatedSpecies species, int? charge = null)
@@ -154,7 +143,7 @@ namespace ProteoformExplorer
 
             if (selectedItems != null && selectedItems.Count >= 1)
             {
-                var spectraFileName = (string)selectedItems[0];
+                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
 
                 if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
                 {
@@ -188,6 +177,20 @@ namespace ProteoformExplorer
                     var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, charge.ToString() + " (ID)");
                     parentNode.Charges.Add(childNode);
                 }
+            }
+        }
+
+        private void openFileListViewButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataListView.Visibility == Visibility.Collapsed)
+            {
+                DataListView.Visibility = Visibility.Visible;
+                gridSplitter.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                DataListView.Visibility = Visibility.Collapsed;
+                gridSplitter.Visibility = Visibility.Hidden;
             }
         }
     }

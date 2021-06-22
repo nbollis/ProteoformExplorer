@@ -10,30 +10,44 @@
       AllowDrop="True" 
       Drop="Window_Drop">
 
-    <Grid>
+    <Grid Background="White">
         <Grid.RowDefinitions>
+            <RowDefinition Height="50" />
             <RowDefinition Height="1*" />
-            <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="2" Margin="40" Background="#f5f6fa" Name="dragAndDropFileLoadingArea">
+        <Label Content="Data Loading" FontSize="24" FontWeight="Bold" Foreground="{StaticResource Electromagnetic}" Margin="20 0" VerticalAlignment="Center" 
+               HorizontalAlignment="Left" Grid.Row="0" Width="200"/>
+
+        <Button x:Name="loadFiles" Grid.Row="0" Visibility="Hidden" Content=">" FontWeight="Bold" VerticalAlignment="Center" 
+                HorizontalAlignment="Right" Width="30" Height="30" />
+
+        <Button x:Name="goToDashboard" Grid.Row="0" Visibility="Hidden" Content=">" FontWeight="Bold" VerticalAlignment="Center" 
+                HorizontalAlignment="Right" Width="30" Height="30" />
+
+        <ProgressBar Name="dataLoadingProgressBar" Grid.Row="0" Width="30" Height="30" Visibility="Hidden" Foreground="{StaticResource ProtossPylon}" 
+                     Background="{StaticResource LynxWhite}" VerticalAlignment="Center"
+                     HorizontalAlignment="Right" Orientation="Vertical" Margin="5" />
+
+        <Border Grid.Row="1" BorderThickness="2" Margin="30 20" Background="{StaticResource LynxWhite}" Name="dragAndDropFileLoadingArea">
             <Border.BorderBrush>
                 <VisualBrush>
                     <VisualBrush.Visual>
-                        <Rectangle StrokeDashArray="4 2" Stroke="#00a8ff" StrokeThickness="2"
+                        <Rectangle StrokeDashArray="4 2" Stroke="{StaticResource ProtossPylon}" StrokeThickness="2"
                             Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
                             Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}"/>
                     </VisualBrush.Visual>
                 </VisualBrush>
             </Border.BorderBrush>
 
-            <Label Content="Drag and drop files here" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00a8ff" FontWeight="Bold"/>
+            <!--<Label Content="Drag and drop files here" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#00a8ff" FontWeight="Bold"/>-->
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource ProtossPylon}" FontWeight="Bold" TextAlignment="Center">
+                Drag and drop files here
+                <LineBreak />
+                .mzML, Thermo .raw, FlashDecon .tsv, MetaMorpheus .psmtsv, TDPortal
+            </TextBlock>
         </Border>
 
-        <ListView Grid.Row="0" Name="selectedFiles" Margin="10" Visibility="Hidden" />
-
-        <Button x:Name="loadFiles" Content="Load" Grid.Row="1" Visibility="Hidden" VerticalAlignment="Center" />
-        <Button x:Name="goToDashboard" Content="Go to dashboard" Grid.Row="1" Visibility="Hidden" VerticalAlignment="Center" />
-        <ProgressBar Name="dataLoadingProgressBar" Grid.Row="1" Width="300" Visibility="Hidden" Foreground="#00a8ff" Background="#f5f6fa" VerticalAlignment="Center" />
+        <ListView Grid.Row="1" Name="filesToLoad" Margin="30 10" HorizontalAlignment="Center" Width="600" Height="500" Visibility="Hidden" BorderThickness="0"/>
     </Grid>
 </Page>

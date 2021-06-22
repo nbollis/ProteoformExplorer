@@ -22,8 +22,8 @@ namespace GUI.Modules
     /// </summary>
     public partial class DataLoading : Page
     {
-        public static ObservableCollection<string> SelectedFilePaths;
-        public static ObservableCollection<string> LoadedSpectraFileNamesWithExtensions;
+        public static ObservableCollection<FileForDataGrid> FilesToLoad;
+        public static ObservableCollection<FileForDataGrid> LoadedSpectraFiles;
         public static Dictionary<string, CachedSpectraFileData> SpectraFiles;
         public static ObservableCollection<AnnotatedSpecies> AllLoadedAnnotatedSpecies;
         public static KeyValuePair<string, CachedSpectraFileData> CurrentlySelectedFile;
@@ -33,12 +33,15 @@ namespace GUI.Modules
         {
             InitializeComponent();
 
-            AllLoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
-            SpectraFiles = new Dictionary<string, CachedSpectraFileData>();
-            SelectedFilePaths = new ObservableCollection<string>();
-            LoadedSpectraFileNamesWithExtensions = new ObservableCollection<string>();
+            if (AllLoadedAnnotatedSpecies == null)
+            {
+                AllLoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
+                SpectraFiles = new Dictionary<string, CachedSpectraFileData>();
+                FilesToLoad = new ObservableCollection<FileForDataGrid>();
+                LoadedSpectraFiles = new ObservableCollection<FileForDataGrid>();
+            }
 
-            selectedFiles.ItemsSource = SelectedFilePaths;
+            filesToLoad.ItemsSource = FilesToLoad;
 
             loadFiles.Click += new RoutedEventHandler(LoadDataButton_Click);
             goToDashboard.Click += new RoutedEventHandler(GoToDashboard_Click);
@@ -53,7 +56,7 @@ namespace GUI.Modules
 
         public static void LoadDataButton_Click(object sender, RoutedEventArgs e)
         {
-            LoadedSpectraFileNamesWithExtensions.Clear();
+            LoadedSpectraFiles.Clear();
 
             foreach (var item in SpectraFiles)
             {
@@ -72,26 +75,30 @@ namespace GUI.Modules
             {
                 dataLoadingProgressBar.Visibility = Visibility.Hidden;
 
-                if (SelectedFilePaths.Any())
+                if (FilesToLoad.Any())
                 {
+
                     dragAndDropFileLoadingArea.Visibility = Visibility.Hidden;
-                    selectedFiles.Visibility = Visibility.Visible;
+                    filesToLoad.Visibility = Visibility.Visible;
 
                     if (SpectraFiles.Any())
                     {
+                        // files have been loaded
                         goToDashboard.Visibility = Visibility.Visible;
                         loadFiles.Visibility = Visibility.Hidden;
                     }
                     else
                     {
+                        // files have been dragged in but not loaded yet
                         goToDashboard.Visibility = Visibility.Hidden;
                         loadFiles.Visibility = Visibility.Visible;
                     }
                 }
                 else
                 {
+                    // no files have been dragged in yet
                     dragAndDropFileLoadingArea.Visibility = Visibility.Visible;
-                    selectedFiles.Visibility = Visibility.Hidden;
+                    filesToLoad.Visibility = Visibility.Hidden;
                 }
             });
         }
@@ -110,11 +117,11 @@ namespace GUI.Modules
 
             if (openFileDialog1.ShowDialog() == true)
             {
-                SelectedFilePaths.Clear();
+                FilesToLoad.Clear();
 
                 foreach (var filePath in openFileDialog1.FileNames.OrderBy(p => p))
                 {
-                    SelectedFilePaths.Add(filePath);
+                    FilesToLoad.Add(new FileForDataGrid(filePath));
                 }
             }
         }
@@ -124,36 +131,36 @@ namespace GUI.Modules
             this.NavigationService.Navigate(new Dashboard());
         }
 
-        private static void LoadFile(string path)
+        private static void LoadFile(FileForDataGrid file)
         {
-            var ext = Path.GetExtension(path).ToLowerInvariant();
-            var fileName = Path.GetFileName(path);
+            var ext = Path.GetExtension(file.FullFilePath).ToLowerInvariant();
+            var fileName = Path.GetFileName(file.FullFilePath);
 
             if (ext == ".raw")
             {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new ThermoDynamicData(path));
+                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new ThermoDynamicData(file.FullFilePath));
 
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    LoadedSpectraFileNamesWithExtensions.Add(fileName);
+                    LoadedSpectraFiles.Add(file);
                 });
 
                 SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
             else if (ext == ".mzml")
             {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new MzmlDynamicData(path));
+                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new MzmlDynamicData(file.FullFilePath));
 
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {
-                    LoadedSpectraFileNamesWithExtensions.Add(fileName);
+                    LoadedSpectraFiles.Add(file);
                 });
 
                 SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
             else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt")
             {
-                var items = InputReaderParser.ReadSpeciesFromFile(path, out var errors);
+                var items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
 
                 foreach (var item in items)
                 {
@@ -178,7 +185,7 @@ namespace GUI.Modules
 
                     if (InputReaderParser.AcceptedFileFormats.Contains(ext))
                     {
-                        SelectedFilePaths.Add(filePath);
+                        FilesToLoad.Add(new FileForDataGrid(filePath));
                     }
                 }
             }
@@ -188,12 +195,16 @@ namespace GUI.Modules
 
         private void LoadFilesInBackground(object sender, DoWorkEventArgs e)
         {
-            RefreshPage();
+            App.Current.Dispatcher.Invoke((Action)delegate
+            {
+                loadFiles.Visibility = Visibility.Hidden;
+                goToDashboard.Visibility = Visibility.Hidden;
+            });
 
             // double-count spectra files for transparency because we're going to load some extra stuff from them
             double itemsLoaded = 0;
-            double itemsToLoad = SelectedFilePaths.Count + 
-                SelectedFilePaths.Count(p => Path.GetExtension(p).ToLowerInvariant() == ".raw" || Path.GetExtension(p).ToLowerInvariant() == ".mzml");
+            double itemsToLoad = FilesToLoad.Count +
+                FilesToLoad.Count(p => Path.GetExtension(p.FileNameWithExtension).ToLowerInvariant() == ".raw" || Path.GetExtension(p.FileNameWithExtension).ToLowerInvariant() == ".mzml");
 
             BackgroundWorker worker = (BackgroundWorker)sender;
             worker.ReportProgress(0);
@@ -203,7 +214,7 @@ namespace GUI.Modules
             Dashboard.DeconvolutionEngine = new Deconvoluter.DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
 
             // load the selected files
-            foreach (var file in SelectedFilePaths)
+            foreach (var file in FilesToLoad)
             {
                 LoadFile(file);
                 itemsLoaded++;

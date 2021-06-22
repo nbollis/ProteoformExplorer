@@ -30,31 +30,53 @@
         <SolidColorBrush x:Key="PicoVoid" Color="#192a56" />
         <SolidColorBrush x:Key="Electromagnetic" Color="#2f3640" />
 
+        <SolidColorBrush x:Key="Black" Color="Black" />
+        <SolidColorBrush x:Key="White" Color="White" />
+        <SolidColorBrush x:Key="F1LightGray" Color="#F1F1F1" />
+        <SolidColorBrush x:Key="20Black" Color="#202020" />
+        <SolidColorBrush x:Key="7EGray" Color="#7E909A" />
+        <SolidColorBrush x:Key="1CDarkBlue" Color="#1C4E80" />
+        <SolidColorBrush x:Key="A5LightBlue" Color="#A5D8DD" />
+        <SolidColorBrush x:Key="EAOrange" Color="#EA6A47" />
+        <SolidColorBrush x:Key="00BrightBlue" Color="#0091D5" />
+        <SolidColorBrush x:Key="F1LightBlue" Color="#f1f6ff" />
+
         <!--Default button style-->
         <Style TargetType="Button">
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Width" Value="200"/>
-            <Setter Property="Background" Value="{StaticResource MazarineBlue}"/>
+            <Setter Property="Background" Value="{StaticResource ProtossPylon}"/>
             <Setter Property="Foreground" Value="{StaticResource LynxWhite}"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="5"/>
 
             <Style.Resources>
                 <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="5"/>
+                    <Setter Property="CornerRadius" Value="2"/>
                 </Style>
             </Style.Resources>
         </Style>
 
         <!--Default ListView style-->
         <Style TargetType="ListView">
-            
+            <Setter Property="Background" Value="{StaticResource LynxWhite}" />
         </Style>
 
         <!--Default ListViewItem style-->
         <Style TargetType="ListViewItem">
-            <Setter Property="Foreground" Value="{StaticResource MazarineBlue}"/>
+            <Setter Property="Foreground" Value="{StaticResource Black}"/>
+            <Setter Property="Background" Value="{StaticResource HindOfPensive}"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="5"/>
+
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
         </Style>
     </Application.Resources>
 </Application>

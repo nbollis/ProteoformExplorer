@@ -47,14 +47,30 @@ namespace ProteoformExplorer
                 Page3 = new Page3_StackedIons();
             }
 
-            GuiFunctions.DrawPercentTicInfo(DashboardPlot1);
-            GuiFunctions.DrawNumEnvelopes(DashboardPlot2);
-            GuiFunctions.DrawMassDistributions(DashboardPlot3);
+            GuiFunctions.DrawPercentTicInfo(DashboardPlot1, out var errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show("An error occurred creating the percent TIC dashboard chart: " + errors.First());
+            }
+
+            GuiFunctions.DrawNumEnvelopes(DashboardPlot2, out errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show("An error occurred creating the num envelopes dashboard chart: " + errors.First());
+            }
+
+            GuiFunctions.DrawMassDistributions(DashboardPlot3, out errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show("An error occurred creating the mass distribution dashboard chart: " + errors.First());
+            }
         }
 
         private void Chart1_Click(object sender, RoutedEventArgs e)
         {
-            Page1.RefreshPage();
             this.NavigationService.Navigate(Page1);
         }
 
@@ -66,6 +82,11 @@ namespace ProteoformExplorer
         private void Chart3_Click(object sender, RoutedEventArgs e)
         {
             this.NavigationService.Navigate(Page3);
+        }
+
+        private void goToDataLoading_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new DataLoading());
         }
     }
 }
