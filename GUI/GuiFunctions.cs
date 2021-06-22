@@ -238,10 +238,12 @@ namespace GUI
                 plot.Plot.Legend(location: Alignment.UpperRight);
 
                 plot.Plot.YAxis.Label("Intensity");
-                plot.Plot.SetAxisLimitsY(0, ticValues.Max(p => p.tic) * 1.2);
+                plot.Plot.SetAxisLimitsY(0, ticValues.Max(p => p.tic) * 1.3);
                 plot.Plot.XTicks(positions, labels);
                 plot.Plot.YAxis.TickLabelNotation(multiplier: true);
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
+                plot.Plot.Grid(false);
+                plot.Plot.YAxis.Ticks(major: true, minor: false);
             }
             catch (Exception e)
             {
@@ -282,8 +284,9 @@ namespace GUI
                 plot.Plot.YAxis.Label("Count");
                 plot.Plot.SetAxisLimitsY(0, numFilteredEnvelopesPerFile.Max(p => p.numFilteredEnvs) * 1.2);
                 plot.Plot.XTicks(positions, labels);
-                plot.Plot.YAxis.TickLabelNotation();
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
+                plot.Plot.Grid(false);
+                plot.Plot.YAxis.Ticks(major: true, minor: false);
             }
             catch (Exception e)
             {
@@ -313,7 +316,7 @@ namespace GUI
 
                     var bar = plot.Plot.AddBar(values: hist.countsFrac, positions: hist.bins);
                     bar.BarWidth = hist.binSize;
-                    bar.FillColor = Color.FromArgb(50, color);
+                    bar.FillColor = Color.FromArgb(180, color);
                     bar.BorderLineWidth = 0;
                     bar.Orientation = ScottPlot.Orientation.Horizontal;
                     bar.ValueOffsets = hist.countsFrac.Select(p => (double)fileNum).ToArray();
@@ -329,6 +332,8 @@ namespace GUI
                 string[] xLabels = DataLoading.SpectraFiles.Select(p => Path.GetFileNameWithoutExtension(p.Key)).ToArray();
                 plot.Plot.XTicks(xPositions, xLabels);
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
+                plot.Plot.Grid(false);
+                plot.Plot.YAxis.Ticks(major: true, minor: false);
             }
             catch (Exception e)
             {
