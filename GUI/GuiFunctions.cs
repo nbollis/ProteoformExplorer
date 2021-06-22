@@ -124,8 +124,6 @@ namespace GUI
                     spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, color, 2.0f);
                 }
             }
-
-            //ZoomAxes(spectrumData, spectrumPlot);
         }
 
         public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
@@ -238,7 +236,7 @@ namespace GUI
                 plot.Plot.Legend(location: Alignment.UpperRight);
 
                 plot.Plot.YAxis.Label("Intensity");
-                plot.Plot.SetAxisLimitsY(0, ticValues.Max(p => p.tic) * 1.3);
+                plot.Plot.SetAxisLimitsY(ticValues.Max(p => p.tic) * -0.1, ticValues.Max(p => p.tic) * 1.4);
                 plot.Plot.XTicks(positions, labels);
                 plot.Plot.YAxis.TickLabelNotation(multiplier: true);
                 plot.Plot.XAxis.TickLabelStyle(rotation: 30);
@@ -290,7 +288,7 @@ namespace GUI
             }
             catch (Exception e)
             {
-
+                errors.Add(e.Message);
             }
         }
 
@@ -337,7 +335,7 @@ namespace GUI
             }
             catch (Exception e)
             {
-
+                errors.Add(e.Message);
             }
         }
 
