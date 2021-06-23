@@ -6,6 +6,7 @@ using MassSpectrometry;
 using MzLibUtil;
 using NUnit.Framework;
 using ProteoformExplorer;
+using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,17 +67,18 @@ namespace Test
         {
             string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\mcf7_sliced\mcf7_sliced_td.raw");
             var connection = new KeyValuePair<string, DynamicDataConnection>(rawFile, new ThermoDynamicData(rawFile));
+            var cachedData = new KeyValuePair<string, CachedSpectraFileData>(rawFile, new CachedSpectraFileData(connection));
 
-            var lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(connection);
+            var lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(cachedData);
             Assert.That(lastScanNum == 52);
 
-            var scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(connection, 57.0);
+            var scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(cachedData, 57.0);
             Assert.That(scan.OneBasedScanNumber == 1);
 
-            scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(connection, 58.21);
+            scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(cachedData, 58.21);
             Assert.That(scan.OneBasedScanNumber == 30);
 
-            scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(connection, 59.0);
+            scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(cachedData, 59.0);
             Assert.That(scan.OneBasedScanNumber == 52);
 
             connection.Value.CloseDynamicConnection();
@@ -179,56 +181,29 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(filePath)));
         }
 
-        [Test]
-        [TestCase(@"032421_MALAT1Capture_11903_30632", 1136.1993, 30632.139, 27)] // false harmonic
-        [TestCase(@"032421_MALAT1Capture_3033_5648", 628.9741, 5648.693, 9)] // very noisy/difficult
+        //[Test]
+        //[TestCase(@"032421_MALAT1Capture_11903_30632", 1136.1993, 30632.139, 27)] // charge too high
+        //[TestCase(@"032421_MALAT1Capture_3033_5648", 628.9741, 5648.693, 9)] // very noisy/difficult
 
-        [TestCase(@"032421_MALAT1Capture_3090_13765", 689.6843, 13765.519, 20)] // easy case
-        [TestCase(@"032421_MALAT1Capture_5081_7011", 638.7745, 7011.428, 11)] // harmonic
-        [TestCase(@"032421_MALAT1Capture_5790_7045", 784.3348, 7045.937, 9)] // harmonic
+        //[TestCase(@"032421_MALAT1Capture_3090_13765", 689.6843, 13765.519, 20)] // easy case
+        //[TestCase(@"032421_MALAT1Capture_5081_7011", 638.7745, 7011.428, 11)] // charge too low
+        //[TestCase(@"032421_MALAT1Capture_5790_7045", 784.3348, 7045.937, 9)] // charge too low
 
-        public static void TestDeconvolutionDifferentCases(string dataFilePath, double mz, double monoMass, int z)
-        {
-            string filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\DeconCases\" + dataFilePath + ".mzML");
-            var data = IO.MzML.Mzml.LoadAllStaticData(filePath);
-            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.4, 3, 5, 2, 60, 2);
+        //public static void TestDeconvolutionDifferentCases(string dataFilePath, double mz, double monoMass, int z)
+        //{
+        //    string filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\DeconCases\" + dataFilePath + ".mzML");
+        //    var data = IO.MzML.Mzml.LoadAllStaticData(filePath);
+        //    var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.4, 3, 5, 2, 60, 2);
 
-            var scan = data.GetAllScansList().First();
+        //    var scan = data.GetAllScansList().First();
 
-            Tolerance t = new AbsoluteTolerance(0.001);
+        //    Tolerance t = new AbsoluteTolerance(0.001);
 
-            var candidates = deconEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange);
-            //deconEngine.CalculateSignalToNoise(scan.MassSpectrum, candidates);
-            var candidatesWithMz = candidates.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).OrderByDescending(p => p.Score).ToList();
+        //    var candidates = deconEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange);
+        //    var candidatesWithMz = candidates.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).OrderByDescending(p => p.Score).ToList();
 
-            var parsimonyEnvelopes = deconEngine.RunEnvelopeParsimony(candidates, scan.MassSpectrum);
-            //deconEngine.CalculateSignalToNoise(scan.MassSpectrum, parsimonyEnvelopes);
-            var parsimonyEnvsWithMz = parsimonyEnvelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
-
-
-
-            //List<string> output = new List<string>();
-            //foreach (var env in parsimonyEnvelopes.Where(p => p.MonoisotopicMass > 8000))
-            //{
-            //    foreach (var peak in env.Peaks)
-            //    {
-            //        output.Add(env.SignalToNoise + "\t" + peak.SignalToNoise);
-            //    }
-            //}
-            //File.WriteAllLines(@"C:\Users\rmillikin\Desktop\DeconvolutionTraining\peaksSn.tsv", output);
-        }
-
-        [Test]
-        public static void TestTest()
-        {
-            string filePath = Path.Combine(@"C:\Users\rmillikin\Desktop\MetaMorpheus Problems\TDHyPRMSdata_forRMandJP\BR1\raw\032421_MALAT1Capture.raw");
-            //var data = IO.ThermoRawFileReader.ThermoRawFileReader.LoadAllStaticData(filePath);
-            var connection = new KeyValuePair<string, DynamicDataConnection>(filePath, new ThermoDynamicData(filePath));
-
-            var scan = connection.Value.GetOneBasedScanFromDynamicConnection(2678);
-
-            var deconEngine = new DeconvolutionEngine(2000, 0.3, 6, 0.3, 5, 5, 2, 60, 2);
-            var envelopes = deconEngine.Deconvolute(scan).ToList();
-        }
+        //    var parsimonyEnvelopes = deconEngine.RunEnvelopeParsimony(candidates, scan.MassSpectrum);
+        //    var parsimonyEnvsWithMz = parsimonyEnvelopes.Where(p => p.Peaks.Any(v => t.Within(v.ExperimentalMz, mz))).ToList();
+        //}
     }
 }
