@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
 
     <IsPackable>false</IsPackable>
 
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Deconvoluter\Deconvoluter.csproj" />
     <ProjectReference Include="..\ProteoformExplorerObjects\ProteoformExplorerObjects.csproj" />
-    <ProjectReference Include="..\GUI\ProteoformExplorerGUI.csproj" />
+    <ProjectReference Include="..\ProteoformExplorerGUI\ProteoformExplorerGUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
