@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "GUI\GUI.csproj", "{89178152-40B8-4B96-BBC7-45BBEC8585D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorerGUI", "GUI\ProteoformExplorerGUI.csproj", "{89178152-40B8-4B96-BBC7-45BBEC8585D1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{24F7F5C4-2EDF-4967-A93D-DE417BA11794}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorerObjects", "ProteoformExplorerObjects\ProteoformExplorerObjects.csproj", "{0FA69990-9A4E-437B-A312-8D6873D13041}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deconvoluter", "Deconvoluter\Deconvoluter.csproj", "{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deconvoluter", "Deconvoluter\Deconvoluter.csproj", "{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -18,7 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Deconvoluter\Deconvoluter.csproj" />
     <ProjectReference Include="..\ProteoformExplorerObjects\ProteoformExplorerObjects.csproj" />
-    <ProjectReference Include="..\GUI\GUI.csproj" />
+    <ProjectReference Include="..\GUI\ProteoformExplorerGUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

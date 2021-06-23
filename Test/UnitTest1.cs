@@ -11,14 +11,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UsefulProteomicsDatabases;
 
 namespace Test
 {
     public class Tests
     {
-        [SetUp]
+        [OneTimeSetUp]
         public void Setup()
         {
+            Loaders.LoadElements();
         }
 
         [Test]
@@ -87,8 +89,6 @@ namespace Test
         [Test]
         public static void TestDeconvolution()
         {
-            UsefulProteomicsDatabases.Loaders.LoadElements();
-
             // >sp|P49703|ARL4D_HUMAN ADP-ribosylation factor-like protein 4D OS=Homo sapiens OX=9606 GN=ARL4D PE=1 SV=2
             string sequence = "MGNHLTEMAPTASSFLPHFQALHVVVIGLDSAGKTSLLYRLKFKEFVQSVPTKGFNTEKIRVPLGGSRGITFQ" +
                               "VWDVGGQEKLRPLWRSYTRRTDGLVFVVDAAEAERLEEAKVELHRISRASDNQGVPVLVLANKQDQPGALSAA" +
@@ -150,7 +150,9 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes != null && p.DeconvolutionFeature.AnnotatedEnvelopes.Count > 0));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes.All(v => v.PeakMzs.Count > 0)));
 
-            //Assert.That(species.Count == 1);
+            Assert.That(species.Count == 1);
+            Assert.That(species.First().DeconvolutionFeature.MonoisotopicMass > formula.MonoisotopicMass - 10 
+                && species.First().DeconvolutionFeature.MonoisotopicMass < formula.MonoisotopicMass + 10);
         }
 
         [Test]

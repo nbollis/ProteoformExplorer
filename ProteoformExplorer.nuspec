@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ProteoformExplorer</id>
+    <version>1.0</version>
+    <title>ProteoformExplorer</title>
+    <authors>Robert J. Millikin</authors>
+    <owners>Robert J. Millikin</owners>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://https://github.com/smith-chem-wisc/ProteoformExplorer</projectUrl>
+    <description>Proteoform Dashboard for WPF Applications</description>
+    <tags>Chemistry Spectrometry Proteomics</tags>
+    <dependencies>
+	  <group targetFramework="net5.0-windows">
+		<dependency id="MahApps.Metro.IconPacks.BoxIcons" version="4.8.0"/>
+		<dependency id="Microsoft.ML" version="1.5.5"/>
+		<dependency id="Microsoft.ML.LightGbm" version="1.5.5"/>
+		<dependency id="mzLib" version="1.0.485"/>
+		<dependency id="ScottPlot" version="4.1.16"/>
+		<dependency id="ScottPlot.WPF" version="4.1.16"/>
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+	<file src="Deconvoluter\bin\x64\Release\net5.0-windows\Deconvoluter.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorerGUI\bin\x64\Release\net5.0-windows\ProteoformExplorerGUI.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorerObjects\bin\x64\Release\net5.0-windows\ProteoformExplorerObjects.dll" target="lib\net5.0-windows" /> 
+  </files>
+</package>
