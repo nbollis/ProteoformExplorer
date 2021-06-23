@@ -22,7 +22,7 @@
     </dependencies>
   </metadata>
   <files>
-	<file src="Deconvoluter\bin\x64\Release\net5.0-windows\Deconvoluter.dll" target="lib\net5.0-windows" /> 
+	<file src="Deconvoluter\bin\x64\Release\net5.0\Deconvoluter.dll" target="lib\net5.0-windows" /> 
 	<file src="ProteoformExplorerGUI\bin\x64\Release\net5.0-windows\ProteoformExplorerGUI.dll" target="lib\net5.0-windows" /> 
 	<file src="ProteoformExplorerObjects\bin\x64\Release\net5.0-windows\ProteoformExplorerObjects.dll" target="lib\net5.0-windows" /> 
   </files>
