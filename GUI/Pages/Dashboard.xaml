@@ -93,7 +93,7 @@
                         <Ellipse Grid.Row="0" Fill="{StaticResource ProtossPylon}" Height="90" Width="90"/>
                         <iconPacks:PackIconBoxIcons Width="60" Height="60" Kind="SolidLayer" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-                        <Label Content="Multifile XIC View" Grid.Row="1" HorizontalAlignment="Center" Foreground="{StaticResource BlueNights}" FontWeight="Bold" Margin="3"/>
+                        <Label Content="3D Waterfall XIC View" Grid.Row="1" HorizontalAlignment="Center" Foreground="{StaticResource BlueNights}" FontWeight="Bold" Margin="3"/>
                     </Grid>
                 </DataTemplate>
             </Button.ContentTemplate>

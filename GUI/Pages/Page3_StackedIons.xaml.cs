@@ -19,6 +19,7 @@ namespace ProteoformExplorer
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
         private const double mmPerInch = 25.4;
         private double mmOffsetSpacing = 12;
+        private double RtWindow = 10.0;
 
         public Page3_StackedIons()
         {
@@ -74,8 +75,6 @@ namespace ProteoformExplorer
                 chargesToPlot.Add(charge.Value);
             }
 
-            double rtWindow = 5.0;
-
             int fileNum = 0;
             foreach (var file in DataLoading.SpectraFiles)
             {
@@ -87,14 +86,14 @@ namespace ProteoformExplorer
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, rtWindow, file, topPlotView,
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, RtWindow, file, topPlotView,
                         clearOldPlot: fileNum == 0);
 
                     fileNum++;
                 }
             }
 
-            // figure out offsets and replot. have to do it 2x because we don't know what the max intensity is until we get the data,
+            // figure out offsets and replot. have to do it twice because we don't know what the max intensity is until we get the data,
             // so it's hard to scale/offset the plots correctly until it's already plotted
             PresentationSource source = PresentationSource.FromVisual(topPlotView);
 
@@ -132,13 +131,12 @@ namespace ProteoformExplorer
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, rtWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0, xOffset, yOffset);
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, RtWindow, file, topPlotView,
+                        clearOldPlot: fileNum == 0, xOffset, yOffset, fill: true, fillBaseline: yOffset);
 
                     fileNum++;
                     xOffset -= offsetUnitStepX;
                     yOffset -= offsetUnitStepY;
-
                 }
             }
 

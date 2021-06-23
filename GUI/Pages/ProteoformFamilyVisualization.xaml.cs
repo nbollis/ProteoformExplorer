@@ -1,4 +1,5 @@
-﻿using ProteoformExplorer;
+﻿using GUI.Modules;
+using ProteoformExplorer;
 using ScottPlot.Plottable;
 using System;
 using System.Collections.Generic;
@@ -36,12 +37,19 @@ namespace GUI.Pages
             exampleFamily[1].Node.AddConnection(exampleFamily[3].Node, "42 Da");
 
             DrawProteoformFamily(exampleFamily);
+
+            // unsubscribe from the default right-click menu event
+            pfmFamilyVisualizationChart.RightClicked -= pfmFamilyVisualizationChart.DefaultRightClickEvent;
+
+            // add your own custom event
+            pfmFamilyVisualizationChart.RightClicked += DeployCustomMenu;
         }
 
         public void DrawProteoformFamily(List<VisualizedProteoformFamilyMember> proteoformFamily)
         {
             pfmFamilyVisualizationChart.Plot.AxisScaleLock(true);
             pfmFamilyVisualizationChart.Plot.Grid(false);
+            pfmFamilyVisualizationChart.Plot.Frameless();
 
             foreach (var proteoform in proteoformFamily)
             {
@@ -64,6 +72,35 @@ namespace GUI.Pages
                 }
                 pfmFamilyVisualizationChart.Plot.Add(proteoform.Node.TextAnnotation);
             }
+        }
+
+        private void backToDashboardButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.NavigationService.Navigate(new Dashboard());
+        }
+
+        private void DeployCustomMenu(object sender, EventArgs e)
+        {
+            //var test = new List<string> { "test1", "test2", "test3" };
+            //var submenu = new ContextMenu();
+            ////foreach (var file in DataLoading.SpectraFiles)
+            ////{
+            ////    var item = new MenuItem() { Header = file.Key };
+            ////    submenu.Items.Add(item);
+            ////}
+            //foreach (var file in test)
+            //{
+            //    var item = new MenuItem() { Header = file };
+            //    submenu.Items.Add(item);
+            //}
+
+            //MenuItem addSinMenuItem = new MenuItem() { Header = "Plot in file...", sub = submenu };
+            ////addSinMenuItem.Click += AddSine;
+
+            //ContextMenu rightClickMenu = new ContextMenu();
+            //rightClickMenu.Items.Add(addSinMenuItem);
+
+            //rightClickMenu.IsOpen = true;
         }
     }
 

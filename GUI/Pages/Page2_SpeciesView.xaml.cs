@@ -17,6 +17,7 @@ namespace ProteoformExplorer
     /// </summary>
     public partial class Page2_SpeciesView : Page
     {
+        private double RtWindow = 10;
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
 
         public Page2_SpeciesView()
@@ -73,14 +74,13 @@ namespace ProteoformExplorer
                 chargesToPlot.Add(charge.Value);
             }
 
-            double rtWindow = 10.0;
             if (charge == null)
             {
                 // plot summed isotopes, one line per charge
                 for (int i = 0; i < chargesToPlot.Count; i++)
                 {
                     int z = chargesToPlot[i];
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, rtWindow, DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, RtWindow, DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
                 }
             }
             else
@@ -111,7 +111,7 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
-                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, rtWindow, DataLoading.CurrentlySelectedFile,
+                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, RtWindow, DataLoading.CurrentlySelectedFile,
                         topPlotView, i == 0);
                 }
             }

@@ -129,7 +129,7 @@ namespace GUI
         }
 
         public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot)
+            bool clearOldPlot, bool fill = false)
         {
             SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
 
@@ -140,10 +140,32 @@ namespace GUI
             var color = xicPlot.Plot.GetNextColor();
 
             xicPlot.Plot.AddScatterLines(xs, ys, color);
+
+            if (fill)
+            {
+                xicPlot.Plot.AddFill(xs, ys, color: color);
+            }
+
+            if (clearOldPlot)
+            {
+                xicPlot.Plot.SetAxisLimitsY(Math.Min(0, ys.Min()), ys.Max());
+                xicPlot.Plot.SetAxisLimitsX(xs.Min(), xs.Max());
+            }
+            else
+            {
+                var axisLimits = xicPlot.Plot.GetAxisLimits(xicPlot.Plot.XAxis.AxisIndex, xicPlot.Plot.YAxis.AxisIndex);
+                double yMin = Math.Max(axisLimits.YMin, ys.Min());
+                double yMax = Math.Max(axisLimits.YMax, ys.Max());
+                double xMin = Math.Max(axisLimits.XMin, xs.Min());
+                double xMax = Math.Max(axisLimits.XMax, xs.Max());
+
+                xicPlot.Plot.SetAxisLimitsY(yMin, yMax);
+                xicPlot.Plot.SetAxisLimitsX(xMin, xMax);
+            }
         }
 
         public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot, double xOffset = 0, double yOffset = 0)
+            bool clearOldPlot, double xOffset = 0, double yOffset = 0, bool fill = false, double fillBaseline = 0)
         {
             SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
 
@@ -154,6 +176,12 @@ namespace GUI
             var color = xicPlot.Plot.GetNextColor();
 
             xicPlot.Plot.AddScatterLines(xs, ys, color, lineWidth: 2);
+
+            if (fill)
+            {
+                var colorWithTransparency = Color.FromArgb(190, color.R, color.G, color.B);
+                xicPlot.Plot.AddFill(xs, ys, baseline: fillBaseline, color: colorWithTransparency);
+            }
 
             if (clearOldPlot)
             {
