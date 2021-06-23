@@ -40,6 +40,29 @@ namespace ProteoformExplorerObjects
 
             foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(DataFile.Key)))
             {
+                if (species.DeconvolutionFeature == null ||
+                    species.DeconvolutionFeature.AnnotatedEnvelopes == null ||
+                    species.DeconvolutionFeature.AnnotatedEnvelopes.Count == 0)
+                {
+                    // the deconvoluted species is from a file type that does not specify the envelopes in the deconvolution feature
+                    // therefore, we'll have to do some peakfinding and guess what envelopes are part of this feature
+                    if (species.DeconvolutionFeature == null)
+                    {
+                        if (species.Identification != null)
+                        { 
+                            //TODO: figure this out
+                            species.DeconvolutionFeature = new ProteoformExplorer.DeconvolutionFeature(species.Identification.MonoisotopicMass,
+                                0, 0, 0, new List<int> { species.Identification.PrecursorChargeState }, DataFile.Key, null);
+                        }
+                        else
+                        {
+                            // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
+                        }
+                    }
+
+                    species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                }
+
                 if (species.DeconvolutionFeature != null)
                 {
                     foreach (var envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)

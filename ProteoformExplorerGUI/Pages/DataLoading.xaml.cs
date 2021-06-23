@@ -212,7 +212,7 @@ namespace GUI.Modules
             worker.ReportProgress(0);
 
             // this calculates all the stuff needed for deconvolution, like averagine distributions
-            Dashboard.DeconvolutionEngine = new Deconvoluter.DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
+            var temp = PfmXplorerUtil.DeconvolutionEngine;
 
             // load the selected files
             foreach (var file in FilesToLoad)

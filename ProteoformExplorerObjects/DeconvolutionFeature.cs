@@ -1,9 +1,12 @@
-﻿using MassSpectrometry;
+﻿using Chemistry;
+using Deconvoluter;
+using MassSpectrometry;
 using MzLibUtil;
 using ProteoformExplorerObjects;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace ProteoformExplorer
@@ -36,6 +39,10 @@ namespace ProteoformExplorer
             }
 
             AnnotatedEnvelopes = new List<AnnotatedEnvelope>();
+            List<DeconvolutedPeak> peaksBuffer = new List<DeconvolutedPeak>();
+            HashSet<double> alreadyClaimedMzs = new HashSet<double>();
+            List<(double, double)> intensitiesBuffer = new List<(double, double)>();
+
             var start = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Minimum);
             var end = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Maximum);
 
@@ -43,18 +50,28 @@ namespace ProteoformExplorer
             {
                 var scan = data.Value.GetOneBasedScan(i);
 
-                if (scan.MsnOrder != 1)
+                if (scan == null || scan.MsnOrder != 1)
                 {
                     continue;
                 }
 
                 foreach (var charge in Charges)
                 {
-                    var envelope = PfmXplorerUtil.GetAnnotatedEnvelope(MonoisotopicMass, scan, charge);
+                    //PfmXplorerUtil.GetAnnotatedEnvelope(MonoisotopicMass, scan, charge);
+                    double modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(MonoisotopicMass);
+                    int index = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(charge));
+                    double expMz = scan.MassSpectrum.XArray[index];
 
-                    if (envelope != null)
+                    if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(charge), modeMass))
                     {
-                        AnnotatedEnvelopes.Add(envelope);
+                        var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, charge, peaksBuffer,
+                            alreadyClaimedMzs, intensitiesBuffer);
+
+                        if (envelope != null)
+                        {
+                            AnnotatedEnvelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime, 
+                                charge, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
+                        }
                     }
                 }
             }

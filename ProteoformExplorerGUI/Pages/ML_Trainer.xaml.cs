@@ -51,8 +51,6 @@ namespace GUI.Pages
 
         private void DisplayDeconvolutionTrainingData()
         {
-            Dashboard.DeconvolutionEngine = new Deconvoluter.DeconvolutionEngine(600, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
-
             var file = @"C:\Data\LVS_TD_Yeast\05-26-17_B7A_yeast_td_fract7_rep1.raw";
 
             var data = new KeyValuePair<string, CachedSpectraFileData>(
@@ -72,7 +70,7 @@ namespace GUI.Pages
                 scan = data.Value.GetOneBasedScan(scanNum);
             }
 
-            var decon = Dashboard.DeconvolutionEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange).OrderBy(p => r.Next()).ToList();
+            var decon = PfmXplorerUtil.DeconvolutionEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange).OrderBy(p => r.Next()).ToList();
 
 
             currentlyDisplayedScan = scan;

@@ -10,7 +10,7 @@ namespace ProteoformExplorer
         public string SpeciesLabel { get; private set; }
         public string SpectraFileNameWithoutExtension { get; private set; }
         public Identification Identification { get; private set; }
-        public DeconvolutionFeature DeconvolutionFeature { get; private set; }
+        public DeconvolutionFeature DeconvolutionFeature { get; set; }
 
         public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature)
         {

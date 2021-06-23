@@ -91,6 +91,9 @@
     <None Update="TestData\MetaMorpheus.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestData\05-26-17_B7A_yeast_td_fract7_rep1.raw">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestData\td_portal.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

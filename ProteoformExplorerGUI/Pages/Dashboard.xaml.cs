@@ -30,7 +30,6 @@ namespace ProteoformExplorer
         private static Page1_QuantifiedTic Page1;
         private static Page2_SpeciesView Page2;
         private static Page3_StackedIons Page3;
-        public static DeconvolutionEngine DeconvolutionEngine;
 
         public Dashboard()
         {

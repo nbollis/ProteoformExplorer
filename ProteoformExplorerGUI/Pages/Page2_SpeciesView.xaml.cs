@@ -48,12 +48,12 @@ namespace ProteoformExplorer
             if (species.DeconvolutionFeature != null)
             {
                 initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataLoading.CurrentlySelectedFile, species.DeconvolutionFeature.ApexRt);
-                modeMass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
+                modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
             }
             else
             {
                 initialScan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(species.Identification.OneBasedPrecursorScanNumber);
-                modeMass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
+                modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
             }
 
             // decide on charges to plot
@@ -94,7 +94,7 @@ namespace ProteoformExplorer
                     double mz = modeMass.ToMz(z);
                     int ind = initialScan.MassSpectrum.GetClosestPeakIndex(mz);
 
-                    var env = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
+                    var env = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(initialScan.MassSpectrum, ind, z,
                         new List<Deconvoluter.DeconvolutedPeak>(), new HashSet<double>(), new List<(double, double)>());
 
                     if (env != null)
@@ -111,7 +111,7 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
-                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
+                    GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
                         DataLoading.CurrentlySelectedFile, topPlotView, i == 0);
                 }
             }

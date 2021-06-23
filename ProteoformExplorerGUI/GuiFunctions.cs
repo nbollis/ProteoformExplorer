@@ -62,7 +62,7 @@ namespace GUI
 
                 if (species.DeconvolutionFeature != null)
                 {
-                    double mass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
+                    double mass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
                     chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
 
                     foreach (var z in chargesToPlot)
@@ -71,7 +71,7 @@ namespace GUI
                         double expMz = scan.MassSpectrum.XArray[index];
                         double expIntensity = scan.MassSpectrum.YArray[index];
 
-                        var envelope = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
+                        var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
                             claimedMzs, new List<(double, double)>());
 
                         if (envelope != null)
@@ -91,14 +91,14 @@ namespace GUI
                 }
                 else if (species.Identification != null)
                 {
-                    double mass = Dashboard.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
+                    double mass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
                     int z = species.Identification.PrecursorChargeState;
 
                     int index = scan.MassSpectrum.GetClosestPeakIndex(mass.ToMz(z));
                     double expMz = scan.MassSpectrum.XArray[index];
                     double expIntensity = scan.MassSpectrum.YArray[index];
 
-                    var envelope = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
+                    var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
                         claimedMzs, new List<(double, double)>());
                 }
 
@@ -399,7 +399,7 @@ namespace GUI
                 double expMz = scan.MassSpectrum.XArray[ind];
                 double expIntensity = scan.MassSpectrum.YArray[ind];
 
-                var env = Dashboard.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, ind, z, peaks, temp, temp2);
+                var env = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, ind, z, peaks, temp, temp2);
 
                 if (env != null)
                 {

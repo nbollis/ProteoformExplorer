@@ -1,4 +1,5 @@
 ﻿using Chemistry;
+using Deconvoluter;
 using MassSpectrometry;
 using MzLibUtil;
 using ProteoformExplorerObjects;
@@ -8,11 +9,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows.Input;
+using UsefulProteomicsDatabases;
 
 namespace ProteoformExplorer
 {
     public static class PfmXplorerUtil
     {
+        public static DeconvolutionEngine DeconvolutionEngine
+        {
+            get
+            {
+                if (_deconvolutionEngine == null)
+                {
+                    Loaders.LoadElements();
+                    _deconvolutionEngine = new DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
+                }
+
+                return _deconvolutionEngine;
+            }
+        }
+
+        private static DeconvolutionEngine _deconvolutionEngine;
         static Dictionary<string, double[]> SpectraFilePathsToRtArray;
 
         public static double GetXPositionFromMouseClickOnChart(object sender, MouseButtonEventArgs e)
@@ -132,32 +149,6 @@ namespace ProteoformExplorer
             }
 
             return 0;
-        }
-
-        public static AnnotatedEnvelope GetAnnotatedEnvelope(double monoMass, MsDataScan scan, int charge, double ppmTolerance = 5)
-        {
-            List<double> mzPeaks = new List<double>();
-            Tolerance tol = new PpmTolerance(ppmTolerance);
-
-            for (int i = 0; i < 20; i++)
-            {
-                double isotopeMass = monoMass + i * Constants.C13MinusC12;
-                double isotopeMz = isotopeMass.ToMz(charge);
-                int ind = scan.MassSpectrum.GetClosestPeakIndex(isotopeMz);
-
-                double expMz = scan.MassSpectrum.XArray[ind];
-
-                if (tol.Within(expMz.ToMass(charge), isotopeMass) && !mzPeaks.Contains(expMz))
-                {
-                    mzPeaks.Add(expMz);
-                }
-                else if (mzPeaks.Count > 0)
-                {
-                    break;
-                }
-            }
-
-            return new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime, charge, mzPeaks);
         }
     }
 }

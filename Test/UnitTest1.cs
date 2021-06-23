@@ -51,6 +51,14 @@ namespace Test
 
             Assert.That(!errors.Any());
             Assert.That(species.Count == 10);
+
+            species = species.Where(p => (int)p.DeconvolutionFeature.MonoisotopicMass == 15229).ToList();
+            string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\05-26-17_B7A_yeast_td_fract7_rep1.raw");
+            var connection = new KeyValuePair<string, DynamicDataConnection>(rawFile, new ThermoDynamicData(rawFile));
+            var cachedData = new KeyValuePair<string, CachedSpectraFileData>(rawFile, new CachedSpectraFileData(connection));
+            cachedData.Value.BuildScanToSpeciesDictionary(species);
+
+            Assert.That(species.First().DeconvolutionFeature.AnnotatedEnvelopes.Count >= 1);
         }
 
         [Test]
@@ -151,7 +159,7 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes.All(v => v.PeakMzs.Count > 0)));
 
             Assert.That(species.Count == 1);
-            Assert.That(species.First().DeconvolutionFeature.MonoisotopicMass > formula.MonoisotopicMass - 10 
+            Assert.That(species.First().DeconvolutionFeature.MonoisotopicMass > formula.MonoisotopicMass - 10
                 && species.First().DeconvolutionFeature.MonoisotopicMass < formula.MonoisotopicMass + 10);
         }
 
