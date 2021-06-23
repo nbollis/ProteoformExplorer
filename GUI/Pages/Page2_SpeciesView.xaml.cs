@@ -17,7 +17,6 @@ namespace ProteoformExplorer
     /// </summary>
     public partial class Page2_SpeciesView : Page
     {
-        private double RtWindow = 10;
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
 
         public Page2_SpeciesView()
@@ -80,7 +79,8 @@ namespace ProteoformExplorer
                 for (int i = 0; i < chargesToPlot.Count; i++)
                 {
                     int z = chargesToPlot[i];
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, RtWindow, DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
+                        DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
                 }
             }
             else
@@ -111,8 +111,8 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
-                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, RtWindow, DataLoading.CurrentlySelectedFile,
-                        topPlotView, i == 0);
+                    GuiFunctions.PlotXic(peak.mz, peak.z, Dashboard.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
+                        DataLoading.CurrentlySelectedFile, topPlotView, i == 0);
                 }
             }
         }
@@ -194,7 +194,6 @@ namespace ProteoformExplorer
             }
         }
     }
-
 
     public interface INode
     {

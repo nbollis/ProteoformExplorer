@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using UsefulProteomicsDatabases;
 
 namespace ProteoformExplorer
 {
@@ -34,6 +35,7 @@ namespace ProteoformExplorer
         public Dashboard()
         {
             InitializeComponent();
+            Loaders.LoadElements();
 
             InitializeDashboard();
         }

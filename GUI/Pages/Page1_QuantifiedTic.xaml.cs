@@ -45,7 +45,7 @@ namespace ProteoformExplorer
             topPlotView.Plot.AddScatterLines(
                 ticChromatogram.Select(p => p.X).ToArray(),
                 ticChromatogram.Select(p => p.Y.Value).ToArray(),
-                Color.Black, 1f, label: "TIC");
+                Color.Black, (float)GuiSettings.ChartLineWidth, label: "TIC");
 
             // display identified TIC chromatogram
             if (DataLoading.AllLoadedAnnotatedSpecies.Any())
@@ -57,7 +57,7 @@ namespace ProteoformExplorer
                     topPlotView.Plot.AddScatterLines(
                         identifiedTicChromatogram.Select(p => p.X).ToArray(),
                         identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                        Color.Purple, 1f, label: "Identified TIC");
+                        Color.Purple, (float)GuiSettings.ChartLineWidth, label: "Identified TIC");
                 }
 
                 var deconvolutedTicChromatogram = DataLoading.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram();
@@ -67,7 +67,7 @@ namespace ProteoformExplorer
                     topPlotView.Plot.AddScatterLines(
                         deconvolutedTicChromatogram.Select(p => p.X).ToArray(),
                         deconvolutedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                        Color.Blue, 1f, label: "Deconvoluted TIC");
+                        Color.Blue, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
                 }
             }
         }

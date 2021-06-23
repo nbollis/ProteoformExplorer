@@ -18,8 +18,6 @@ namespace ProteoformExplorer
     {
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
         private const double mmPerInch = 25.4;
-        private double mmOffsetSpacing = 12;
-        private double RtWindow = 10.0;
 
         public Page3_StackedIons()
         {
@@ -86,7 +84,7 @@ namespace ProteoformExplorer
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, RtWindow, file, topPlotView,
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
                         clearOldPlot: fileNum == 0);
 
                     fileNum++;
@@ -105,7 +103,7 @@ namespace ProteoformExplorer
                 dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
             }
 
-            double inchOffset = mmOffsetSpacing / mmPerInch;
+            double inchOffset = GuiSettings.WaterfallSpacingInMm / mmPerInch;
             var axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
 
             // y axis offset
@@ -131,7 +129,7 @@ namespace ProteoformExplorer
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, RtWindow, file, topPlotView,
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
                         clearOldPlot: fileNum == 0, xOffset, yOffset, fill: true, fillBaseline: yOffset);
 
                     fileNum++;

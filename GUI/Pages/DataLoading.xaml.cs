@@ -33,6 +33,8 @@ namespace GUI.Modules
         {
             InitializeComponent();
 
+            Loaders.LoadElements();
+
             if (AllLoadedAnnotatedSpecies == null)
             {
                 AllLoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
@@ -210,7 +212,6 @@ namespace GUI.Modules
             worker.ReportProgress(0);
 
             // this calculates all the stuff needed for deconvolution, like averagine distributions
-            Loaders.LoadElements();
             Dashboard.DeconvolutionEngine = new Deconvoluter.DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
 
             // load the selected files

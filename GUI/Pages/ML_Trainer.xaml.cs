@@ -27,6 +27,7 @@ namespace GUI.Pages
         public ML_Trainer()
         {
             InitializeComponent();
+            Loaders.LoadElements();
 
             mlCategories = new List<string> { "charge too high", "charge too low", "correct envelope", "incomplete envelope", "noise" };
             InitializeButtons();
@@ -50,7 +51,6 @@ namespace GUI.Pages
 
         private void DisplayDeconvolutionTrainingData()
         {
-            Loaders.LoadElements();
             Dashboard.DeconvolutionEngine = new Deconvoluter.DeconvolutionEngine(600, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
 
             var file = @"C:\Data\LVS_TD_Yeast\05-26-17_B7A_yeast_td_fract7_rep1.raw";

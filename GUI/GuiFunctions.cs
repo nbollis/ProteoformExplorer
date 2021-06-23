@@ -3,41 +3,24 @@ using Deconvoluter;
 using GUI.Modules;
 using MassSpectrometry;
 using MzLibUtil;
-using mzPlot;
 using ProteoformExplorer;
 using ProteoformExplorerObjects;
 using ScottPlot;
 using ScottPlot.Drawing;
-using ScottPlot.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace GUI
 {
     public class GuiFunctions
     {
-        // from: http://seaborn.pydata.org/tutorial/color_palettes.html (qualitative bright palette)
-        public static string[] ColorPalette = new string[]
-        {
-            @"#00ca3d",  // green
-            @"#e91405",  // red
-            @"#9214e1",  // purple
-            @"#9f4a00",  // brown
-            @"#f44ac1",  // pink
-            @"#fdc807",  // gold
-            @"#17d4ff",  // teal
-            @"#3729fe",  // blue
-            @"#ff8000",  // orange
-        };
-
         public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot spectrumPlot)
         {
             // set color palette
-            spectrumPlot.Plot.Palette = new Palette(ColorPalette);
+            spectrumPlot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
             spectrumPlot.Plot.Clear();
             spectrumPlot.Plot.YAxis.Ticks(major: true, minor: false);
             spectrumPlot.Plot.XAxis.Ticks(major: true, minor: false);
@@ -62,7 +45,7 @@ namespace GUI
 
             foreach (var item in spectrumData)
             {
-                spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, Color.Gray, 1.0f);
+                spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, GuiSettings.UnannotatedSpectrumColor, (float)GuiSettings.ChartLineWidth);
             }
 
             if (allSpeciesToPlot == null)
@@ -123,7 +106,7 @@ namespace GUI
 
                 foreach (var item in annotatedData)
                 {
-                    spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, color, 2.0f);
+                    spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, color, (float)GuiSettings.AnnotatedEnvelopeLineWidth);
                 }
             }
         }
@@ -210,7 +193,7 @@ namespace GUI
                 plot.Plot.Title(@"MS1 TIC");
 
                 // set color palette
-                plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+                plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
 
                 List<(string file, double tic, double deconvolutedTic, double identifiedTic)> ticValues
                     = new List<(string file, double tic, double deconvolutedTic, double identifiedTic)>();
@@ -291,7 +274,7 @@ namespace GUI
             {
                 plot.Plot.Title(@"MS1 Envelope Counts");
                 // set color palette
-                plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+                plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
 
                 var numFilteredEnvelopesPerFile = new List<(string file, int numFilteredEnvs)>();
 
@@ -337,7 +320,7 @@ namespace GUI
             try
             {
                 plot.Plot.Title(@"MS1 Envelope Mass Histograms");
-                plot.Plot.Palette = new Palette(GuiFunctions.ColorPalette);
+                plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
                 var color = Color.Blue;
 
                 int fileNum = 0;
@@ -439,7 +422,7 @@ namespace GUI
                 xicPlot.Plot.Clear();
             }
 
-            xicPlot.Plot.Palette = new Palette(ColorPalette);
+            xicPlot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
             xicPlot.Plot.Grid(false);
             xicPlot.Plot.YAxis.TickLabelNotation(multiplier: true);
             xicPlot.Plot.YAxis.Label("Intensity");
