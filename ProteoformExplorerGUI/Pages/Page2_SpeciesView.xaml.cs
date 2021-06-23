@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ProteoformExplorer
 {
@@ -18,6 +19,9 @@ namespace ProteoformExplorer
     public partial class Page2_SpeciesView : Page
     {
         private ObservableCollection<INode> SelectableAnnotatedSpecies;
+        private MsDataScan CurrentScan;
+        private AnnotatedSpecies CurrentlyDisplayedSpecies;
+        private int? CurrentlyDisplayedCharge;
 
         public Page2_SpeciesView()
         {
@@ -37,6 +41,8 @@ namespace ProteoformExplorer
         {
             PlotSpeciesIsotopeXics(species, out var apexScan, charge);
             PlotSpeciesInSpectrum(species, apexScan, charge);
+            CurrentlyDisplayedSpecies = species;
+            CurrentlyDisplayedCharge = charge;
         }
 
         private void PlotSpeciesIsotopeXics(AnnotatedSpecies species, out MsDataScan initialScan, int? charge = null)
@@ -79,7 +85,7 @@ namespace ProteoformExplorer
                 for (int i = 0; i < chargesToPlot.Count; i++)
                 {
                     int z = chargesToPlot[i];
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
                         DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
                 }
             }
@@ -111,7 +117,7 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
-                    GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow, 
+                    GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
                         DataLoading.CurrentlySelectedFile, topPlotView, i == 0);
                 }
             }
@@ -121,6 +127,51 @@ namespace ProteoformExplorer
         {
             GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataLoading.CurrentlySelectedFile,
                 bottomPlotView);
+
+            CurrentScan = scan;
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Left)
+            {
+                if (CurrentScan != null && CurrentlyDisplayedSpecies != null)
+                {
+                    var previousScan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(CurrentScan.OneBasedScanNumber - 1);
+
+                    if (previousScan != null)
+                    {
+                        PlotSpeciesInSpectrum(CurrentlyDisplayedSpecies, previousScan, CurrentlyDisplayedCharge);
+                    }
+                }
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Right)
+            {
+                if (CurrentScan != null && CurrentlyDisplayedSpecies != null)
+                {
+                    var nextScan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(CurrentScan.OneBasedScanNumber + 1);
+
+                    if (nextScan != null)
+                    {
+                        PlotSpeciesInSpectrum(CurrentlyDisplayedSpecies, nextScan, CurrentlyDisplayedCharge);
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
+        private void topPlotView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (DataLoading.CurrentlySelectedFile.Value == null)
+            {
+                return;
+            }
+
+            double rt = PfmXplorerUtil.GetXPositionFromMouseClickOnChart(sender, e);
+            var theScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataLoading.CurrentlySelectedFile, rt);
+
+            PlotSpeciesInSpectrum(CurrentlyDisplayedSpecies, theScan, CurrentlyDisplayedCharge);
         }
 
         private void SpeciesListView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)

@@ -48,7 +48,8 @@ namespace GUI
                 spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, GuiSettings.UnannotatedSpectrumColor, (float)GuiSettings.ChartLineWidth);
             }
 
-            if (allSpeciesToPlot == null)
+            if (allSpeciesToPlot == null || scan.MsnOrder != 1
+                )
             {
                 return;
             }
