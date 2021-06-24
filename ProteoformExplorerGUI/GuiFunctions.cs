@@ -19,8 +19,67 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     public class GuiFunctions
     {
+        public static void StylePlot(WpfPlot plot)
+        {
+            plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
+            plot.Plot.Grid(GuiSettings.ShowChartGrid);
+            plot.Plot.XAxis.Ticks(major: true, minor: false);
+            plot.Plot.YAxis.Ticks(major: true, minor: false);
+            plot.Plot.Legend(location: Alignment.UpperRight);
+            plot.Plot.XAxis.TickMarkColor(Color.White);
+            plot.Plot.YAxis.TickMarkColor(Color.White);
+        }
+
+        public static void StyleDashboardPlot(WpfPlot plot)
+        {
+            StylePlot(plot);
+
+            plot.Plot.XAxis.TickLabelStyle(rotation: (float)GuiSettings.XLabelRotation);
+            plot.Plot.Frame(top: false, right: false);
+            plot.Plot.YAxis.Line(visible: false);
+        }
+
+        public static void StyleIonChromatogramPlot(WpfPlot plot, bool clearOldPlot, VLine rtIndicator)
+        {
+            if (clearOldPlot)
+            {
+                plot.Plot.Clear();
+            }
+
+            if (rtIndicator != null)
+            {
+                plot.Plot.Add(rtIndicator);
+            }
+
+            StylePlot(plot);
+
+            plot.Plot.YAxis.TickLabelNotation(multiplier: true);
+            plot.Plot.YAxis.Label("Intensity");
+            plot.Plot.XAxis.Label("Retention Time");
+        }
+
+        public static void StyleSpectrumPlot(WpfPlot plot, MsDataScan scan, string dataFileName)
+        {
+            StylePlot(plot);
+
+            try
+            {
+                plot.Plot.Title(dataFileName + "  Scan#" + scan.OneBasedScanNumber + "  RT: " + scan.RetentionTime + "  MS" + scan.MsnOrder + "\n" +
+                    " " + scan.ScanFilter, bold: false);
+            }
+            catch (Exception e)
+            {
+                plot.Plot.Title(dataFileName + "  Scan#" + scan.OneBasedScanNumber + "  RT: " + scan.RetentionTime + "  MS" + scan.MsnOrder, bold: false);
+            }
+
+            plot.Plot.YAxis.TickLabelNotation(multiplier: true);
+            plot.Plot.YAxis.Label("Intensity");
+            plot.Plot.XAxis.Label("m/z");
+            plot.Plot.SetViewLimits(scan.ScanWindowRange.Minimum, scan.ScanWindowRange.Maximum, 0, scan.MassSpectrum.YArray.Max() * 2.0);
+        }
+
         public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data,
-            WpfPlot spectrumPlot, out MsDataScan scan)
+            WpfPlot spectrumPlot, out MsDataScan scan, int? charge = null)
         {
             spectrumPlot.Plot.Clear();
 
@@ -68,7 +127,15 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 if (species.DeconvolutionFeature != null)
                 {
                     double mass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
-                    chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
+
+                    if (charge != null)
+                    {
+                        chargesToPlot.Add(charge.Value);
+                    }
+                    else
+                    {
+                        chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
+                    }
 
                     foreach (var z in chargesToPlot)
                     {
@@ -114,12 +181,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     spectrumPlot.Plot.AddLine(item.X, 0, item.X, item.Y.Value, color, (float)GuiSettings.AnnotatedEnvelopeLineWidth);
                 }
             }
+
+            spectrumPlot.Plot.SetAxisLimits(scan.ScanWindowRange.Minimum, scan.ScanWindowRange.Maximum, 0, scan.MassSpectrum.YArray.Max() * 1.2);
         }
 
         public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot, bool fill = false, string label = null)
+            bool clearOldPlot, VLine rtIndicator, bool fill = false, string label = null)
         {
-            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
+            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans, rtIndicator);
 
             var xicData = GetXicData(scans, mz, z, tolerance);
 
@@ -154,11 +223,11 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         }
 
         public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot, double xOffset = 0, double yOffset = 0, bool fill = false, double fillBaseline = 0, string label = null)
+            bool clearOldPlot, VLine rtIndicator, double xOffset = 0, double yOffset = 0, bool fill = false, double fillBaseline = 0, string label = null)
         {
-            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans);
+            SetUpXicPlot(rt, rtWindow, data, xicPlot, clearOldPlot, out var scans, rtIndicator);
 
-            var xicData = GetSummedChargeXis(scans, modeMass, z);
+            var xicData = GetSummedChargeXics(scans, modeMass, z);
 
             var xs = xicData.Select(p => p.X + xOffset).ToArray();
             var ys = xicData.Select(p => p.Y.Value + yOffset).ToArray();
@@ -191,14 +260,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void PlotTotalIonChromatograms(WpfPlot plot)
+        public static void PlotTotalIonChromatograms(WpfPlot plot, VLine rtIndicator)
         {
             if (DataLoading.CurrentlySelectedFile.Value == null)
             {
                 return;
             }
 
-            StyleIonChromatogramPlot(plot, true);
+            StyleIonChromatogramPlot(plot, true, rtIndicator);
 
             // display TIC chromatogram
             var ticChromatogram = DataLoading.CurrentlySelectedFile.Value.GetTicChromatogram();
@@ -233,7 +302,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void DrawPercentTicPerFileInfo(WpfPlot plot, out List<string> errors)
+        public static void DrawPercentTicPerFileInfoDashboardPlot(WpfPlot plot, out List<string> errors)
         {
             errors = new List<string>();
 
@@ -307,7 +376,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void DrawNumEnvelopes(WpfPlot plot, out List<string> errors)
+        public static void DrawNumEnvelopesDashboardPlot(WpfPlot plot, out List<string> errors)
         {
             errors = new List<string>();
 
@@ -345,14 +414,13 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void DrawMassDistributions(WpfPlot plot, out List<string> errors)
+        public static void DrawMassDistributionsDashboardPlot(WpfPlot plot, out List<string> errors)
         {
             errors = new List<string>();
 
             try
             {
                 plot.Plot.Title(@"MS1 Envelope Mass Histograms");
-                plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
                 var color = GuiSettings.DeconvolutedColor;
 
                 int fileNum = 0;
@@ -363,14 +431,33 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     var envelopeMasses = file.Value.OneBasedScanToAnnotatedEnvelopes.SelectMany(p => p.Value.Select(v => v.PeakMzs.First().ToMass(v.Charge))).ToArray();
                     maxMass = Math.Max(maxMass, envelopeMasses.Max());
 
-                    var hist = new ScottPlot.Statistics.Histogram(envelopeMasses, binSize: 500);
+                    // generate histogram bars
+                    List<(double start, double end, int count)> histogramBins = new List<(double start, double end, int count)>();
+                    double binWidth = 500;
 
-                    var bar = plot.Plot.AddBar(values: hist.countsFrac, positions: hist.bins);
-                    bar.BarWidth = hist.binSize;
+                    for (int i = 0; i < int.MaxValue; i++)
+                    {
+                        double binMin = i * binWidth;
+                        double binMax = (i + 1) * binWidth;
+
+                        if (binMin > envelopeMasses.Max())
+                        {
+                            break;
+                        }
+
+                        int itemsInBin = envelopeMasses.Count(p => p >= binMin && p < binMax);
+                        histogramBins.Add((binMin, binMax, itemsInBin));
+                    }
+
+                    double[] fractionalAbundance = histogramBins.Select(p => p.count / ((double)envelopeMasses.Length)).ToArray();
+                    double[] locations = histogramBins.Select(p => (p.start + p.end) / 2.0).ToArray();
+
+                    var bar = plot.Plot.AddBar(values: fractionalAbundance, positions: locations);
+                    bar.BarWidth = binWidth;
                     bar.FillColor = Color.FromArgb(180, color);
                     bar.BorderLineWidth = 0;
                     bar.Orientation = ScottPlot.Orientation.Horizontal;
-                    bar.ValueOffsets = hist.countsFrac.Select(p => (double)fileNum).ToArray();
+                    bar.ValueOffsets = locations.Select(p => (double)fileNum).ToArray();
                     bar.Label = Path.GetFileNameWithoutExtension(file.Key);
 
                     fileNum++;
@@ -390,64 +477,10 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void StylePlot(WpfPlot plot)
-        {
-            plot.Plot.Palette = new Palette(GuiSettings.ColorPalette);
-            plot.Plot.Grid(GuiSettings.ShowChartGrid);
-            plot.Plot.XAxis.Ticks(major: true, minor: false);
-            plot.Plot.YAxis.Ticks(major: true, minor: false);
-            plot.Plot.Legend(location: Alignment.UpperRight);
-            plot.Plot.XAxis.TickMarkColor(Color.White);
-            plot.Plot.YAxis.TickMarkColor(Color.White);
-        }
-
-        public static void StyleDashboardPlot(WpfPlot plot)
-        {
-            StylePlot(plot);
-
-            plot.Plot.XAxis.TickLabelStyle(rotation: (float)GuiSettings.XLabelRotation);
-            plot.Plot.Frame(top: false, right: false);
-            plot.Plot.YAxis.Line(visible: false);
-        }
-
-        public static void StyleIonChromatogramPlot(WpfPlot plot, bool clearOldPlot)
-        {
-            if (clearOldPlot)
-            {
-                plot.Plot.Clear();
-            }
-
-            StylePlot(plot);
-
-            plot.Plot.YAxis.TickLabelNotation(multiplier: true);
-            plot.Plot.YAxis.Label("Intensity");
-            plot.Plot.XAxis.Label("Retention Time");
-        }
-
-        public static void StyleSpectrumPlot(WpfPlot plot, MsDataScan scan, string dataFileName)
-        {
-            StylePlot(plot);
-
-            try
-            {
-                plot.Plot.Title(dataFileName + "  Scan#" + scan.OneBasedScanNumber + "  RT: " + scan.RetentionTime + "  MS" + scan.MsnOrder + "\n" +
-                    " " + scan.ScanFilter, bold: false);
-            }
-            catch (Exception e)
-            {
-                plot.Plot.Title(dataFileName + "  Scan#" + scan.OneBasedScanNumber + "  RT: " + scan.RetentionTime + "  MS" + scan.MsnOrder, bold: false);
-            }
-
-            plot.Plot.YAxis.TickLabelNotation(multiplier: true);
-            plot.Plot.YAxis.Label("Intensity");
-            plot.Plot.XAxis.Label("m/z");
-            plot.Plot.SetViewLimits(scan.ScanWindowRange.Minimum, scan.ScanWindowRange.Maximum, 0, scan.MassSpectrum.YArray.Max() * 2.0);
-        }
-
         public static void SetUpXicPlot(double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot, bool clearOldPlot,
-            out List<MsDataScan> scans)
+            out List<MsDataScan> scans, VLine rtIndicator)
         {
-            StyleIonChromatogramPlot(xicPlot, clearOldPlot);
+            StyleIonChromatogramPlot(xicPlot, clearOldPlot, rtIndicator);
 
             double rtWindowHalfWidth = rtWindow / 2;
 
@@ -513,7 +546,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        public static void SpectraFileChanged(object sender, SelectionChangedEventArgs e)
+        public static void OnSpeciesChanged()
+        {
+
+        }
+
+        public static void OnSpectraFileChanged(object sender, SelectionChangedEventArgs e)
         {
             var selectedItems = ((ListView)sender).SelectedItems;
 
@@ -540,7 +578,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 return indicator;
             }
 
-            if (indicator == null)
+            var plottables = plot.Plot.GetPlottables();
+            if (indicator == null || !plottables.Any(p => p is VLine line))
             {
                 indicator = plot.Plot.AddVerticalLine(scan.RetentionTime, color: Color.Red, width: 1.5f);
             }
@@ -573,7 +612,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             return xicData;
         }
 
-        private static List<Datum> GetSummedChargeXis(List<MsDataScan> scans, double modeMass, int z)
+        private static List<Datum> GetSummedChargeXics(List<MsDataScan> scans, double modeMass, int z)
         {
             List<Datum> xicData = new List<Datum>();
             List<DeconvolutedPeak> peaks = new List<DeconvolutedPeak>();

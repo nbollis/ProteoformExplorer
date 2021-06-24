@@ -38,7 +38,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             // get apex or precursor scan
             if (species.DeconvolutionFeature != null)
             {
-                initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataLoading.CurrentlySelectedFile, species.DeconvolutionFeature.ApexRt);
+                initialScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataLoading.CurrentlySelectedFile, species.DeconvolutionFeature.ApexRt, 1);
                 modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
             }
             else
@@ -76,7 +76,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0, label: file.Key);
+                        clearOldPlot: fileNum == 0, label: file.Key, rtIndicator: null);
 
                     fileNum++;
                 }
@@ -122,7 +122,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0, xOffset, yOffset, fill: true, fillBaseline: yOffset, label: file.Key);
+                        clearOldPlot: fileNum == 0, rtIndicator: null, xOffset, yOffset, fill: true, fillBaseline: yOffset, label: file.Key);
 
                     fileNum++;
                     xOffset -= offsetUnitStepX;
@@ -151,11 +151,13 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             {
                 PlotSpeciesStacked(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
             }
+
+            GuiFunctions.OnSpeciesChanged();
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            GuiFunctions.SpectraFileChanged(sender, e);
+            GuiFunctions.OnSpectraFileChanged(sender, e);
 
             GuiFunctions.PopulateTreeViewWithSpeciesAndCharges(SelectableAnnotatedSpecies);
         }

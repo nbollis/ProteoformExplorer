@@ -4,7 +4,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ScottPlot.Plottable;
-using System.Drawing;
 
 namespace ProteoformExplorer.ProteoformExplorerGUI
 {
@@ -14,8 +13,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
     public partial class Page1_QuantifiedTic : Page
     {
         private MsDataScan CurrentScan;
-        private int IntegratedAreaStart;
-        private int IntegratedAreaEnd;
+        private VLine IntegratedAreaStart;
+        private VLine IntegratedAreaEnd;
         private VLine CurrentRtIndicator;
 
         public Page1_QuantifiedTic()
@@ -23,6 +22,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             InitializeComponent();
             DataListView.ItemsSource = DataLoading.LoadedSpectraFiles;
         }
+
         private void Home_Click(object sender, RoutedEventArgs e)
         {
             this.NavigationService.Navigate(new Dashboard());
@@ -30,7 +30,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
         private void DisplayTic()
         {
-            GuiFunctions.PlotTotalIonChromatograms(topPlotView);
+            GuiFunctions.PlotTotalIonChromatograms(topPlotView, CurrentRtIndicator);
         }
 
         private void DisplayAnnotatedSpectrum(int scanNum)
@@ -77,7 +77,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            GuiFunctions.SpectraFileChanged(sender, e);
+            GuiFunctions.OnSpectraFileChanged(sender, e);
 
             DisplayTic();
         }

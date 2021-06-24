@@ -1,6 +1,7 @@
 ﻿using Deconvoluter;
 using MassSpectrometry;
 using ScottPlot;
+using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 using UsefulProteomicsDatabases;
@@ -109,6 +110,50 @@ namespace ProteoformExplorer.Objects
 
             // TODO: error?
             return null;
+        }
+
+        public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt, int msOrder)
+        {
+            var closestScan = GetClosestScanToRtFromDynamicConnection(data, rt);
+            MsDataScan next = null;
+            MsDataScan previous = null;
+
+            for (int i = closestScan.OneBasedScanNumber; i < int.MaxValue; i++)
+            {
+                var scan = data.Value.GetOneBasedScan(i);
+
+                if (scan == null || scan.MsnOrder == msOrder)
+                {
+                    next = scan;
+                    break;
+                }
+            }
+
+            for (int i = closestScan.OneBasedScanNumber - 1; i >= 1; i--)
+            {
+                var scan = data.Value.GetOneBasedScan(i);
+
+                if (scan == null || scan.MsnOrder == msOrder)
+                {
+                    previous = scan;
+                    break;
+                }
+            }
+
+            if (next == null)
+            {
+                return previous;
+            }
+            if (previous == null)
+            {
+                return next;
+            }
+            if (Math.Abs(next.RetentionTime - rt) < Math.Abs(previous.RetentionTime - rt))
+            {
+                return next;
+            }
+
+            return previous;
         }
 
         public static int GetLastOneBasedScanNumber(KeyValuePair<string, CachedSpectraFileData> data)

@@ -34,21 +34,21 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 Page3 = new Page3_StackedIons();
             }
 
-            GuiFunctions.DrawPercentTicPerFileInfo(DashboardPlot1, out var errors);
+            GuiFunctions.DrawPercentTicPerFileInfoDashboardPlot(DashboardPlot1, out var errors);
 
             if (errors.Any())
             {
                 MessageBox.Show("An error occurred creating the percent TIC dashboard chart: " + errors.First());
             }
 
-            GuiFunctions.DrawNumEnvelopes(DashboardPlot2, out errors);
+            GuiFunctions.DrawNumEnvelopesDashboardPlot(DashboardPlot2, out errors);
 
             if (errors.Any())
             {
                 MessageBox.Show("An error occurred creating the num envelopes dashboard chart: " + errors.First());
             }
 
-            GuiFunctions.DrawMassDistributions(DashboardPlot3, out errors);
+            GuiFunctions.DrawMassDistributionsDashboardPlot(DashboardPlot3, out errors);
 
             if (errors.Any())
             {
