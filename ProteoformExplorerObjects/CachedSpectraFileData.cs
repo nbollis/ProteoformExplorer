@@ -1,13 +1,10 @@
 ﻿using MassSpectrometry;
 using MzLibUtil;
-using ProteoformExplorer;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
-namespace ProteoformExplorerObjects
+namespace ProteoformExplorer.Objects
 {
     public class CachedSpectraFileData
     {
@@ -51,7 +48,7 @@ namespace ProteoformExplorerObjects
                         if (species.Identification != null)
                         { 
                             //TODO: figure this out
-                            species.DeconvolutionFeature = new ProteoformExplorer.DeconvolutionFeature(species.Identification.MonoisotopicMass,
+                            species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification.MonoisotopicMass,
                                 0, 0, 0, new List<int> { species.Identification.PrecursorChargeState }, DataFile.Key, null);
                         }
                         else

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.Objects
 {
     public class AnnotatedEnvelope
     {

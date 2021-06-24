@@ -1,15 +1,11 @@
 ﻿using Chemistry;
 using Deconvoluter;
-using MassSpectrometry;
 using MzLibUtil;
-using ProteoformExplorerObjects;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.Objects
 {
     public class DeconvolutionFeature
     {

@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
+﻿using System.Drawing;
 
-namespace GUI
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     public static class GuiSettings
     {
@@ -28,5 +25,10 @@ namespace GUI
         public static double ExtractionWindow = 10.0;
         public static double WaterfallSpacingInMm = 12;
         public static Color UnannotatedSpectrumColor = Color.Gray;
+        public static Color TicColor = Color.Black;
+        public static Color DeconvolutedColor = Color.Blue;
+        public static Color IdentifiedColor = Color.Purple;
+        public static bool ShowChartGrid = false;
+        public static double XLabelRotation = 30;
     }
 }

@@ -1,12 +1,9 @@
 using Chemistry;
 using Deconvoluter;
-using Deconvoluter.ML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
-using MzLibUtil;
 using NUnit.Framework;
-using ProteoformExplorer;
-using ProteoformExplorerObjects;
+using ProteoformExplorer.Objects;
 using System;
 using System.Collections.Generic;
 using System.IO;

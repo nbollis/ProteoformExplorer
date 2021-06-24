@@ -1,17 +1,11 @@
-﻿using Chemistry;
-using Deconvoluter;
+﻿using Deconvoluter;
 using MassSpectrometry;
-using MzLibUtil;
-using ProteoformExplorerObjects;
 using ScottPlot;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Input;
 using UsefulProteomicsDatabases;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.Objects
 {
     public static class PfmXplorerUtil
     {

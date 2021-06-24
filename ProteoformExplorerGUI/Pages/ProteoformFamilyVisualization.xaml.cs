@@ -1,15 +1,12 @@
-﻿using GUI.Modules;
-using ProteoformExplorer;
-using ScottPlot.Plottable;
+﻿using ScottPlot.Plottable;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace GUI.Pages
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     public enum VisualizedType { Gene, Transcript, TheoreticalProteoform, TopDownExperimentalProteoform, IntactMassExperimentalProteoform, QuantifiedExperimentalProteoform }
 
@@ -48,7 +45,7 @@ namespace GUI.Pages
         public void DrawProteoformFamily(List<VisualizedProteoformFamilyMember> proteoformFamily)
         {
             pfmFamilyVisualizationChart.Plot.AxisScaleLock(true);
-            pfmFamilyVisualizationChart.Plot.Grid(false);
+            pfmFamilyVisualizationChart.Plot.Grid(GuiSettings.ShowChartGrid);
             pfmFamilyVisualizationChart.Plot.Frameless();
 
             foreach (var proteoform in proteoformFamily)

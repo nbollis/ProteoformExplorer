@@ -1,8 +1,7 @@
 ﻿using IO.MzML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
-using ProteoformExplorer;
-using ProteoformExplorerObjects;
+using ProteoformExplorer.Objects;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,7 +14,7 @@ using System.Windows.Controls;
 using System.Windows.Navigation;
 using UsefulProteomicsDatabases;
 
-namespace GUI.Modules
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for DataLoading.xaml

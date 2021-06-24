@@ -1,14 +1,12 @@
-﻿using GUI;
-using GUI.Modules;
-using MassSpectrometry;
-using System;
-using System.Drawing;
-using System.Linq;
+﻿using MassSpectrometry;
+using ProteoformExplorer.Objects;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ScottPlot.Plottable;
+using System.Drawing;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for Page1_QuantifiedTic.xaml
@@ -18,6 +16,7 @@ namespace ProteoformExplorer
         private MsDataScan CurrentScan;
         private int IntegratedAreaStart;
         private int IntegratedAreaEnd;
+        private VLine CurrentRtIndicator;
 
         public Page1_QuantifiedTic()
         {
@@ -31,66 +30,17 @@ namespace ProteoformExplorer
 
         private void DisplayTic()
         {
-            if (DataLoading.CurrentlySelectedFile.Value == null)
-            {
-                return;
-            }
-
-            // display TIC chromatogram
-            var ticChromatogram = DataLoading.CurrentlySelectedFile.Value.GetTicChromatogram();
-
-            topPlotView.Plot.Clear();
-            topPlotView.Plot.Grid(false);
-
-            topPlotView.Plot.AddScatterLines(
-                ticChromatogram.Select(p => p.X).ToArray(),
-                ticChromatogram.Select(p => p.Y.Value).ToArray(),
-                Color.Black, (float)GuiSettings.ChartLineWidth, label: "TIC");
-
-            // display identified TIC chromatogram
-            if (DataLoading.AllLoadedAnnotatedSpecies.Any())
-            {
-                var identifiedTicChromatogram = DataLoading.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram();
-
-                if (identifiedTicChromatogram.Any())
-                {
-                    topPlotView.Plot.AddScatterLines(
-                        identifiedTicChromatogram.Select(p => p.X).ToArray(),
-                        identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                        Color.Purple, (float)GuiSettings.ChartLineWidth, label: "Identified TIC");
-                }
-
-                var deconvolutedTicChromatogram = DataLoading.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram();
-
-                if (deconvolutedTicChromatogram.Any())
-                {
-                    topPlotView.Plot.AddScatterLines(
-                        deconvolutedTicChromatogram.Select(p => p.X).ToArray(),
-                        deconvolutedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                        Color.Blue, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
-                }
-            }
+            GuiFunctions.PlotTotalIonChromatograms(topPlotView);
         }
 
         private void DisplayAnnotatedSpectrum(int scanNum)
         {
-            if (DataLoading.CurrentlySelectedFile.Value == null)
-            {
-                return;
-            }
-
-            var scan = DataLoading.CurrentlySelectedFile.Value.GetOneBasedScan(scanNum);
-
-            if (scan == null)
-            {
-                return;
-            }
-
-            CurrentScan = scan;
-
             var speciesInScan = DataLoading.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
 
-            GuiFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataLoading.CurrentlySelectedFile, bottomPlotView);
+            GuiFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataLoading.CurrentlySelectedFile, bottomPlotView, out var scan);
+            CurrentScan = scan;
+
+            CurrentRtIndicator = GuiFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -127,38 +77,14 @@ namespace ProteoformExplorer
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItems = ((ListView)sender).SelectedItems;
-
-            if (selectedItems != null && selectedItems.Count >= 1)
-            {
-                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
-
-                if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
-                {
-                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFileName);
-                }
-                else
-                {
-                    MessageBox.Show("The spectra file " + spectraFileName + " has not been loaded yet");
-                    return;
-                }
-            }
+            GuiFunctions.SpectraFileChanged(sender, e);
 
             DisplayTic();
         }
 
         private void openFileListViewButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DataListView.Visibility == Visibility.Collapsed)
-            {
-                DataListView.Visibility = Visibility.Visible;
-                gridSplitter.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                DataListView.Visibility = Visibility.Collapsed;
-                gridSplitter.Visibility = Visibility.Hidden;
-            }
+            GuiFunctions.ShowOrHideSpectraFileList(DataListView, gridSplitter);
         }
     }
 }

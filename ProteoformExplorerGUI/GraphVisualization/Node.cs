@@ -6,7 +6,7 @@ using System.Text;
 using ScottPlot;
 using ScottPlot.Plottable;
 
-namespace GUI
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     public class Node
     {

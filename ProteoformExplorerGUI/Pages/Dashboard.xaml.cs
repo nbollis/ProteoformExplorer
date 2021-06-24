@@ -1,26 +1,12 @@
-﻿using Chemistry;
-using Deconvoluter;
-using GUI;
-using GUI.Modules;
-using IO.MzML;
-using IO.ThermoRawFileReader;
-using MassSpectrometry;
-using ProteoformExplorerObjects;
-using Proteomics.ProteolyticDigestion;
+﻿using ProteoformExplorer.Objects;
 using ScottPlot.Drawing;
 using ScottPlot.Statistics;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using UsefulProteomicsDatabases;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for Dashboard.xaml
@@ -48,7 +34,7 @@ namespace ProteoformExplorer
                 Page3 = new Page3_StackedIons();
             }
 
-            GuiFunctions.DrawPercentTicInfo(DashboardPlot1, out var errors);
+            GuiFunctions.DrawPercentTicPerFileInfo(DashboardPlot1, out var errors);
 
             if (errors.Any())
             {

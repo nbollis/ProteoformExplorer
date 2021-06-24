@@ -1,17 +1,16 @@
 ﻿using Chemistry;
-using GUI;
-using GUI.Modules;
 using MassSpectrometry;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
+using ProteoformExplorer.Objects;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Drawing;
+using ScottPlot.Plottable;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for Page2_SpeciesView.xaml
@@ -22,6 +21,7 @@ namespace ProteoformExplorer
         private MsDataScan CurrentScan;
         private AnnotatedSpecies CurrentlyDisplayedSpecies;
         private int? CurrentlyDisplayedCharge;
+        private VLine CurrentRtIndicator;
 
         public Page2_SpeciesView()
         {
@@ -85,8 +85,9 @@ namespace ProteoformExplorer
                 for (int i = 0; i < chargesToPlot.Count; i++)
                 {
                     int z = chargesToPlot[i];
+
                     GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
-                        DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0);
+                        DataLoading.CurrentlySelectedFile, topPlotView, clearOldPlot: i == 0, label: "z=" + z);
                 }
             }
             else
@@ -117,8 +118,9 @@ namespace ProteoformExplorer
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
+
                     GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
-                        DataLoading.CurrentlySelectedFile, topPlotView, i == 0);
+                        DataLoading.CurrentlySelectedFile, topPlotView, i == 0, label: peak.mz.ToMass(peak.z).ToString("F2"));
                 }
             }
         }
@@ -126,9 +128,11 @@ namespace ProteoformExplorer
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
             GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataLoading.CurrentlySelectedFile,
-                bottomPlotView);
+                bottomPlotView, out var scan2);
 
             CurrentScan = scan;
+
+            CurrentRtIndicator = GuiFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -190,92 +194,14 @@ namespace ProteoformExplorer
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItems = ((ListView)sender).SelectedItems;
+            GuiFunctions.SpectraFileChanged(sender, e);
 
-            if (selectedItems != null && selectedItems.Count >= 1)
-            {
-                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
-
-                if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
-                {
-                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFileName);
-                }
-                else
-                {
-                    MessageBox.Show("The spectra file " + spectraFileName + " has not been loaded yet");
-                    return;
-                }
-            }
-
-            SelectableAnnotatedSpecies.Clear();
-            var nameWithoutExtension = Path.GetFileNameWithoutExtension(DataLoading.CurrentlySelectedFile.Key);
-            foreach (AnnotatedSpecies species in DataLoading.AllLoadedAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
-            {
-                var parentNode = new AnnotatedSpeciesNode(species);
-                SelectableAnnotatedSpecies.Add(parentNode);
-
-                if (species.DeconvolutionFeature != null)
-                {
-                    foreach (var charge in species.DeconvolutionFeature.Charges)
-                    {
-                        var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge);
-                        parentNode.Charges.Add(childNode);
-                    }
-                }
-                if (species.Identification != null)
-                {
-                    int charge = species.Identification.PrecursorChargeState;
-                    var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, charge.ToString() + " (ID)");
-                    parentNode.Charges.Add(childNode);
-                }
-            }
+            GuiFunctions.PopulateTreeViewWithSpeciesAndCharges(SelectableAnnotatedSpecies);
         }
 
         private void openFileListViewButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DataListView.Visibility == Visibility.Collapsed)
-            {
-                DataListView.Visibility = Visibility.Visible;
-                gridSplitter.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                DataListView.Visibility = Visibility.Collapsed;
-                gridSplitter.Visibility = Visibility.Hidden;
-            }
-        }
-    }
-
-    public interface INode
-    {
-        string Name { get; }
-    }
-
-    public class AnnotatedSpeciesNode : INode
-    {
-        public AnnotatedSpecies AnnotatedSpecies;
-        public ObservableCollection<INode> Charges { get; set; }
-        public string Name { get; }
-
-        public AnnotatedSpeciesNode(AnnotatedSpecies species)
-        {
-            Charges = new ObservableCollection<INode>();
-            Name = species.SpeciesLabel;
-            AnnotatedSpecies = species;
-        }
-    }
-
-    public class AnnotatedSpeciesNodeSpecificCharge : INode
-    {
-        public AnnotatedSpecies AnnotatedSpecies { get; set; }
-        public int Charge { get; set; }
-        public string Name { get; set; }
-
-        public AnnotatedSpeciesNodeSpecificCharge(AnnotatedSpecies species, int charge, string name = null)
-        {
-            AnnotatedSpecies = species;
-            Charge = charge;
-            Name = "z=" + charge.ToString();
+            GuiFunctions.ShowOrHideSpectraFileList(DataListView, gridSplitter);
         }
     }
 }

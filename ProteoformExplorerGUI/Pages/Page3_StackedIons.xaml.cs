@@ -1,15 +1,11 @@
-﻿using GUI;
-using GUI.Modules;
-using MassSpectrometry;
-using System;
+﻿using MassSpectrometry;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
+using ProteoformExplorer.Objects;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for Page3_StackedIons.xaml
@@ -31,11 +27,6 @@ namespace ProteoformExplorer
         private void Home_Click(object sender, RoutedEventArgs e)
         {
             this.NavigationService.Navigate(new Dashboard());
-        }
-
-        private void PlotSpecies(AnnotatedSpecies species, int? charge = null)
-        {
-            PlotSpeciesStacked(species, charge);
         }
 
         private void PlotSpeciesStacked(AnnotatedSpecies species, int? charge = null)
@@ -85,7 +76,7 @@ namespace ProteoformExplorer
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0);
+                        clearOldPlot: fileNum == 0, label: file.Key);
 
                     fileNum++;
                 }
@@ -125,12 +116,13 @@ namespace ProteoformExplorer
                 {
                     // plot summed charge states, one line per file
                     //TODO
+                    topPlotView.Plot.Clear();
                 }
                 else
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0, xOffset, yOffset, fill: true, fillBaseline: yOffset);
+                        clearOldPlot: fileNum == 0, xOffset, yOffset, fill: true, fillBaseline: yOffset, label: file.Key);
 
                     fileNum++;
                     xOffset -= offsetUnitStepX;
@@ -141,8 +133,8 @@ namespace ProteoformExplorer
             // zoom axes
             axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
             topPlotView.Plot.SetAxisLimits(
-                axisLimits.XMin - axisLimits.XSpan / 2, 
-                axisLimits.XMax + axisLimits.XSpan / 2, 
+                axisLimits.XMin - axisLimits.XSpan / 2,
+                axisLimits.XMax + axisLimits.XSpan / 2,
                 axisLimits.YMin - axisLimits.YSpan / 2,
                 axisLimits.YMax + axisLimits.YSpan / 2);
         }
@@ -153,69 +145,24 @@ namespace ProteoformExplorer
 
             if (species is AnnotatedSpeciesNode annotatedSpeciesNode)
             {
-                PlotSpecies(annotatedSpeciesNode.AnnotatedSpecies);
+                PlotSpeciesStacked(annotatedSpeciesNode.AnnotatedSpecies);
             }
             else if (species is AnnotatedSpeciesNodeSpecificCharge annotatedSpeciesNodeSpecificCharge)
             {
-                PlotSpecies(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
+                PlotSpeciesStacked(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
             }
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItems = ((ListView)sender).SelectedItems;
+            GuiFunctions.SpectraFileChanged(sender, e);
 
-            if (selectedItems != null && selectedItems.Count >= 1)
-            {
-                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
-
-                if (DataLoading.SpectraFiles.ContainsKey(spectraFileName))
-                {
-                    DataLoading.CurrentlySelectedFile = DataLoading.SpectraFiles.First(p => p.Key == spectraFileName);
-                }
-                else
-                {
-                    MessageBox.Show("The spectra file " + spectraFileName + " has not been loaded yet");
-                    return;
-                }
-            }
-
-            SelectableAnnotatedSpecies.Clear();
-            var nameWithoutExtension = Path.GetFileNameWithoutExtension(DataLoading.CurrentlySelectedFile.Key);
-            foreach (AnnotatedSpecies species in DataLoading.AllLoadedAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
-            {
-                var parentNode = new AnnotatedSpeciesNode(species);
-                SelectableAnnotatedSpecies.Add(parentNode);
-
-                if (species.DeconvolutionFeature != null)
-                {
-                    foreach (var charge in species.DeconvolutionFeature.Charges)
-                    {
-                        var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge);
-                        parentNode.Charges.Add(childNode);
-                    }
-                }
-                if (species.Identification != null)
-                {
-                    int charge = species.Identification.PrecursorChargeState;
-                    var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, charge.ToString() + " (ID)");
-                    parentNode.Charges.Add(childNode);
-                }
-            }
+            GuiFunctions.PopulateTreeViewWithSpeciesAndCharges(SelectableAnnotatedSpecies);
         }
 
         private void openFileListViewButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DataListView.Visibility == Visibility.Collapsed)
-            {
-                DataListView.Visibility = Visibility.Visible;
-                gridSplitter.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                DataListView.Visibility = Visibility.Collapsed;
-                gridSplitter.Visibility = Visibility.Hidden;
-            }
+            GuiFunctions.ShowOrHideSpectraFileList(DataListView, gridSplitter);
         }
     }
 }

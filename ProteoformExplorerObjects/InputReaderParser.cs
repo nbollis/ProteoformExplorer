@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
-namespace ProteoformExplorer
+namespace ProteoformExplorer.Objects
 {
     public static class InputReaderParser
     {

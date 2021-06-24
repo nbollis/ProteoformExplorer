@@ -1,18 +1,14 @@
 ﻿using Deconvoluter;
 using MassSpectrometry;
-using ProteoformExplorer;
-using ProteoformExplorerObjects;
+using ProteoformExplorer.Objects;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using UsefulProteomicsDatabases;
 
-namespace GUI.Pages
+namespace ProteoformExplorer.ProteoformExplorerGUI
 {
     /// <summary>
     /// Interaction logic for ML_Trainer.xaml
@@ -86,7 +82,7 @@ namespace GUI.Pages
         private void DisplayNextEnvelope()
         {
             spectrumPlot.Plot.Clear();
-            spectrumPlot.Plot.Grid(false);
+            spectrumPlot.Plot.Grid(GuiSettings.ShowChartGrid);
 
             DeconvolutedEnvelope env = envelopeCandidates[r.Next(0, envelopeCandidates.Count)];
 
