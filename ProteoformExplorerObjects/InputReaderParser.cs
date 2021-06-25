@@ -110,8 +110,14 @@ namespace ProteoformExplorer.Objects
 
             string baseSequence = items[SpeciesNameColumn];
             string modSequence = items[SpeciesNameColumn];
+
+            if (items[MonoisotopicMassColumn].Contains("|"))
+            {
+                return null;
+            }
+
             double mass = double.Parse(items[MonoisotopicMassColumn]);
-            int charge = int.Parse(items[ChargeColumn]);
+            int charge = (int)double.Parse(items[ChargeColumn]);
             int precursorScanNumber = int.Parse(items[ScanNumberColumn]);
 
             var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber);

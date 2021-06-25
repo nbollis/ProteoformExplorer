@@ -28,7 +28,7 @@
     <SolidColorBrush x:Key="PicoVoid" Color="#192a56" />
     <SolidColorBrush x:Key="Electromagnetic" Color="#2f3640" />
 
-    <!--<SolidColorBrush x:Key="Black" Color="Black" />
+    <SolidColorBrush x:Key="Black" Color="Black" />
     <SolidColorBrush x:Key="White" Color="White" />
     <SolidColorBrush x:Key="F1LightGray" Color="#F1F1F1" />
     <SolidColorBrush x:Key="20Black" Color="#202020" />
@@ -37,7 +37,7 @@
     <SolidColorBrush x:Key="A5LightBlue" Color="#A5D8DD" />
     <SolidColorBrush x:Key="EAOrange" Color="#EA6A47" />
     <SolidColorBrush x:Key="00BrightBlue" Color="#0091D5" />
-    <SolidColorBrush x:Key="F1LightBlue" Color="#f1f6ff" />-->
+    <SolidColorBrush x:Key="F1LightBlue" Color="#f1f6ff" />
 
     <!--Default button style-->
     <Style TargetType="Button">

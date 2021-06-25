@@ -81,8 +81,6 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data,
             WpfPlot spectrumPlot, out MsDataScan scan, int? charge = null)
         {
-            spectrumPlot.Plot.Clear();
-
             if (data.Value == null)
             {
                 scan = null;
@@ -97,6 +95,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 return;
             }
 
+            spectrumPlot.Plot.Clear();
             StyleSpectrumPlot(spectrumPlot, scan, data.Key);
 
             // add non-annotated peaks
@@ -219,6 +218,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
                 xicPlot.Plot.SetAxisLimitsY(yMin, yMax);
                 xicPlot.Plot.SetAxisLimitsX(xMin, xMax);
+
+                //xicPlot.Plot.SetViewLimits(xMin, xMax, yMin, yMax * 2);
             }
         }
 
@@ -257,6 +258,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
                 xicPlot.Plot.SetAxisLimitsY(yMin, yMax);
                 xicPlot.Plot.SetAxisLimitsX(xMin, xMax);
+
+                //xicPlot.Plot.SetViewLimits(xMin, xMax, yMin, yMax * 2);
             }
         }
 
@@ -300,6 +303,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                         Color.Blue, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
                 }
             }
+
+            plot.Plot.SetViewLimits(xMin: ticChromatogram.Min(p => p.X), xMax: ticChromatogram.Max(p => p.X), yMin: 0, yMax: ticChromatogram.Max(p => p.Y.Value) * 2.0);
         }
 
         public static void DrawPercentTicPerFileInfoDashboardPlot(WpfPlot plot, out List<string> errors)

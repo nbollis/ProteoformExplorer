@@ -40,7 +40,8 @@
             <Button x:Name="openFileListViewButton" Grid.Row="0" Content="&#9776;" FontWeight="Bold" HorizontalAlignment="Left" Width="30" Height="30" Margin="40 2" Click="openFileListViewButton_Click" />
             <!--<Button x:Name="settingsButton" Grid.Row="0" Content="&#9881;" FontWeight="Light" HorizontalAlignment="Right" Width="30" Height="30" Margin="2" />-->
 
-            <WpfPlot Name="topPlotView" Grid.Row="1" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown" />
+            <WpfPlot Name="topPlotView" Grid.Row="1" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown" 
+                     PreviewMouseLeftButtonUp="topPlotView_PreviewMouseLeftButtonUp" />
             <WpfPlot Name="bottomPlotView" Grid.Row="2" />
         </Grid>
     </Grid>
