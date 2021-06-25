@@ -11,6 +11,8 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Navigation;
 using UsefulProteomicsDatabases;
 
@@ -106,7 +108,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
         public static void SelectDataButton_Click(object sender, RoutedEventArgs e)
         {
-            string filterString = string.Join(";", InputReaderParser.AcceptedFileFormats.Select(p => "*" + p));
+            string filterString = string.Join(";",
+                InputReaderParser.AcceptedTextFileFormats.Concat(InputReaderParser.AcceptedSpectraFileFormats).Select(p => "*" + p));
 
             Microsoft.Win32.OpenFileDialog openFileDialog1 = new Microsoft.Win32.OpenFileDialog
             {
@@ -122,7 +125,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
                 foreach (var filePath in openFileDialog1.FileNames.OrderBy(p => p))
                 {
-                    FilesToLoad.Add(new FileForDataGrid(filePath));
+                    var ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+                    if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
+                    {
+                        FilesToLoad.Add(new FileForDataGrid(filePath));
+                    }
                 }
             }
         }
@@ -184,7 +192,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     var ext = Path.GetExtension(filePath).ToLowerInvariant();
 
-                    if (InputReaderParser.AcceptedFileFormats.Contains(ext))
+                    if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
                     {
                         FilesToLoad.Add(new FileForDataGrid(filePath));
                     }

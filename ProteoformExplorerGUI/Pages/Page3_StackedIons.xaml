@@ -47,7 +47,7 @@
                 <!--Area to select species to plot-->
                 <Grid Grid.Column="0">
                     <TreeView Name="SpeciesListView" ItemsSource="{Binding SelectableAnnotatedSpecies}" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
-                          VirtualizingPanel.IsVirtualizing="True">
+                          VirtualizingPanel.IsVirtualizing="True" PreviewMouseDoubleClick="SpeciesListView_PreviewMouseDoubleClick">
                         <TreeView.Resources>
                             <HierarchicalDataTemplate DataType="{x:Type local:AnnotatedSpeciesNode}" ItemsSource="{Binding Charges}">
                                 <StackPanel Orientation="Horizontal">

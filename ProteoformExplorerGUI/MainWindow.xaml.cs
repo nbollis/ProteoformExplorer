@@ -12,6 +12,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             InitializeComponent();
 
             //_NavigationFrame.Navigate(new ProteoformFamilyVisualization());
+            //Dashboard.TicDashboardItem = false;
             _NavigationFrame.Navigate(new DataLoading());
             //_NavigationFrame.Navigate(new ML_Trainer());
         }

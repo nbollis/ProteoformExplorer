@@ -204,5 +204,11 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         {
             GuiFunctions.ShowOrHideSpectraFileList(DataListView, gridSplitter);
         }
+
+        private void SpeciesListView_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // double click doesn't actually do anything. the program seems to crash when double-clicking, so 
+            // this event handler is here just to do nothing if a double-click occurs
+        }
     }
 }

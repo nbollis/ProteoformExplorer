@@ -16,13 +16,58 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         private static Page1_QuantifiedTic Page1;
         private static Page2_SpeciesView Page2;
         private static Page3_StackedIons Page3;
+        public static bool TicLollipopPlot = true;
+        public static bool EnvelopeCountPlot = true;
+        public static bool MassHistogramPlot = true;
+        public static bool TicDashboardItem = true;
+        public static bool SpeciesViewDashboardItem = true;
+        public static bool WaterfallPlotDashboardItem = true;
+        public static bool ProteoformVisualization = true;
 
         public Dashboard()
         {
             InitializeComponent();
             Loaders.LoadElements();
+            
+            new DataLoading();
 
             InitializeDashboard();
+
+            if (!TicLollipopPlot)
+            {
+                DashboardPlot1.Visibility = Visibility.Hidden;
+            }
+
+            if (!EnvelopeCountPlot)
+            {
+                DashboardPlot2.Visibility = Visibility.Hidden;
+            }
+
+            if (!MassHistogramPlot)
+            {
+                DashboardPlot3.Visibility = Visibility.Hidden;
+            }
+
+            if (!TicDashboardItem)
+            {
+                ticButton.Visibility = Visibility.Hidden;
+            }
+
+            if (!SpeciesViewDashboardItem)
+            {
+                speciesViewButton.Visibility = Visibility.Hidden;
+            }
+
+            if (!WaterfallPlotDashboardItem)
+            {
+                waterfallButton.Visibility = Visibility.Hidden;
+            }
+
+            if (!ProteoformVisualization)
+            {
+                //TODO
+                //DashboardPlot1.Visibility = Visibility.Hidden;
+            }
         }
 
         private void InitializeDashboard()

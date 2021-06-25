@@ -43,7 +43,7 @@
         <WpfPlot Name="DashboardPlot3" Grid.Row="1" Grid.Column="2" Margin="5" />
 
         <!--TIC View Button-->
-        <Button Grid.Row="2" Grid.Column="0" Click="Chart1_Click" Margin="5" Background="White" >
+        <Button Name="ticButton" Grid.Row="2" Grid.Column="0" Click="Chart1_Click" Margin="5" Background="White" >
             <Button.ContentTemplate>
                 <DataTemplate>
                     <Grid>
@@ -62,7 +62,7 @@
         </Button>
 
         <!--Species View Button-->
-        <Button Grid.Row="2" Grid.Column="1" Click="Chart2_Click" Margin="5" Background="White" >
+        <Button Name="speciesViewButton" Grid.Row="2" Grid.Column="1" Click="Chart2_Click" Margin="5" Background="White" >
             <Button.ContentTemplate>
                 <DataTemplate>
                     <Grid>
@@ -81,7 +81,7 @@
         </Button>
 
         <!--Multifile XIC View Button-->
-        <Button Grid.Row="2" Grid.Column="2" Click="Chart3_Click" Margin="5" Background="White" >
+        <Button Name="waterfallButton" Grid.Row="2" Grid.Column="2" Click="Chart3_Click" Margin="5" Background="White" >
             <Button.ContentTemplate>
                 <DataTemplate>
                     <Grid>

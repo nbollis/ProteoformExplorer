@@ -28,8 +28,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             InitializeComponent();
             DataListView.ItemsSource = DataLoading.LoadedSpectraFiles;
 
-            // left click + pan is replaced by left click + integrate for this chart
-            topPlotView.Configuration.LeftClickDragPan = false;
+            // right click to zoom is replaced by right click to integrate for this chart
+            topPlotView.Configuration.RightClickDragZoom = false;
 
             PercentDeconAnnotation = new Text();
             PercentDeconAnnotation.Color = GuiSettings.DeconvolutedColor;
@@ -86,7 +86,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             }
         }
 
-        private void topPlotView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void topPlotView_PreviewMouseLeftOrRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (DataLoading.CurrentlySelectedFile.Value == null)
             {
@@ -115,7 +115,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             GuiFunctions.ShowOrHideSpectraFileList(DataListView, gridSplitter);
         }
 
-        private void topPlotView_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void topPlotView_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (IntegratedAreaStart == null)
             {
@@ -133,13 +133,13 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             // shade the area
             if (Math.Abs(integratedAreaEnd - integratedAreaStart) > 0.001)
             {
-                List<(string label, double area, double xLoc, double yLoc)> integrations = new List<(string, double, double, double)>();
+                List<(string label, double summedTic, double xLoc, double yLoc)> integrations = new List<(string, double, double, double)>();
 
                 foreach (var item in topPlotView.Plot.GetPlottables())
                 {
                     if (item is ScatterPlot scatter)
                     {
-                        double area = 0;
+                        double summedTic = 0;
 
                         var pointsX = scatter.Xs;
                         var pointsY = scatter.Ys;
@@ -176,11 +176,11 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                         xs[xs.Length - 1] = pointsX[endInd];
                         ys[xs.Length - 1] = 0;
 
-                        var color = Color.FromArgb(50, scatter.Color);
+                        var color = Color.FromArgb(20, scatter.Color);
                         var poly = topPlotView.Plot.AddPolygon(xs, ys, fillColor: color);
-                        area = Math.Abs(polygonArea(xs, ys));
+                        summedTic = ys.Sum();
 
-                        integrations.Add((scatter.Label, area, xs[1], ys[1]));
+                        integrations.Add((scatter.Label, summedTic, xs[1], ys[1]));
                     }
                 }
 
@@ -188,11 +188,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     var tic = integrations.First(p => p.label == "TIC");
                     var deconTic = integrations.First(p => p.label == "Deconvoluted TIC");
-                    double percentTicDeconvoluted = deconTic.area / tic.area;
+                    double percentTicDeconvoluted = deconTic.summedTic / tic.summedTic;
 
+                    var axisDims = topPlotView.Plot.GetAxisLimits();
                     PercentDeconAnnotation.Label = (percentTicDeconvoluted * 100).ToString("F1") + "%";
                     PercentDeconAnnotation.X = deconTic.xLoc;
-                    PercentDeconAnnotation.Y = deconTic.yLoc;
+                    PercentDeconAnnotation.Y = axisDims.YMax;
+                    PercentDeconAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
+                    PercentDeconAnnotation.FontBold = true;
 
                     if (!topPlotView.Plot.GetPlottables().Contains(PercentDeconAnnotation))
                     {
@@ -203,11 +206,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     var tic = integrations.First(p => p.label == "TIC");
                     var identTic = integrations.First(p => p.label == "Identified TIC");
-                    double percentTicIdentified = identTic.area / tic.area;
+                    double percentTicIdentified = identTic.summedTic / tic.summedTic;
 
+                    var axisDims = topPlotView.Plot.GetAxisLimits();
                     PercentIdentifiedAnnotation.Label = (percentTicIdentified * 100).ToString("F1") + "%";
                     PercentIdentifiedAnnotation.X = identTic.xLoc;
-                    PercentIdentifiedAnnotation.Y = identTic.yLoc;
+                    PercentIdentifiedAnnotation.Y = axisDims.YCenter;
+                    PercentIdentifiedAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
+                    PercentDeconAnnotation.FontBold = true;
 
                     if (!topPlotView.Plot.GetPlottables().Contains(PercentIdentifiedAnnotation))
                     {
@@ -215,21 +221,6 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     }
                 }
             }
-        }
-
-        // from https://www.mathopenref.com/coordpolygonarea.html
-        private double polygonArea(double[] xs, double[] ys)
-        {
-            double area = 0;   // Accumulates area 
-            int numPoints = xs.Length;
-            int j = numPoints - 1;
-
-            for (int i = 0; i < numPoints; i++)
-            {
-                area += (xs[j] + xs[i]) * (ys[j] - ys[i]);
-                j = i;  //j is previous vertex to i
-            }
-            return area / 2;
         }
 
         private void ClearIntegratedAreasAndTextAnnotations()

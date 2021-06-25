@@ -10,6 +10,27 @@
       AllowDrop="True" 
       Drop="Window_Drop">
 
+    <Page.Resources>
+        <!--Default ListViewItem style-->
+        <Style TargetType="ListViewItem">
+            <Setter Property="Foreground" Value="{Binding ForegroundColor}"/>
+            <Setter Property="Background" Value="{Binding BackgroundColor}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="100"/>
+            <Setter Property="Width" Value="300"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+
+            <Style.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="5"/>
+                </Style>
+            </Style.Resources>
+        </Style>
+    </Page.Resources>
+
     <Grid Background="White">
         <Grid.RowDefinitions>
             <RowDefinition Height="50" />
@@ -48,6 +69,15 @@
             </TextBlock>
         </Border>
 
-        <ListView Grid.Row="1" Name="filesToLoad" Margin="30 10" HorizontalAlignment="Center" Width="600" Height="500" Visibility="Hidden" BorderThickness="0"/>
+        <ScrollViewer Grid.Row="1" Margin="0">
+            <ListView ScrollViewer.HorizontalScrollBarVisibility="Disabled" Name="filesToLoad" HorizontalAlignment="Center" 
+                      Visibility="Hidden" BorderThickness="0" Margin="0">
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+            </ListView>
+        </ScrollViewer>
     </Grid>
 </Page>

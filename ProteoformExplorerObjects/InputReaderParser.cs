@@ -8,7 +8,8 @@ namespace ProteoformExplorer.Objects
     public static class InputReaderParser
     {
         public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, ProteoformExplorer, MetaMorpheus, TDPortal, Unknown }
-        public static List<string> AcceptedFileFormats = new List<string> { ".raw", ".mzml", ".psmtsv", ".tsv", ".txt" };
+        public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt" };
+        public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
         private static int SpeciesNameColumn;
         private static int SpectraFileNameColumn;
@@ -220,7 +221,7 @@ namespace ProteoformExplorer.Objects
             return species;
         }
 
-        private static InputSourceType GetFileTypeFromHeader(string line)
+        public static InputSourceType GetFileTypeFromHeader(string line)
         {
             var split = line.Split(ItemDelimiter).Select(p => p.Trim()).ToArray();
 
