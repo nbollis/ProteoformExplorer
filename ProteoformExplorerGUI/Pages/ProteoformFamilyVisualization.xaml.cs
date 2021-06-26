@@ -19,6 +19,9 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         {
             InitializeComponent();
 
+            // this gets DPI scaling info
+            GuiFunctions.StylePlot(pfmFamilyVisualizationChart);
+
             var exampleFamily = new List<VisualizedProteoformFamilyMember>
             {
                 new VisualizedProteoformFamilyMember(VisualizedType.Gene, @"TestGene", 10, 0),
@@ -38,7 +41,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             // unsubscribe from the default right-click menu event
             pfmFamilyVisualizationChart.RightClicked -= pfmFamilyVisualizationChart.DefaultRightClickEvent;
 
-            // add your own custom event
+            // add custom right-click event
             pfmFamilyVisualizationChart.RightClicked += DeployCustomMenu;
         }
 
@@ -52,9 +55,10 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             {
                 foreach (var connection in proteoform.Node.Edges)
                 {
-                    connection.VisualRepresentation.LineWidth = 1;
+                    connection.VisualRepresentation.LineWidth = 1 * GuiSettings.DpiScalingX;
                     connection.VisualRepresentation.Color = Color.FromArgb(124, 124, 124); // gray
                     connection.TextAnnotation.Color = Color.FromArgb(255, 113, 79); // orange text annotation for edge
+                    connection.TextAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
 
                     pfmFamilyVisualizationChart.Plot.Add(connection.VisualRepresentation);
                     pfmFamilyVisualizationChart.Plot.Add(connection.TextAnnotation);
@@ -121,80 +125,47 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         private void BuildProteoformVisualRepresentation()
         {
             Node.TextAnnotation.Color = Color.Black; // black text annotation for node
+            Node.TextAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
 
             switch (Type)
             {
                 case VisualizedType.Gene:
-                    var qualitativeMarker = new ScatterPlot(new double[] { Node.X }, new double[] { Node.Y });
-                    qualitativeMarker.MarkerSize = 70;
-                    qualitativeMarker.MarkerShape = ScottPlot.MarkerShape.filledSquare;
-                    qualitativeMarker.Color = Color.FromArgb(255, 116, 175); // pink
+                    var qualitativeMarker = GetSquare(Node.X, Node.Y, 1, Color.FromArgb(255, 116, 175)); // pink
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.Transcript:
-                    qualitativeMarker = new ScatterPlot(new double[] { Node.X }, new double[] { Node.Y });
-                    qualitativeMarker.MarkerSize = 70;
-                    qualitativeMarker.MarkerShape = ScottPlot.MarkerShape.filledDiamond;
-                    qualitativeMarker.Color = Color.FromArgb(255, 116, 175); // pink
+                    qualitativeMarker = GetDiamond(Node.X, Node.Y, 1, Color.FromArgb(255, 116, 175)); // pink
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.TheoreticalProteoform:
-                    qualitativeMarker = new ScatterPlot(new double[] { Node.X }, new double[] { Node.Y });
-                    qualitativeMarker.MarkerSize = 70;
-                    qualitativeMarker.MarkerShape = ScottPlot.MarkerShape.filledCircle;
-                    qualitativeMarker.Color = Color.FromArgb(0, 183, 62); // green
+                    qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(0, 183, 62)); // green
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.TopDownExperimentalProteoform:
-                    qualitativeMarker = new ScatterPlot(new double[] { Node.X }, new double[] { Node.Y });
-                    qualitativeMarker.MarkerSize = 70;
-                    qualitativeMarker.MarkerShape = ScottPlot.MarkerShape.filledCircle;
-                    qualitativeMarker.Color = Color.FromArgb(144, 123, 189); // purple
+                    qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(144, 123, 189)); // purple
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.IntactMassExperimentalProteoform:
-                    qualitativeMarker = new ScatterPlot(new double[] { Node.X }, new double[] { Node.Y });
-                    qualitativeMarker.MarkerSize = 70;
-                    qualitativeMarker.MarkerShape = ScottPlot.MarkerShape.filledCircle;
-                    qualitativeMarker.Color = Color.FromArgb(0, 193, 245); // blue
+                    qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(0, 193, 245)); // blue
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.QuantifiedExperimentalProteoform:
                     List<IPlottable> polygons = new List<IPlottable>();
-                    (double x, double y) centerOfCircle = (Node.X, Node.Y);
                     double volume = QuantifiedIntensities.Sum();
                     double radius = Math.Sqrt(volume / Math.PI);
-                    double radiansStep = 0.01;
 
                     double radianStart = Math.PI / 2.0;
+
                     foreach (var intensity in QuantifiedIntensities)
                     {
-                        List<double> thetas = new List<double>();
                         double endRadians = radianStart + (intensity / volume) * (2.0 * Math.PI);
 
-                        for (double theta = radianStart; theta <= endRadians; theta += radiansStep)
-                        {
-                            thetas.Add(theta);
-                        }
-
-                        // convert radians to cartesian
-                        (double[] xs, double[] ys) = ScottPlot.Tools.ConvertPolarCoordinates(thetas.Select(p => radius).ToArray(), thetas.ToArray());
-
-                        List<(double x, double y)> polygonPoints = new List<(double x, double y)>();
-
-                        polygonPoints.Add(centerOfCircle);
-                        for (int i = 0; i < xs.Length; i++)
-                        {
-                            polygonPoints.Add((xs[i] + centerOfCircle.x, ys[i] + centerOfCircle.y));
-                        }
-
-                        var poly = new Polygon(polygonPoints.Select(p => p.x).ToArray(), polygonPoints.Select(p => p.y).ToArray());
-                        poly.LineWidth = 0;
+                        var poly = GetSemiCircle(radianStart, endRadians, Node.X, Node.Y, radius, Color.White);
                         polygons.Add(poly);
 
                         radianStart = endRadians;
@@ -207,26 +178,101 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     if (IsStatisticallySignificantlyDifferent)
                     {
                         // add an orange ring around the proteoform
-                        List<double> thetas = new List<double>();
+                        var outline = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, radius, Color.FromArgb(243, 112, 84), radius * 0.9);
 
-                        for (double theta = 0; theta <= 2.0 * Math.PI; theta += radiansStep)
-                        {
-                            thetas.Add(theta);
-                        }
-
-                        // convert radians to cartesian
-                        (double[] xs, double[] ys) = ScottPlot.Tools.ConvertPolarCoordinates(thetas.Select(p => radius).ToArray(), thetas.ToArray());
-                        var scatter = new ScatterPlot(xs.Select(p => p + centerOfCircle.x).ToArray(), ys.Select(p => p + centerOfCircle.y).ToArray());
-                        scatter.LineWidth = 10;
-                        scatter.MarkerSize = 0;
-                        scatter.Color = Color.FromArgb(243, 112, 84); // orange
-                        polygons.Add(scatter);
+                        polygons.Add(outline);
                     }
 
                     Node.VisualRepresentation = new List<IPlottable>(polygons);
 
                     break;
             }
+        }
+
+        private Polygon GetSemiCircle(double radianStart, double radianEnd, double xCenter, double yCenter, double radius, Color color, double donutHoleSize = 0)
+        {
+            List<double> thetas = new List<double>();
+            double radiansStep = 0.01;
+
+            for (double theta = radianStart; theta <= radianEnd; theta += radiansStep)
+            {
+                thetas.Add(theta);
+            }
+
+            // convert radians to cartesian
+            (double[] xs, double[] ys) = ScottPlot.Tools.ConvertPolarCoordinates(thetas.Select(p => radius).ToArray(), thetas.ToArray());
+
+            List<(double x, double y)> polygonPoints = new List<(double x, double y)>();
+
+            if (radianEnd % (2 * Math.PI) != radianStart)
+            {
+                polygonPoints.Add((xCenter, yCenter));
+            }
+
+            for (int i = 0; i < xs.Length; i++)
+            {
+                polygonPoints.Add((xs[i] + xCenter, ys[i] + yCenter));
+            }
+
+            if (donutHoleSize > 0)
+            {
+                thetas.Clear();
+
+                for (double theta = radianEnd; theta >= radianStart; theta -= radiansStep)
+                {
+                    thetas.Add(theta);
+                }
+
+                (xs, ys) = ScottPlot.Tools.ConvertPolarCoordinates(thetas.Select(p => donutHoleSize).ToArray(), thetas.ToArray());
+                for (int i = 0; i < xs.Length; i++)
+                {
+                    polygonPoints.Add((xs[i] + xCenter, ys[i] + yCenter));
+                }
+            }
+
+            var poly = new Polygon(polygonPoints.Select(p => p.x).ToArray(), polygonPoints.Select(p => p.y).ToArray());
+            poly.FillColor = color;
+            poly.Fill = true;
+            poly.LineWidth = 0;
+
+            return poly;
+        }
+
+        private Polygon GetSquare(double xCenter, double yCenter, double sideLength, Color color)
+        {
+            var polygonPoints = new List<(double x, double y)>
+            {
+                (xCenter - sideLength / 2, yCenter - sideLength / 2),
+                (xCenter + sideLength / 2, yCenter - sideLength / 2),
+                (xCenter + sideLength / 2, yCenter + sideLength / 2),
+                (xCenter - sideLength / 2, yCenter + sideLength / 2),
+            };
+
+            var poly = new Polygon(polygonPoints.Select(p => p.x).ToArray(), polygonPoints.Select(p => p.y).ToArray());
+            poly.FillColor = color;
+            poly.Fill = true;
+            poly.LineWidth = 0;
+
+            return poly;
+        }
+
+        private Polygon GetDiamond(double xCenter, double yCenter, double sideLength, Color color)
+        {
+            // TODO
+            var polygonPoints = new List<(double x, double y)>
+            {
+                (xCenter, yCenter - sideLength / 2),
+                (xCenter + sideLength / 2, yCenter - sideLength / 2),
+                (xCenter + sideLength / 2, yCenter + sideLength / 2),
+                (xCenter - sideLength / 2, yCenter + sideLength / 2),
+            };
+
+            var poly = new Polygon(polygonPoints.Select(p => p.x).ToArray(), polygonPoints.Select(p => p.y).ToArray());
+            poly.FillColor = color;
+            poly.Fill = true;
+            poly.LineWidth = 0;
+
+            return poly;
         }
     }
 }
