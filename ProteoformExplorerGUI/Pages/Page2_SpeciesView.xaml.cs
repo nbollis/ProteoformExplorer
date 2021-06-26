@@ -66,7 +66,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             {
                 if (species.DeconvolutionFeature != null)
                 {
-                    chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
+                    chargesToPlot.AddRange(species.DeconvolutionFeature.Charges.OrderBy(p => p));
                 }
                 else if (species.Identification != null)
                 {
@@ -105,7 +105,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
                     if (env != null)
                     {
-                        peaksToMakeXicsFor.AddRange(env.Peaks.Select(p => (p.ExperimentalMz, p.Charge)));
+                        peaksToMakeXicsFor.AddRange(env.Peaks.OrderBy(p => p.ExperimentalMz).Select(p => (p.ExperimentalMz, p.Charge)));
                     }
                     else
                     {

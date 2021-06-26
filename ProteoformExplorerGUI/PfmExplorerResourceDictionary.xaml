@@ -23,22 +23,14 @@
     <SolidColorBrush x:Key="BlueNights" Color="#353b48" />
 
     <SolidColorBrush x:Key="HarleyDavidsonOrange" Color="#c23616" />
-    <SolidColorBrush x:Key="HindOfPensive" Color="#dcdde1" />
+    <SolidColorBrush x:Key="HintOfPensive" Color="#dcdde1" />
     <SolidColorBrush x:Key="ChainGangGrey" Color="#718093" />
     <SolidColorBrush x:Key="PicoVoid" Color="#192a56" />
     <SolidColorBrush x:Key="Electromagnetic" Color="#2f3640" />
 
     <SolidColorBrush x:Key="Black" Color="Black" />
     <SolidColorBrush x:Key="White" Color="White" />
-    <SolidColorBrush x:Key="F1LightGray" Color="#F1F1F1" />
-    <SolidColorBrush x:Key="20Black" Color="#202020" />
-    <SolidColorBrush x:Key="7EGray" Color="#7E909A" />
-    <SolidColorBrush x:Key="1CDarkBlue" Color="#1C4E80" />
-    <SolidColorBrush x:Key="A5LightBlue" Color="#A5D8DD" />
-    <SolidColorBrush x:Key="EAOrange" Color="#EA6A47" />
-    <SolidColorBrush x:Key="00BrightBlue" Color="#0091D5" />
-    <SolidColorBrush x:Key="F1LightBlue" Color="#f1f6ff" />
-
+    
     <!--Default button style-->
     <Style TargetType="Button">
         <Setter Property="BorderThickness" Value="0"/>
@@ -62,7 +54,7 @@
     <!--Default ListViewItem style-->
     <Style TargetType="ListViewItem">
         <Setter Property="Foreground" Value="{StaticResource Black}"/>
-        <Setter Property="Background" Value="{StaticResource HindOfPensive}"/>
+        <Setter Property="Background" Value="{StaticResource HintOfPensive}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="BorderThickness" Value="0"/>

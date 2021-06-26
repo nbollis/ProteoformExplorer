@@ -102,6 +102,13 @@ namespace ProteoformExplorer.Objects
                 }
             }
 
+            int linesWithSpecies = lineNum - 1; // first line is header
+
+            if (linesWithSpecies != listOfSpecies.Count)
+            {
+                errors.Add(filePath + ": " + (linesWithSpecies - listOfSpecies.Count) + " lines of text did not contain valid species");
+            }
+
             return listOfSpecies;
         }
 
@@ -120,9 +127,9 @@ namespace ProteoformExplorer.Objects
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             int charge = (int)double.Parse(items[ChargeColumn]);
             int precursorScanNumber = int.Parse(items[ScanNumberColumn]);
+            string fileNameWithExtension = items[SpectraFileNameColumn];
 
-            var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber);
-
+            var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber, fileNameWithExtension);
 
             var species = new AnnotatedSpecies(id);
 
@@ -138,8 +145,9 @@ namespace ProteoformExplorer.Objects
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             // TD portal does not report precursor charge
             //TODO: figure out charge + precursor one based scan num
+            string fileNameWithExtension = items[SpectraFileNameColumn];
 
-            var id = new Identification(baseSequence, modSequence, mass, -1, -1);
+            var id = new Identification(baseSequence, modSequence, mass, -1, -1, fileNameWithExtension);
 
             var species = new AnnotatedSpecies(id);
 

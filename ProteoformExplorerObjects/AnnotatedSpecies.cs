@@ -18,6 +18,7 @@
         {
             SpeciesLabel = identification.FullSequence;
             Identification = identification;
+            SpectraFileNameWithoutExtension = identification.SpectraFileNameWithoutExtension;
         }
 
         public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature, Identification identification)

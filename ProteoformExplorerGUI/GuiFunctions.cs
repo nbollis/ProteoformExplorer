@@ -619,14 +619,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
         public static void ShowOrHideSpectraFileList(ListView DataListView, GridSplitter gridSplitter)
         {
-            if (DataListView.Visibility == Visibility.Collapsed)
+            if (DataListView.Visibility == Visibility.Hidden)
             {
                 DataListView.Visibility = Visibility.Visible;
                 gridSplitter.Visibility = Visibility.Visible;
             }
             else
             {
-                DataListView.Visibility = Visibility.Collapsed;
+                DataListView.Visibility = Visibility.Hidden;
                 gridSplitter.Visibility = Visibility.Hidden;
             }
         }

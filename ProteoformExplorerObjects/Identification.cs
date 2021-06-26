@@ -1,4 +1,6 @@
-﻿namespace ProteoformExplorer.Objects
+﻿using System.IO;
+
+namespace ProteoformExplorer.Objects
 {
     public class Identification
     {
@@ -7,13 +9,18 @@
         public double MonoisotopicMass { get; private set; }
         public int PrecursorChargeState { get; private set; }
         public int OneBasedPrecursorScanNumber { get; private set; }
-        public Identification(string baseSequence, string modifiedSequence, double monoMass, int chargeState, int precursorScanNum)
+        public string SpectraFileNameWithoutExtension { get; private set; }
+
+        public Identification(string baseSequence, string modifiedSequence, double monoMass, int chargeState, 
+            int precursorScanNum, string spectraFileNameWithoutExtension)
         {
             this.FullSequence = modifiedSequence;
             this.BaseSequence = baseSequence;
             this.MonoisotopicMass = monoMass;
             this.PrecursorChargeState = chargeState;
             this.OneBasedPrecursorScanNumber = precursorScanNum;
+
+            this.SpectraFileNameWithoutExtension = Path.GetFileNameWithoutExtension(spectraFileNameWithoutExtension);
         }
     }
 }
