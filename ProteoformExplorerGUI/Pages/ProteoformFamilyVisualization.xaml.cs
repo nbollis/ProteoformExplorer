@@ -1,10 +1,12 @@
-﻿using ScottPlot.Plottable;
+﻿using ProteoformExplorer.Objects;
+using ScottPlot.Plottable;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ProteoformExplorer.ProteoformExplorerGUI
 {
@@ -15,6 +17,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
     /// </summary>
     public partial class ProteoformFamilyVisualization : Page
     {
+        private static List<VisualizedProteoformFamilyMember> AllVisualizedProteoforms;
+
         public ProteoformFamilyVisualization()
         {
             InitializeComponent();
@@ -24,11 +28,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
             var exampleFamily = new List<VisualizedProteoformFamilyMember>
             {
-                new VisualizedProteoformFamilyMember(VisualizedType.Gene, @"TestGene", 10, 0),
-                new VisualizedProteoformFamilyMember(VisualizedType.TheoreticalProteoform, @"Unmodified", 15, 5),
-                new VisualizedProteoformFamilyMember(VisualizedType.TopDownExperimentalProteoform, @"Unmodified", 15, 10),
-                new VisualizedProteoformFamilyMember(VisualizedType.IntactMassExperimentalProteoform, @"Acetyl", 5, 5),
-                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Unmodified", 7, 7, new List<double> { 1.0, 2.0 }, isStatisticallySignificant: true),
+                new VisualizedProteoformFamilyMember(VisualizedType.Gene, @"TestGene", 10, 0, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.TheoreticalProteoform, @"Unmodified", 15, 5, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.TopDownExperimentalProteoform, @"Unmodified", 15, 10, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.IntactMassExperimentalProteoform, @"Acetyl", 5, 5, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Unmodified", 7, 7, null,
+                    new List<double> { 1.0, 2.0 }, isStatisticallySignificant: true),
             };
 
             exampleFamily[0].Node.AddConnection(exampleFamily[1].Node, "0 Da");
@@ -38,11 +43,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
             DrawProteoformFamily(exampleFamily);
 
+            AllVisualizedProteoforms = exampleFamily;
+
             // unsubscribe from the default right-click menu event
             pfmFamilyVisualizationChart.RightClicked -= pfmFamilyVisualizationChart.DefaultRightClickEvent;
+            pfmFamilyVisualizationChart.Configuration.RightClickDragZoom = false;
 
             // add custom right-click event
-            pfmFamilyVisualizationChart.RightClicked += DeployCustomMenu;
+            //pfmFamilyVisualizationChart.RightClicked += DeployCustomMenu;
         }
 
         public void DrawProteoformFamily(List<VisualizedProteoformFamilyMember> proteoformFamily)
@@ -82,6 +90,10 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
         private void DeployCustomMenu(object sender, EventArgs e)
         {
+
+            // get the item that was clicked
+            //PfmXplorerUtil.GetXPositionFromMouseClickOnChart(sender, (MouseButtonEventArgs) e);
+
             //var test = new List<string> { "test1", "test2", "test3" };
             //var submenu = new ContextMenu();
             ////foreach (var file in DataLoading.SpectraFiles)
@@ -103,6 +115,48 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
             //rightClickMenu.IsOpen = true;
         }
+
+        private void pfmFamilyVisualizationChart_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            int pixelX = (int)e.MouseDevice.GetPosition(pfmFamilyVisualizationChart).X;
+            int pixelY = (int)e.MouseDevice.GetPosition(pfmFamilyVisualizationChart).Y;
+
+            (double coordinateX, double coordinateY) = pfmFamilyVisualizationChart.GetMouseCoordinates();
+
+            var closestPfm = AllVisualizedProteoforms
+                .OrderBy(p => Math.Sqrt(Math.Pow(coordinateX - p.Node.X, 2) + Math.Pow(coordinateY - p.Node.Y, 2)))
+                .FirstOrDefault();
+
+            if (closestPfm == null
+                || closestPfm.Type == VisualizedType.Gene
+                || closestPfm.Type == VisualizedType.Transcript
+                || closestPfm.Type == VisualizedType.TheoreticalProteoform)
+            {
+                return;
+            }
+
+            var nodeItems = closestPfm.Node.VisualRepresentation.Where(p => p is Polygon).ToList();
+
+            // get the radius
+            double radius = double.NegativeInfinity;
+            foreach (var item in nodeItems)
+            {
+                var poly = (Polygon)item;
+                radius = Math.Max(radius, Math.Abs(poly.Ys.Max() - closestPfm.Node.Y));
+            }
+
+            bool clickLocationIsInsideCircle = Math.Sqrt(Math.Pow(coordinateX - closestPfm.Node.X, 2) + Math.Pow(coordinateY - closestPfm.Node.Y, 2)) < radius;
+
+            if (clickLocationIsInsideCircle)
+            {
+                // this is just temporary. TODO: show right-click menu to see XIC plotting options
+                foreach (var item in nodeItems)
+                {
+                    var poly = (Polygon)item;
+                    poly.HatchStyle = ScottPlot.Drawing.HatchStyle.StripedDownwardDiagonal;
+                }
+            }
+        }
     }
 
     public class VisualizedProteoformFamilyMember
@@ -112,13 +166,16 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         public List<double> QuantifiedIntensities { get; private set; }
         public bool IsStatisticallySignificantlyDifferent { get; private set; }
 
-        public VisualizedProteoformFamilyMember(VisualizedType type, string nodeAnnotation, double x, double y, List<double> quantifiedIntensities = null,
-            bool isStatisticallySignificant = false)
+        public AnnotatedSpecies AnnotatedSpecies { get; private set; }
+
+        public VisualizedProteoformFamilyMember(VisualizedType type, string nodeAnnotation, double x, double y, AnnotatedSpecies species,
+            List<double> quantifiedIntensities = null, bool isStatisticallySignificant = false)
         {
             Type = type;
             Node = new Node(x, y, nodeAnnotation);
             QuantifiedIntensities = quantifiedIntensities;
             IsStatisticallySignificantlyDifferent = isStatisticallySignificant;
+            AnnotatedSpecies = species;
             BuildProteoformVisualRepresentation();
         }
 
@@ -130,12 +187,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             switch (Type)
             {
                 case VisualizedType.Gene:
-                    var qualitativeMarker = GetSquare(Node.X, Node.Y, 1, Color.FromArgb(255, 116, 175)); // pink
+                    var qualitativeMarker = GetSquare(Node.X, Node.Y, 2, Color.FromArgb(255, 116, 175)); // pink
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
                 case VisualizedType.Transcript:
-                    qualitativeMarker = GetDiamond(Node.X, Node.Y, 1, Color.FromArgb(255, 116, 175)); // pink
+                    qualitativeMarker = GetDiamond(Node.X, Node.Y, 2, Color.FromArgb(255, 116, 175)); // pink
                     Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
                     break;
 
@@ -256,15 +313,14 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             return poly;
         }
 
-        private Polygon GetDiamond(double xCenter, double yCenter, double sideLength, Color color)
+        private Polygon GetDiamond(double xCenter, double yCenter, double height, Color color)
         {
-            // TODO
             var polygonPoints = new List<(double x, double y)>
             {
-                (xCenter, yCenter - sideLength / 2),
-                (xCenter + sideLength / 2, yCenter - sideLength / 2),
-                (xCenter + sideLength / 2, yCenter + sideLength / 2),
-                (xCenter - sideLength / 2, yCenter + sideLength / 2),
+                (xCenter, yCenter - height / 2),
+                (xCenter + height / 2, yCenter),
+                (xCenter, yCenter + height / 2),
+                (xCenter - height / 2, yCenter),
             };
 
             var poly = new Polygon(polygonPoints.Select(p => p.x).ToArray(), polygonPoints.Select(p => p.y).ToArray());

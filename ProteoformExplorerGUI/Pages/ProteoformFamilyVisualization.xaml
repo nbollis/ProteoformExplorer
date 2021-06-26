@@ -17,6 +17,6 @@
         <!--Navigation buttons-->
         <Button x:Name="backToDashboardButton" Grid.Row="0" Content="&lt;" FontWeight="Bold" HorizontalAlignment="Left" 
                 Width="30" Height="30" Margin="2" Click="backToDashboardButton_Click" />
-        <WpfPlot Name="pfmFamilyVisualizationChart" Grid.Row="1" />
+        <WpfPlot Name="pfmFamilyVisualizationChart" Grid.Row="1" PreviewMouseRightButtonDown="pfmFamilyVisualizationChart_PreviewMouseRightButtonDown" />
     </Grid>
 </Page>
