@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29418.71
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorerGUI", "ProteoformExplorerGUI\ProteoformExplorerGUI.csproj", "{89178152-40B8-4B96-BBC7-45BBEC8585D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorer.Wpf", "ProteoformExplorer.Wpf\ProteoformExplorer.Wpf.csproj", "{89178152-40B8-4B96-BBC7-45BBEC8585D1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{24F7F5C4-2EDF-4967-A93D-DE417BA11794}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorer.Tests", "ProteoformExplorer.Tests\ProteoformExplorer.Tests.csproj", "{24F7F5C4-2EDF-4967-A93D-DE417BA11794}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorerObjects", "ProteoformExplorerObjects\ProteoformExplorerObjects.csproj", "{0FA69990-9A4E-437B-A312-8D6873D13041}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorer.Core", "ProteoformExplorer.Core\ProteoformExplorer.Core.csproj", "{0FA69990-9A4E-437B-A312-8D6873D13041}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Deconvoluter", "Deconvoluter\Deconvoluter.csproj", "{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorer.Deconvoluter", "ProteoformExplorer.Deconvoluter\ProteoformExplorer.Deconvoluter.csproj", "{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProteoformExplorer.GuiFunctions", "ProteoformExplorer.GuiFunctions\ProteoformExplorer.GuiFunctions.csproj", "{8D3B637B-CC81-41F1-81E6-BF6048303375}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,22 +19,36 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Debug|x64.ActiveCfg = Debug|x64
 		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Debug|x64.Build.0 = Debug|x64
+		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Release|Any CPU.ActiveCfg = Release|x64
 		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Release|x64.ActiveCfg = Release|x64
 		{89178152-40B8-4B96-BBC7-45BBEC8585D1}.Release|x64.Build.0 = Release|x64
+		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Debug|x64.ActiveCfg = Debug|x64
 		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Debug|x64.Build.0 = Debug|x64
+		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Release|Any CPU.ActiveCfg = Release|x64
 		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Release|x64.ActiveCfg = Release|x64
 		{24F7F5C4-2EDF-4967-A93D-DE417BA11794}.Release|x64.Build.0 = Release|x64
+		{0FA69990-9A4E-437B-A312-8D6873D13041}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{0FA69990-9A4E-437B-A312-8D6873D13041}.Debug|x64.ActiveCfg = Debug|x64
 		{0FA69990-9A4E-437B-A312-8D6873D13041}.Debug|x64.Build.0 = Debug|x64
+		{0FA69990-9A4E-437B-A312-8D6873D13041}.Release|Any CPU.ActiveCfg = Release|x64
 		{0FA69990-9A4E-437B-A312-8D6873D13041}.Release|x64.ActiveCfg = Release|x64
 		{0FA69990-9A4E-437B-A312-8D6873D13041}.Release|x64.Build.0 = Release|x64
+		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Debug|x64.ActiveCfg = Debug|x64
 		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Debug|x64.Build.0 = Debug|x64
+		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Release|Any CPU.ActiveCfg = Release|x64
 		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Release|x64.ActiveCfg = Release|x64
 		{64E81E17-9E0D-40EF-B212-0F9C8DBBE253}.Release|x64.Build.0 = Release|x64
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Debug|x64.Build.0 = Debug|Any CPU
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Release|Any CPU.ActiveCfg = Release|x64
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Release|x64.ActiveCfg = Release|x64
+		{8D3B637B-CC81-41F1-81E6-BF6048303375}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

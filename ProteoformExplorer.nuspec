@@ -18,12 +18,14 @@
 		<dependency id="mzLib" version="1.0.485"/>
 		<dependency id="ScottPlot" version="4.1.16"/>
 		<dependency id="ScottPlot.WPF" version="4.1.16"/>
+		<dependency id="Nett" version="0.15.0"/>
       </group>
     </dependencies>
   </metadata>
   <files>
-	<file src="Deconvoluter\bin\x64\Release\net5.0\Deconvoluter.dll" target="lib\net5.0-windows" /> 
-	<file src="ProteoformExplorerGUI\bin\x64\Release\net5.0-windows\ProteoformExplorerGUI.dll" target="lib\net5.0-windows" /> 
-	<file src="ProteoformExplorerObjects\bin\x64\Release\net5.0-windows\ProteoformExplorerObjects.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorer.Deconvoluter\bin\x64\Release\net5.0\ProteoformExplorer.Deconvoluter.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorer.Wpf\bin\x64\Release\net5.0-windows\ProteoformExplorer.Wpf.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorer.Core\bin\x64\Release\net5.0\ProteoformExplorer.Core.dll" target="lib\net5.0-windows" /> 
+	<file src="ProteoformExplorer.GuiFunctions\bin\x64\Release\net5.0\ProteoformExplorer.GuiFunctions.dll" target="lib\net5.0-windows" /> 
   </files>
 </package>

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MahApps.Metro.IconPacks.BoxIcons" Version="4.8.0" />
+    <PackageReference Include="mzLib" Version="1.0.485" />
+    <PackageReference Include="ScottPlot" Version="4.1.16" />
+    <PackageReference Include="ScottPlot.WPF" Version="4.1.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProteoformExplorer.Core\ProteoformExplorer.Core.csproj" />
+    <ProjectReference Include="..\ProteoformExplorer.Deconvoluter\ProteoformExplorer.Deconvoluter.csproj" />
+    <ProjectReference Include="..\ProteoformExplorer.GuiFunctions\ProteoformExplorer.GuiFunctions.csproj" />
+  </ItemGroup>
+
+</Project>

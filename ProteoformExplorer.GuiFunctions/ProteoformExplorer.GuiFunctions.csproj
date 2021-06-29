@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="mzLib" Version="1.0.485" />
+    <PackageReference Include="Nett" Version="0.15.0" />
+    <PackageReference Include="ScottPlot" Version="4.1.16" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProteoformExplorer.Deconvoluter\ProteoformExplorer.Deconvoluter.csproj" />
+    <ProjectReference Include="..\ProteoformExplorer.Core\ProteoformExplorer.Core.csproj" />
+  </ItemGroup>
+
+</Project>
