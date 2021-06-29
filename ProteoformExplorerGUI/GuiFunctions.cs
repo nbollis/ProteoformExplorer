@@ -30,71 +30,72 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             plot.Plot.YAxis.TickMarkColor(Color.Transparent);
 
             // DPI scaling, for high-resolution monitors
-            PresentationSource source = PresentationSource.FromVisual(plot);
+            if (GuiSettings.DpiScaling)
+            {
+                PresentationSource source = PresentationSource.FromVisual(plot);
 
-            double dpiX = 0;
-            double dpiY = 0;
-            if (source != null)
-            {
-                dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
-                dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
-            }
-            else
-            {
-                using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
+                double dpiX = 0;
+                double dpiY = 0;
+                if (source != null)
                 {
-                    dpiX = g.DpiX;
-                    dpiY = g.DpiY;
+                    dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
+                    dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
                 }
+                else
+                {
+                    using (Graphics g = Graphics.FromHwnd(IntPtr.Zero))
+                    {
+                        dpiX = g.DpiX;
+                        dpiY = g.DpiY;
+                    }
+                }
+
+                if (dpiX < 96 || dpiY < 96)
+                {
+                    return;
+                }
+
+                double xScale = dpiX / 96;
+                double yScale = dpiY / 96;
+
+                GuiSettings.DpiScalingX = xScale;
+                GuiSettings.DpiScalingY = yScale;
             }
 
-            if (dpiX < 96 || dpiY < 96)
-            {
-                return;
-            }
-
-            double xScale = dpiX / 96;
-            double yScale = dpiY / 96;
-
-            GuiSettings.DpiScalingX = xScale;
-            GuiSettings.DpiScalingY = yScale;
-
-            plot.Plot.Layout();
-
-            plot.Plot.XAxis.Line(width: (float)yScale);
-            plot.Plot.XAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * yScale)
-            //    , bold: true
+            plot.Plot.XAxis.Line(width: (float)GuiSettings.DpiScalingY);
+            plot.Plot.XAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingY)
+                //    , bold: true
                 );
-            plot.Plot.XAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * yScale)
-            //    , fontBold: true
+            plot.Plot.XAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * GuiSettings.DpiScalingY)
+                //    , fontBold: true
                 );
 
-            plot.Plot.YAxis.Line(width: (float)xScale);
-            plot.Plot.YAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * xScale)
-            //    , bold: true
+            plot.Plot.YAxis.Line(width: (float)GuiSettings.DpiScalingX);
+            plot.Plot.YAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX)
+                //    , bold: true
                 );
-            plot.Plot.YAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * xScale)
-            //    , fontBold: true
+            plot.Plot.YAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * GuiSettings.DpiScalingX)
+                //    , fontBold: true
                 );
 
             var legend = plot.Plot.Legend(location: GuiSettings.LegendLocation);
-            legend.FontSize = (float)(GuiSettings.ChartLegendFontSize * xScale);
+            legend.FontSize = (float)(GuiSettings.ChartLegendFontSize * GuiSettings.DpiScalingX);
 
             // title
-            plot.Plot.XAxis2.Label(size: (float)(GuiSettings.ChartHeaderFontSize * xScale));
+            plot.Plot.XAxis2.Label(size: (float)(GuiSettings.ChartHeaderFontSize * GuiSettings.DpiScalingX));
 
             foreach (var item in plot.Plot.GetPlottables())
             {
                 if (item is ScatterPlot scatter)
                 {
                     //TODO: this will affect all lines... spectra and xic..
-                    scatter.LineWidth = GuiSettings.ChartLineWidth * yScale;
+                    scatter.LineWidth = GuiSettings.ChartLineWidth * GuiSettings.DpiScalingY;
                 }
                 else if (item is LollipopPlot lollipopPlot)
                 {
                     //TODO
-                    lollipopPlot.ErrorLineWidth = (float)(GuiSettings.ChartLineWidth * xScale);
-                    lollipopPlot.BarWidth = (float)(GuiSettings.ChartLineWidth * xScale);
+                    lollipopPlot.ErrorLineWidth = (float)(GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX);
+                    lollipopPlot.BarWidth = (float)(GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX);
                 }
             }
         }
@@ -248,7 +249,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         }
 
         public static void PlotXic(double mz, int z, Tolerance tolerance, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot, VLine rtIndicator, bool fill = false, string label = null)
+            bool clearOldPlot, VLine rtIndicator, double xOffset = 0, double yOffset = 0, string label = null)
         {
             if (clearOldPlot)
             {
@@ -266,9 +267,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             xicPlot.Plot.AddScatterLines(xs, ys, color, label: label);
             xicPlot.Plot.Legend(label != null, location: GuiSettings.LegendLocation);
 
-            if (fill)
+            bool isWaterfall = xOffset != 0 || yOffset != 0;
+
+            if ((isWaterfall && GuiSettings.FillWaterfall) || (!isWaterfall && GuiSettings.FillSideView))
             {
-                xicPlot.Plot.AddFill(xs, ys, color: color);
+                var colorWithTransparency = Color.FromArgb(GuiSettings.FillAlpha, color.R, color.G, color.B);
+                xicPlot.Plot.AddFill(xs, ys, baseline: yOffset, color: colorWithTransparency);
             }
 
             if (clearOldPlot)
@@ -294,7 +298,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
         }
 
         public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, WpfPlot xicPlot,
-            bool clearOldPlot, VLine rtIndicator, double xOffset = 0, double yOffset = 0, bool fill = false, double fillBaseline = 0, string label = null)
+            bool clearOldPlot, VLine rtIndicator, double xOffset = 0, double yOffset = 0, string label = null)
         {
             if (clearOldPlot)
             {
@@ -312,10 +316,12 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             xicPlot.Plot.AddScatterLines(xs, ys, color, lineWidth: (float)GuiSettings.ChartLineWidth, label: label);
             xicPlot.Plot.Legend(label != null, location: GuiSettings.LegendLocation);
 
-            if (fill)
+            bool isWaterfall = xOffset != 0 || yOffset != 0;
+
+            if ((isWaterfall && GuiSettings.FillWaterfall) || (!isWaterfall && GuiSettings.FillSideView))
             {
-                var colorWithTransparency = Color.FromArgb(190, color.R, color.G, color.B);
-                xicPlot.Plot.AddFill(xs, ys, baseline: fillBaseline, color: colorWithTransparency);
+                var colorWithTransparency = Color.FromArgb(GuiSettings.FillAlpha, color.R, color.G, color.B);
+                xicPlot.Plot.AddFill(xs, ys, baseline: yOffset, color: colorWithTransparency);
             }
 
             if (clearOldPlot)
@@ -355,7 +361,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             plot.Plot.AddScatterLines(
                 ticChromatogram.Select(p => p.X).ToArray(),
                 ticChromatogram.Select(p => p.Y.Value).ToArray(),
-                Color.Black, (float)GuiSettings.ChartLineWidth, label: "TIC");
+                GuiSettings.TicColor, (float)GuiSettings.ChartLineWidth, label: "TIC");
 
             // display identified TIC chromatogram
             if (DataLoading.AllLoadedAnnotatedSpecies.Any())
@@ -517,12 +523,11 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
                     // generate histogram bars
                     List<(double start, double end, int count)> histogramBins = new List<(double start, double end, int count)>();
-                    double binWidth = 500;
 
                     for (int i = 0; i < int.MaxValue; i++)
                     {
-                        double binMin = i * binWidth;
-                        double binMax = (i + 1) * binWidth;
+                        double binMin = i * GuiSettings.MassHistogramBinWidth;
+                        double binMax = (i + 1) * GuiSettings.MassHistogramBinWidth;
 
                         if (binMin > envelopeMasses.Max())
                         {
@@ -537,8 +542,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     double[] locations = histogramBins.Select(p => (p.start + p.end) / 2.0).ToArray();
 
                     var bar = plot.Plot.AddBar(values: fractionalAbundance, positions: locations);
-                    bar.BarWidth = binWidth;
-                    bar.FillColor = Color.FromArgb(180, color);
+                    bar.BarWidth = GuiSettings.MassHistogramBinWidth;
+                    bar.FillColor = Color.FromArgb(GuiSettings.FillAlpha, color);
                     bar.BorderLineWidth = 0;
                     bar.Orientation = ScottPlot.Orientation.Horizontal;
                     bar.ValueOffsets = locations.Select(p => (double)fileNum).ToArray();
@@ -666,7 +671,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             var plottables = plot.Plot.GetPlottables();
             if (indicator == null || !plottables.Any(p => p is VLine line))
             {
-                indicator = plot.Plot.AddVerticalLine(scan.RetentionTime, color: Color.Red, width: 1.5f);
+                indicator = plot.Plot.AddVerticalLine(scan.RetentionTime, color: GuiSettings.RtIndicatorColor,
+                    width: (float)(GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX));
             }
 
             indicator.X = scan.RetentionTime;

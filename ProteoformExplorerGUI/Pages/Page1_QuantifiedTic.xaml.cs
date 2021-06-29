@@ -176,7 +176,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                         xs[xs.Length - 1] = pointsX[endInd];
                         ys[xs.Length - 1] = 0;
 
-                        var color = Color.FromArgb(20, scatter.Color);
+                        var color = Color.FromArgb(GuiSettings.IntegrationFillAlpha, scatter.Color);
                         var poly = topPlotView.Plot.AddPolygon(xs, ys, fillColor: color);
                         summedTic = ys.Sum();
 

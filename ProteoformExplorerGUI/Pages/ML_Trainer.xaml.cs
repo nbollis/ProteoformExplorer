@@ -91,7 +91,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 double mz = currentlyDisplayedScan.MassSpectrum.XArray[i];
                 double intensity = currentlyDisplayedScan.MassSpectrum.YArray[i];
 
-                spectrumPlot.Plot.AddLine(mz, 0, mz, intensity, System.Drawing.Color.Gray, 1);
+                spectrumPlot.Plot.AddLine(mz, 0, mz, intensity, GuiSettings.UnannotatedSpectrumColor, 
+                    (float)(GuiSettings.AnnotatedEnvelopeLineWidth * GuiSettings.DpiScalingX));
             }
 
             foreach (var peak in env.Peaks)
@@ -101,7 +102,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 double mz = currentlyDisplayedScan.MassSpectrum.XArray[index];
                 double intensity = currentlyDisplayedScan.MassSpectrum.YArray[index];
 
-                spectrumPlot.Plot.AddLine(mz, 0, mz, intensity, System.Drawing.Color.Blue, 2);
+                spectrumPlot.Plot.AddLine(mz, 0, mz, intensity, GuiSettings.DeconvolutedColor, (float)(GuiSettings.AnnotatedEnvelopeLineWidth * GuiSettings.DpiScalingX));
             }
 
             double xZoom = (currentlyDisplayedScan.MassSpectrum.XArray.Max() - currentlyDisplayedScan.MassSpectrum.XArray.Min()) / 3;

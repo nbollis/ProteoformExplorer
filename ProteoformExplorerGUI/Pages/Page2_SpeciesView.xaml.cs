@@ -85,7 +85,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 {
                     int z = chargesToPlot[i];
 
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiSettings.RtExtractionWindow,
                         DataLoading.CurrentlySelectedFile, topPlotView, rtIndicator: CurrentRtIndicator, clearOldPlot: i == 0, label: "z=" + z);
                 }
             }
@@ -113,13 +113,20 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                     }
                 }
 
+                double xOffset = 0;
+                double yOffset = 0;
+                if (GuiSettings.WaterfallXics)
+                {
+                    //TODO
+                }
+
                 // make the plots
                 for (int i = 0; i < peaksToMakeXicsFor.Count; i++)
                 {
                     var peak = peaksToMakeXicsFor[i];
 
-                    GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.ExtractionWindow,
-                        DataLoading.CurrentlySelectedFile, topPlotView, i == 0, rtIndicator: CurrentRtIndicator, label: peak.mz.ToMass(peak.z).ToString("F2"));
+                    GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiSettings.RtExtractionWindow,
+                        DataLoading.CurrentlySelectedFile, topPlotView, i == 0, CurrentRtIndicator, xOffset, yOffset, peak.mz.ToMass(peak.z).ToString("F2"));
                 }
             }
         }

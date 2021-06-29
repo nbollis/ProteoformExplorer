@@ -75,37 +75,25 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.RtExtractionWindow, file, topPlotView,
                         clearOldPlot: fileNum == 0, label: file.Key, rtIndicator: null);
 
                     fileNum++;
                 }
             }
 
-            // figure out offsets and replot. have to do it twice because we don't know what the max intensity is until we get the data,
-            // so it's hard to scale/offset the plots correctly until it's already plotted
-            PresentationSource source = PresentationSource.FromVisual(topPlotView);
-
-            double dpiX = 0;
-            double dpiY = 0;
-            if (source != null)
-            {
-                dpiX = 96.0 * source.CompositionTarget.TransformToDevice.M11;
-                dpiY = 96.0 * source.CompositionTarget.TransformToDevice.M22;
-            }
-
-            double inchOffset = GuiSettings.WaterfallSpacingInMm / mmPerInch;
+            double inchOffset = GuiSettings.WaterfallSpacing / mmPerInch;
             var axisLimits = topPlotView.Plot.GetAxisLimits(topPlotView.Plot.XAxis.AxisIndex, topPlotView.Plot.YAxis.AxisIndex);
 
             // y axis offset
             double yAxisRange = topPlotView.Plot.GetPixelY(axisLimits.YMax) - topPlotView.Plot.GetPixelY(axisLimits.YMin);
             double yUnitsPerDot = (axisLimits.YMax - axisLimits.YMin) / yAxisRange;
-            double offsetUnitStepY = inchOffset * dpiY * yUnitsPerDot;
+            double offsetUnitStepY = inchOffset * GuiSettings.DpiScalingY * yUnitsPerDot;
 
             // x axis offset
             double xAxisRange = topPlotView.Plot.GetPixelX(axisLimits.XMax) - topPlotView.Plot.GetPixelX(axisLimits.XMin);
             double xUnitsPerDot = (axisLimits.XMax - axisLimits.XMin) / xAxisRange;
-            double offsetUnitStepX = inchOffset * dpiX * xUnitsPerDot;
+            double offsetUnitStepX = inchOffset * GuiSettings.DpiScalingX * xUnitsPerDot;
 
             fileNum = 0;
             double xOffset = 0;
@@ -121,8 +109,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.ExtractionWindow, file, topPlotView,
-                        clearOldPlot: fileNum == 0, rtIndicator: null, xOffset, yOffset, fill: true, fillBaseline: yOffset, label: file.Key);
+                    GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiSettings.RtExtractionWindow, file, topPlotView,
+                        clearOldPlot: fileNum == 0, rtIndicator: null, xOffset, yOffset, label: file.Key);
 
                     fileNum++;
                     xOffset -= offsetUnitStepX;

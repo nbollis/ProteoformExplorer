@@ -18,7 +18,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             ConnectedNodes = new List<Node> { node1, node2 };
 
             VisualRepresentation = new ScatterPlot(new double[] { node1.X, node2.X }, new double[] { node1.Y, node2.Y });
-            VisualRepresentation.LineWidth = 1;
+            VisualRepresentation.LineWidth = GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX;
             VisualRepresentation.MarkerSize = 0;
 
             TextAnnotation = new Text();

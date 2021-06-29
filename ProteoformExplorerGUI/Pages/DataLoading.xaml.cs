@@ -1,6 +1,7 @@
 ﻿using IO.MzML;
 using IO.ThermoRawFileReader;
 using MassSpectrometry;
+using Nett;
 using ProteoformExplorer.Objects;
 using System;
 using System.Collections.Generic;
@@ -8,12 +9,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Media;
-using System.Windows.Navigation;
 using UsefulProteomicsDatabases;
 
 namespace ProteoformExplorer.ProteoformExplorerGUI
@@ -35,6 +32,8 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             InitializeComponent();
 
             Loaders.LoadElements();
+
+            //LoadSettings();
 
             if (AllLoadedAnnotatedSpecies == null)
             {
@@ -255,6 +254,15 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
 
             dataLoadingProgressBar.Maximum = 100;
             dataLoadingProgressBar.Value = e.ProgressPercentage;
+        }
+
+        private void LoadSettings()
+        {
+            var file = Path.Combine(@"C:\Users\rjmil\Desktop\MS data", @"GUIsettings.toml");
+            Toml.WriteFile(GuiSettings.ToTomlTable(), file);
+
+            var test = Toml.ReadFile(file).ToDictionary();
+            GuiSettings.FromTomlTable(test);
         }
     }
 }

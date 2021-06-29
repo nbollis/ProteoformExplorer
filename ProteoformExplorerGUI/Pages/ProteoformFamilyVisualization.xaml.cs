@@ -63,7 +63,7 @@ namespace ProteoformExplorer.ProteoformExplorerGUI
             {
                 foreach (var connection in proteoform.Node.Edges)
                 {
-                    connection.VisualRepresentation.LineWidth = 1 * GuiSettings.DpiScalingX;
+                    connection.VisualRepresentation.LineWidth = GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX;
                     connection.VisualRepresentation.Color = Color.FromArgb(124, 124, 124); // gray
                     connection.TextAnnotation.Color = Color.FromArgb(255, 113, 79); // orange text annotation for edge
                     connection.TextAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
