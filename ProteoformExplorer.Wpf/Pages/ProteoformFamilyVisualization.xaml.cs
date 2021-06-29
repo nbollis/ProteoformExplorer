@@ -19,6 +19,7 @@ namespace ProteoformExplorer.Wpf
     public partial class ProteoformFamilyVisualization : Page
     {
         public static List<VisualizedProteoformFamilyMember> AllVisualizedProteoforms;
+        public static bool ShowTextLabels = true;
 
         public ProteoformFamilyVisualization()
         {
@@ -62,8 +63,39 @@ namespace ProteoformExplorer.Wpf
                 {
                     pfmFamilyVisualizationChart.Plot.Add(item);
                 }
+
                 pfmFamilyVisualizationChart.Plot.Add(proteoform.Node.TextAnnotation);
             }
+        }
+
+        public VisualizedProteoformFamilyMember GetItemUnderMouse()
+        {
+            (double coordinateX, double coordinateY) = pfmFamilyVisualizationChart.GetMouseCoordinates();
+
+            var closestPfm = AllVisualizedProteoforms
+                .OrderBy(p => Math.Sqrt(Math.Pow(coordinateX - p.Node.X, 2) + Math.Pow(coordinateY - p.Node.Y, 2)))
+                .FirstOrDefault();
+
+            var nodeItems = closestPfm.Node.VisualRepresentation.Where(p => p is Polygon).ToList();
+
+            // get the radius
+            double radius = double.NegativeInfinity;
+            foreach (var item in nodeItems)
+            {
+                var poly = (Polygon)item;
+                radius = Math.Max(radius, Math.Abs(poly.Ys.Max() - closestPfm.Node.Y));
+            }
+
+            // determine if the user clicked inside the proteoform's node circle
+            //TODO: special cases for genes/transcripts (not circles)?
+            bool clickLocationIsInsideCircle = Math.Sqrt(Math.Pow(coordinateX - closestPfm.Node.X, 2) + Math.Pow(coordinateY - closestPfm.Node.Y, 2)) < radius;
+
+            if (clickLocationIsInsideCircle)
+            {
+                return closestPfm;
+            }
+
+            return null;
         }
 
         private void backToDashboardButton_Click(object sender, RoutedEventArgs e)
@@ -95,44 +127,17 @@ namespace ProteoformExplorer.Wpf
 
         private void pfmFamilyVisualizationChart_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            int pixelX = (int)e.MouseDevice.GetPosition(pfmFamilyVisualizationChart).X;
-            int pixelY = (int)e.MouseDevice.GetPosition(pfmFamilyVisualizationChart).Y;
+            VisualizedProteoformFamilyMember proteoform = GetItemUnderMouse();
 
-            (double coordinateX, double coordinateY) = pfmFamilyVisualizationChart.GetMouseCoordinates();
-
-            var closestPfm = AllVisualizedProteoforms
-                .OrderBy(p => Math.Sqrt(Math.Pow(coordinateX - p.Node.X, 2) + Math.Pow(coordinateY - p.Node.Y, 2)))
-                .FirstOrDefault();
-
-            if (closestPfm == null
-                || closestPfm.Type == VisualizedType.Gene
-                || closestPfm.Type == VisualizedType.Transcript
-                || closestPfm.Type == VisualizedType.TheoreticalProteoform)
+            if (proteoform == null
+                || proteoform.Type == VisualizedType.Gene
+                || proteoform.Type == VisualizedType.Transcript
+                || proteoform.Type == VisualizedType.TheoreticalProteoform)
             {
                 return;
             }
 
-            var nodeItems = closestPfm.Node.VisualRepresentation.Where(p => p is Polygon).ToList();
-
-            // get the radius
-            double radius = double.NegativeInfinity;
-            foreach (var item in nodeItems)
-            {
-                var poly = (Polygon)item;
-                radius = Math.Max(radius, Math.Abs(poly.Ys.Max() - closestPfm.Node.Y));
-            }
-
-            // determine if the user clicked inside the proteoform's node circle
-            bool clickLocationIsInsideCircle = Math.Sqrt(Math.Pow(coordinateX - closestPfm.Node.X, 2) + Math.Pow(coordinateY - closestPfm.Node.Y, 2)) < radius;
-
-            if (clickLocationIsInsideCircle)
-            {
-                // show right-click menu to see XIC plotting options
-                foreach (var item in nodeItems)
-                {
-                    DeployCustomMenu(closestPfm);
-                }
-            }
+            DeployCustomMenu(proteoform);
         }
 
         private void CreateSampleFamily()
@@ -152,9 +157,21 @@ namespace ProteoformExplorer.Wpf
             exampleFamily[1].Node.AddConnection(exampleFamily[4].Node, "0 Da");
             exampleFamily[1].Node.AddConnection(exampleFamily[3].Node, "42 Da");
 
-            DrawProteoformFamilies();
-
             AllVisualizedProteoforms = exampleFamily;
+
+            DrawProteoformFamilies();
+        }
+
+        private void ToggleTextLabels_Click(object sender, RoutedEventArgs e)
+        {
+            ShowTextLabels = !ShowTextLabels;
+
+            foreach (var element in pfmFamilyVisualizationChart.Plot.GetPlottables().Where(p => p is Text text))
+            {
+                element.IsVisible = ShowTextLabels;
+            }
+
+            pfmFamilyVisualizationChart.Render();
         }
     }
 
