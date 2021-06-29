@@ -15,10 +15,10 @@ namespace ProteoformExplorer.Wpf
     /// </summary>
     public partial class Dashboard : Page
     {
-        private static Page1_QuantifiedTic Page1;
-        private static Page2_SpeciesView Page2;
+        public static Page1_QuantifiedTic Page1;
+        public static Page2_SpeciesView Page2;
         public static Page3_StackedIons Page3;
-        private static ProteoformFamilyVisualization ProteoformFamilyVisualization;
+        public static ProteoformFamilyVisualization ProteoformFamilyVisualization;
         private static ML_Trainer ML_Trainer;
         public static bool TicLollipopPlot = true;
         public static bool EnvelopeCountPlot = true;
