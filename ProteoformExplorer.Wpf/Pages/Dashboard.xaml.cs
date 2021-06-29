@@ -17,7 +17,7 @@ namespace ProteoformExplorer.Wpf
     {
         private static Page1_QuantifiedTic Page1;
         private static Page2_SpeciesView Page2;
-        private static Page3_StackedIons Page3;
+        public static Page3_StackedIons Page3;
         private static ProteoformFamilyVisualization ProteoformFamilyVisualization;
         private static ML_Trainer ML_Trainer;
         public static bool TicLollipopPlot = true;

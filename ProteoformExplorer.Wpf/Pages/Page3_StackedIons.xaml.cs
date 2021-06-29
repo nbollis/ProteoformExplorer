@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using ProteoformExplorer.Core;
 using System.Windows;
 using System.Windows.Controls;
+using System.Linq;
+using System.IO;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -22,6 +24,36 @@ namespace ProteoformExplorer.Wpf
 
             SelectableAnnotatedSpecies = new ObservableCollection<INode>();
             SpeciesListView.ItemsSource = SelectableAnnotatedSpecies;
+        }
+
+        public void SelectItem(AnnotatedSpecies species)
+        {
+            if (species == null)
+            {
+                return;
+            }
+
+            // select the spectra file
+            DataListView.SelectedItem = DataLoading.LoadedSpectraFiles.First(p =>
+                Path.GetFileNameWithoutExtension(p.FileNameWithExtension) == species.SpectraFileNameWithoutExtension);
+
+            // notify the data manager that the spectra file has changed
+            WpfFunctions.OnSpectraFileChanged(DataListView, null);
+
+            // this will populate the treeview for species found in the currently selected file
+            WpfFunctions.PopulateTreeViewWithSpeciesAndCharges(SelectableAnnotatedSpecies);
+
+            // select the item in the treeview
+            var theNodeToSelect = SelectableAnnotatedSpecies.First(p => p is AnnotatedSpeciesNode node && node.AnnotatedSpecies == species);
+            AnnotatedSpeciesNode node = (AnnotatedSpeciesNode)theNodeToSelect;
+            AnnotatedSpeciesNodeSpecificCharge child = (AnnotatedSpeciesNodeSpecificCharge)node.Charges.First();
+
+            node.IsExpanded = true;
+            child.IsSelected = true;
+
+            // make the plot
+            PlotSpeciesStacked(child.AnnotatedSpecies, child.Charge);
+            GuiFunctions.GuiFunctions.OnSpeciesChanged();
         }
 
         private void Home_Click(object sender, RoutedEventArgs e)

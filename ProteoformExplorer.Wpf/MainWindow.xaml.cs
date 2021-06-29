@@ -11,10 +11,8 @@ namespace ProteoformExplorer.Wpf
         {
             InitializeComponent();
 
-            //_NavigationFrame.Navigate(new ProteoformFamilyVisualization());
-            //Dashboard.TicDashboardItem = false;
+            //Dashboard.ProteoformVisualization = true;
             _NavigationFrame.Navigate(new DataLoading());
-            //_NavigationFrame.Navigate(new ML_Trainer());
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

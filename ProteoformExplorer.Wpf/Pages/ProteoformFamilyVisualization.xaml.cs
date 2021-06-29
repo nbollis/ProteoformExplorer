@@ -18,7 +18,7 @@ namespace ProteoformExplorer.Wpf
     /// </summary>
     public partial class ProteoformFamilyVisualization : Page
     {
-        private static List<VisualizedProteoformFamilyMember> AllVisualizedProteoforms;
+        public static List<VisualizedProteoformFamilyMember> AllVisualizedProteoforms;
 
         public ProteoformFamilyVisualization()
         {
@@ -27,40 +27,22 @@ namespace ProteoformExplorer.Wpf
             // this gets DPI scaling info
             GuiFunctions.GuiFunctions.StylePlot(pfmFamilyVisualizationChart.Plot);
 
-            var exampleFamily = new List<VisualizedProteoformFamilyMember>
-            {
-                new VisualizedProteoformFamilyMember(VisualizedType.Gene, @"TestGene", 10, 0, null),
-                new VisualizedProteoformFamilyMember(VisualizedType.TheoreticalProteoform, @"Unmodified", 15, 5, null),
-                new VisualizedProteoformFamilyMember(VisualizedType.TopDownExperimentalProteoform, @"Unmodified", 15, 10, null),
-                new VisualizedProteoformFamilyMember(VisualizedType.IntactMassExperimentalProteoform, @"Acetyl", 5, 5, null),
-                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Unmodified", 7, 7, null,
-                    new List<double> { 1.0, 2.0 }, isStatisticallySignificant: true),
-            };
+            //AllVisualizedProteoforms = new List<VisualizedProteoformFamilyMember>();
 
-            exampleFamily[0].Node.AddConnection(exampleFamily[1].Node, "0 Da");
-            exampleFamily[0].Node.AddConnection(exampleFamily[2].Node, "0 Da");
-            exampleFamily[1].Node.AddConnection(exampleFamily[4].Node, "0 Da");
-            exampleFamily[1].Node.AddConnection(exampleFamily[3].Node, "42 Da");
-
-            DrawProteoformFamily(exampleFamily);
-
-            AllVisualizedProteoforms = exampleFamily;
-
-            // unsubscribe from the default right-click menu event
+            // remove default right-click menu event
             pfmFamilyVisualizationChart.RightClicked -= pfmFamilyVisualizationChart.DefaultRightClickEvent;
             pfmFamilyVisualizationChart.Configuration.RightClickDragZoom = false;
 
-            // add custom right-click event
-            //pfmFamilyVisualizationChart.RightClicked += DeployCustomMenu;
+            //CreateSampleFamily();
         }
 
-        public void DrawProteoformFamily(List<VisualizedProteoformFamilyMember> proteoformFamily)
+        public void DrawProteoformFamilies()
         {
             pfmFamilyVisualizationChart.Plot.AxisScaleLock(true);
             pfmFamilyVisualizationChart.Plot.Grid(GuiSettings.ShowChartGrid);
             pfmFamilyVisualizationChart.Plot.Frameless();
 
-            foreach (var proteoform in proteoformFamily)
+            foreach (var proteoform in AllVisualizedProteoforms)
             {
                 foreach (var connection in proteoform.Node.Edges)
                 {
@@ -74,7 +56,7 @@ namespace ProteoformExplorer.Wpf
                 }
             }
 
-            foreach (var proteoform in proteoformFamily)
+            foreach (var proteoform in AllVisualizedProteoforms)
             {
                 foreach (var item in proteoform.Node.VisualRepresentation)
                 {
@@ -89,32 +71,26 @@ namespace ProteoformExplorer.Wpf
             this.NavigationService.Navigate(new Dashboard());
         }
 
-        private void DeployCustomMenu(object sender, EventArgs e)
+        private void DeployCustomMenu(VisualizedProteoformFamilyMember proteoform)
         {
+            MenuItem addSinMenuItem = new MenuItem() { Header = "View Proteoform in Waterfall XIC" };
+            addSinMenuItem.Click += DisplayProteoformInWaterfallPlot;
+            addSinMenuItem.Tag = proteoform;
+            //MenuItem clearPlotMenuItem = new MenuItem() { Header = "Clear Plot" };
+            //clearPlotMenuItem.Click += ClearPlot;
 
-            // get the item that was clicked
-            //PfmXplorerUtil.GetXPositionFromMouseClickOnChart(sender, (MouseButtonEventArgs) e);
+            ContextMenu rightClickMenu = new ContextMenu();
+            rightClickMenu.Items.Add(addSinMenuItem);
+            //rightClickMenu.Items.Add(clearPlotMenuItem);
 
-            //var test = new List<string> { "test1", "test2", "test3" };
-            //var submenu = new ContextMenu();
-            ////foreach (var file in DataLoading.SpectraFiles)
-            ////{
-            ////    var item = new MenuItem() { Header = file.Key };
-            ////    submenu.Items.Add(item);
-            ////}
-            //foreach (var file in test)
-            //{
-            //    var item = new MenuItem() { Header = file };
-            //    submenu.Items.Add(item);
-            //}
+            rightClickMenu.IsOpen = true;
+        }
 
-            //MenuItem addSinMenuItem = new MenuItem() { Header = "Plot in file...", sub = submenu };
-            ////addSinMenuItem.Click += AddSine;
-
-            //ContextMenu rightClickMenu = new ContextMenu();
-            //rightClickMenu.Items.Add(addSinMenuItem);
-
-            //rightClickMenu.IsOpen = true;
+        private void DisplayProteoformInWaterfallPlot(object sender, RoutedEventArgs e)
+        {
+            var proteoform = (VisualizedProteoformFamilyMember)(((MenuItem)sender).Tag);
+            Dashboard.Page3.SelectItem(proteoform.AnnotatedSpecies);
+            this.NavigationService.Navigate(Dashboard.Page3);
         }
 
         private void pfmFamilyVisualizationChart_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -146,17 +122,39 @@ namespace ProteoformExplorer.Wpf
                 radius = Math.Max(radius, Math.Abs(poly.Ys.Max() - closestPfm.Node.Y));
             }
 
+            // determine if the user clicked inside the proteoform's node circle
             bool clickLocationIsInsideCircle = Math.Sqrt(Math.Pow(coordinateX - closestPfm.Node.X, 2) + Math.Pow(coordinateY - closestPfm.Node.Y, 2)) < radius;
 
             if (clickLocationIsInsideCircle)
             {
-                // this is just temporary. TODO: show right-click menu to see XIC plotting options
+                // show right-click menu to see XIC plotting options
                 foreach (var item in nodeItems)
                 {
-                    var poly = (Polygon)item;
-                    poly.HatchStyle = ScottPlot.Drawing.HatchStyle.StripedDownwardDiagonal;
+                    DeployCustomMenu(closestPfm);
                 }
             }
+        }
+
+        private void CreateSampleFamily()
+        {
+            var exampleFamily = new List<VisualizedProteoformFamilyMember>
+            {
+                new VisualizedProteoformFamilyMember(VisualizedType.Gene, @"TestGene", 10, 0, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.TheoreticalProteoform, @"Unmodified", 15, 5, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.TopDownExperimentalProteoform, @"Unmodified", 15, 10, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.IntactMassExperimentalProteoform, @"Acetyl", 5, 5, null),
+                new VisualizedProteoformFamilyMember(VisualizedType.QuantifiedExperimentalProteoform, @"Unmodified", 7, 7, null,
+                    new List<double> { 1.0, 2.0 }, isStatisticallySignificant: true),
+            };
+
+            exampleFamily[0].Node.AddConnection(exampleFamily[1].Node, "0 Da");
+            exampleFamily[0].Node.AddConnection(exampleFamily[2].Node, "0 Da");
+            exampleFamily[1].Node.AddConnection(exampleFamily[4].Node, "0 Da");
+            exampleFamily[1].Node.AddConnection(exampleFamily[3].Node, "42 Da");
+
+            DrawProteoformFamilies();
+
+            AllVisualizedProteoforms = exampleFamily;
         }
     }
 

@@ -8,6 +8,13 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="Page3_StackedIons">
 
+    <Page.Resources>
+        <Style TargetType="TreeViewItem">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+        </Style>
+    </Page.Resources>
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -67,7 +74,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="1*" />
                     </Grid.RowDefinitions>
-
+                    
                     <WpfPlot Name="topPlotView" Grid.Row="0"/>
                 </Grid>
             </Grid>
