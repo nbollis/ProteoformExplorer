@@ -21,7 +21,7 @@ namespace ProteoformExplorer.Wpf
     /// </summary>
     public partial class DataLoading : Page
     {
-        private static ObservableCollection<FileForDataGrid> FilesToLoad;
+        public static ObservableCollection<FileForDataGrid> FilesToLoad;
         public static ObservableCollection<FileForDataGrid> LoadedSpectraFiles;
         private static BackgroundWorker worker;
 
@@ -77,7 +77,6 @@ namespace ProteoformExplorer.Wpf
 
                 if (FilesToLoad.Any())
                 {
-
                     dragAndDropFileLoadingArea.Visibility = Visibility.Hidden;
                     filesToLoad.Visibility = Visibility.Visible;
 
