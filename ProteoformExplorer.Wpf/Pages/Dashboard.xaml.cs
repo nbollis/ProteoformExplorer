@@ -139,21 +139,23 @@ namespace ProteoformExplorer.Wpf
                 //ML_Trainer = new ML_Trainer();
             }
 
-            ProteoformExplorer.GuiFunctions.GuiFunctions.DrawPercentTicPerFileInfoDashboardPlot(DashboardPlot1.Plot, out var errors);
+            WpfFunctions.CalculateDpiSettings(DashboardPlot1);
+
+            PlottingFunctions.DrawPercentTicPerFileInfoDashboardPlot(DashboardPlot1.Plot, out var errors);
 
             if (errors.Any())
             {
                 MessageBox.Show("An error occurred creating the percent TIC dashboard chart: " + errors.First());
             }
 
-            GuiFunctions.GuiFunctions.DrawNumEnvelopesDashboardPlot(DashboardPlot2.Plot, out errors);
+            PlottingFunctions.DrawNumEnvelopesDashboardPlot(DashboardPlot2.Plot, out errors);
 
             if (errors.Any())
             {
                 MessageBox.Show("An error occurred creating the num envelopes dashboard chart: " + errors.First());
             }
 
-            GuiFunctions.GuiFunctions.DrawMassDistributionsDashboardPlot(DashboardPlot3.Plot, out errors);
+            PlottingFunctions.DrawMassDistributionsDashboardPlot(DashboardPlot3.Plot, out errors);
 
             if (errors.Any())
             {

@@ -8,6 +8,7 @@ using System;
 using System.Linq;
 using System.Drawing;
 using System.Collections.Generic;
+using ProteoformExplorer.GuiFunctions;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -47,14 +48,24 @@ namespace ProteoformExplorer.Wpf
 
         private void DisplayTic()
         {
-            GuiFunctions.GuiFunctions.PlotTotalIonChromatograms(topPlotView.Plot, CurrentRtIndicator);
+            PlottingFunctions.PlotTotalIonChromatograms(topPlotView.Plot, CurrentRtIndicator, out var errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show(errors.First());
+            }
         }
 
         private void DisplayAnnotatedSpectrum(int scanNum)
         {
             var speciesInScan = DataManagement.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
 
-            GuiFunctions.GuiFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataManagement.CurrentlySelectedFile, bottomPlotView.Plot, out var scan);
+            PlottingFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataManagement.CurrentlySelectedFile, bottomPlotView.Plot, out var scan, out var errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show(errors.First());
+            }
 
             if (scan == null)
             {
@@ -63,7 +74,7 @@ namespace ProteoformExplorer.Wpf
 
             CurrentScan = scan;
 
-            CurrentRtIndicator = GuiFunctions.GuiFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
+            CurrentRtIndicator = PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

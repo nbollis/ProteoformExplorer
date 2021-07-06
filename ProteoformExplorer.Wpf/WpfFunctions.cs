@@ -15,9 +15,9 @@ using System.Windows.Input;
 
 namespace ProteoformExplorer.Wpf
 {
-    public class WpfFunctions
+    public static class WpfFunctions
     {
-        public void CalculateDpiSettings(WpfPlot plot)
+        public static void CalculateDpiSettings(WpfPlot plot)
         {
             // DPI scaling, for high-resolution monitors
             if (GuiSettings.DpiScaling)

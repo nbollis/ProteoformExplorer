@@ -26,7 +26,7 @@ namespace ProteoformExplorer.Wpf
             InitializeComponent();
 
             // this gets DPI scaling info
-            GuiFunctions.GuiFunctions.StylePlot(pfmFamilyVisualizationChart.Plot);
+            PlottingFunctions.StylePlot(pfmFamilyVisualizationChart.Plot);
 
             //AllVisualizedProteoforms = new List<VisualizedProteoformFamilyMember>();
 

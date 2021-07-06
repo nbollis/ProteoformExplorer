@@ -46,7 +46,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="32"/>
                         </Grid.RowDefinitions>
 
                         <Ellipse Grid.Row="0" Fill="{StaticResource ProtossPylon}" Height="90" Width="90"/>
@@ -65,7 +65,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="32"/>
                         </Grid.RowDefinitions>
 
                         <Ellipse Grid.Row="0" Fill="{StaticResource ProtossPylon}" Height="90" Width="90"/>
@@ -84,7 +84,7 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="32"/>
                         </Grid.RowDefinitions>
 
                         <Ellipse Grid.Row="0" Fill="{StaticResource ProtossPylon}" Height="90" Width="90"/>
@@ -96,13 +96,14 @@
             </Button.ContentTemplate>
         </Button>
 
+        <!--Proteoform Family View Button-->
         <Button Name="proteoformFamilyVisualization" Click="ProteoformFamilyVisualization_Click" Margin="5" Background="White" >
             <Button.ContentTemplate>
                 <DataTemplate>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="1*"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="32"/>
                         </Grid.RowDefinitions>
 
                         <Ellipse Grid.Row="0" Fill="{StaticResource ProtossPylon}" Height="90" Width="90"/>

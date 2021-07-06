@@ -53,7 +53,7 @@ namespace ProteoformExplorer.Wpf
 
             // make the plot
             PlotSpeciesStacked(child.AnnotatedSpecies, child.Charge);
-            GuiFunctions.GuiFunctions.OnSpeciesChanged();
+            GuiFunctions.PlottingFunctions.OnSpeciesChanged();
         }
 
         private void Home_Click(object sender, RoutedEventArgs e)
@@ -107,8 +107,13 @@ namespace ProteoformExplorer.Wpf
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        clearOldPlot: fileNum == 0, label: file.Key, rtIndicator: null);
+                    GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
+                        fileNum == 0, null, out var errors, 0, 0, file.Key);
+
+                    if (errors.Any())
+                    {
+                        MessageBox.Show(errors.First());
+                    }
 
                     fileNum++;
                 }
@@ -141,8 +146,13 @@ namespace ProteoformExplorer.Wpf
                 else
                 {
                     // plot the charge state envelope, one line per file
-                    GuiFunctions.GuiFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        clearOldPlot: fileNum == 0, rtIndicator: null, xOffset, yOffset, label: file.Key);
+                    GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
+                        fileNum == 0, null, out var errors, xOffset, yOffset, file.Key);
+
+                    if (errors.Any())
+                    {
+                        MessageBox.Show(errors.First());
+                    }
 
                     fileNum++;
                     xOffset -= offsetUnitStepX;
@@ -172,7 +182,7 @@ namespace ProteoformExplorer.Wpf
                 PlotSpeciesStacked(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
             }
 
-            GuiFunctions.GuiFunctions.OnSpeciesChanged();
+            GuiFunctions.PlottingFunctions.OnSpeciesChanged();
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

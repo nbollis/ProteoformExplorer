@@ -56,17 +56,24 @@ namespace ProteoformExplorer.Wpf
 
         public static void LoadDataButton_Click(object sender, RoutedEventArgs e)
         {
-            LoadedSpectraFiles.Clear();
-
-            foreach (var item in DataManagement.SpectraFiles)
+            try
             {
-                item.Value.DataFile.Value.CloseDynamicConnection();
+                LoadedSpectraFiles.Clear();
+
+                foreach (var item in DataManagement.SpectraFiles)
+                {
+                    item.Value.DataFile.Value.CloseDynamicConnection();
+                }
+
+                DataManagement.SpectraFiles.Clear();
+
+                // load files in the background
+                worker.RunWorkerAsync();
             }
-
-            DataManagement.SpectraFiles.Clear();
-
-            // load files in the background
-            worker.RunWorkerAsync();
+            catch (Exception exep)
+            {
+                MessageBox.Show("An error occurred while loading files: " + exep.Message);
+            }
         }
 
         public void RefreshPage()
@@ -102,38 +109,19 @@ namespace ProteoformExplorer.Wpf
             });
         }
 
-        public static void SelectDataButton_Click(object sender, RoutedEventArgs e)
-        {
-            string filterString = string.Join(";",
-                InputReaderParser.AcceptedTextFileFormats.Concat(InputReaderParser.AcceptedSpectraFileFormats).Select(p => "*" + p));
-
-            Microsoft.Win32.OpenFileDialog openFileDialog1 = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "Files(" + filterString + ")|" + filterString,
-                FilterIndex = 1,
-                RestoreDirectory = true,
-                Multiselect = true
-            };
-
-            if (openFileDialog1.ShowDialog() == true)
-            {
-                FilesToLoad.Clear();
-
-                foreach (var filePath in openFileDialog1.FileNames.OrderBy(p => p))
-                {
-                    var ext = Path.GetExtension(filePath).ToLowerInvariant();
-
-                    if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
-                    {
-                        FilesToLoad.Add(new FileForDataGrid(filePath));
-                    }
-                }
-            }
-        }
-
         public void GoToDashboard_Click(object sender, RoutedEventArgs e)
         {
             this.NavigationService.Navigate(new Dashboard());
+        }
+
+        public void AddFileToLoad(string filePath)
+        {
+            var ext = Path.GetExtension(filePath).ToLowerInvariant();
+
+            if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
+            {
+                FilesToLoad.Add(new FileForDataGrid(filePath));
+            }
         }
 
         private static void LoadFile(FileForDataGrid file)
@@ -186,12 +174,7 @@ namespace ProteoformExplorer.Wpf
             {
                 foreach (var filePath in files.OrderBy(p => p))
                 {
-                    var ext = Path.GetExtension(filePath).ToLowerInvariant();
-
-                    if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
-                    {
-                        FilesToLoad.Add(new FileForDataGrid(filePath));
-                    }
+                    AddFileToLoad(filePath);
                 }
             }
 

@@ -85,8 +85,13 @@ namespace ProteoformExplorer.Wpf
                 {
                     int z = chargesToPlot[i];
 
-                    GuiFunctions.GuiFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow,
-                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, rtIndicator: CurrentRtIndicator, clearOldPlot: i == 0, label: "z=" + z);
+                    GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow,
+                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, i == 0, CurrentRtIndicator, out var errors, 0, 0, "z=" + z);
+
+                    if (errors.Any())
+                    {
+                        MessageBox.Show(errors.First());
+                    }
                 }
             }
             else
@@ -125,20 +130,30 @@ namespace ProteoformExplorer.Wpf
                 {
                     var peak = peaksToMakeXicsFor[i];
 
-                    GuiFunctions.GuiFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow,
-                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, i == 0, CurrentRtIndicator, xOffset, yOffset, peak.mz.ToMass(peak.z).ToString("F2"));
+                    GuiFunctions.PlottingFunctions.PlotXic(peak.mz, peak.z, PfmXplorerUtil.DeconvolutionEngine.PpmTolerance, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow,
+                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, i == 0, CurrentRtIndicator, out var errors, xOffset, yOffset, peak.mz.ToMass(peak.z).ToString("F2"));
+
+                    if (errors.Any())
+                    {
+                        MessageBox.Show(errors.First());
+                    }
                 }
             }
         }
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            GuiFunctions.GuiFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
-                bottomPlotView.Plot, out var scan2, charge);
+            GuiFunctions.PlottingFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
+                bottomPlotView.Plot, out var scan2, out var errors, charge);
+
+            if (errors.Any())
+            {
+                MessageBox.Show(errors.First());
+            }
 
             CurrentScan = scan;
 
-            CurrentRtIndicator = GuiFunctions.GuiFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
+            CurrentRtIndicator = GuiFunctions.PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -197,7 +212,7 @@ namespace ProteoformExplorer.Wpf
                 PlotSpecies(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
             }
 
-            GuiFunctions.GuiFunctions.OnSpeciesChanged();
+            GuiFunctions.PlottingFunctions.OnSpeciesChanged();
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
