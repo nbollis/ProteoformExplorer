@@ -125,6 +125,7 @@ namespace ProteoformExplorer.Core
                 for (int i = 1; i <= lastScanNum; i++)
                 {
                     deconClaimedMzs.Clear();
+                    identClaimedMzs.Clear();
                     var scan = GetOneBasedScan(i);
                     double deconvolutedTic = 0;
                     double identifiedTic = 0;

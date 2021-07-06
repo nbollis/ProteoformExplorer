@@ -83,18 +83,17 @@ namespace ProteoformExplorer.Wpf
 
         public static void ShowOrHideSpectraFileList(ListView DataListView, GridSplitter gridSplitter)
         {
-            if (DataListView.Visibility == Visibility.Hidden)
+            if (DataListView.Visibility == Visibility.Collapsed)
             {
                 DataListView.Visibility = Visibility.Visible;
                 gridSplitter.Visibility = Visibility.Visible;
             }
             else
             {
-                DataListView.Visibility = Visibility.Hidden;
-                gridSplitter.Visibility = Visibility.Hidden;
+                DataListView.Visibility = Visibility.Collapsed;
+                gridSplitter.Visibility = Visibility.Collapsed;
             }
         }
-
 
         public static void OnSpectraFileChanged(object sender, SelectionChangedEventArgs e)
         {

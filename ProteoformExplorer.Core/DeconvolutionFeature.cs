@@ -99,36 +99,38 @@ namespace ProteoformExplorer.Core
             {
                 var scan = data.Value.GetOneBasedScan(i);
 
-                if (scan == null || scan.MsnOrder != 1)
+                bool successfullyFoundEnvelope = false;
+
+                if (scan != null && scan.MsnOrder == 1)
+                {
+                    int index = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(id.PrecursorChargeState));
+                    double expMz = scan.MassSpectrum.XArray[index];
+
+                    if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(id.PrecursorChargeState), modeMass))
+                    {
+                        var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, id.PrecursorChargeState, peaksBuffer,
+                            alreadyClaimedMzs, intensitiesBuffer);
+
+                        if (envelope != null)
+                        {
+                            envelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime,
+                                id.PrecursorChargeState, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
+
+                            successfullyFoundEnvelope = true;
+                        }
+                    }
+                }
+                else if (scan.MsnOrder != 1 && i != lastScanNum)
                 {
                     continue;
                 }
 
-                int index = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(id.PrecursorChargeState));
-                double expMz = scan.MassSpectrum.XArray[index];
-
-                bool successfullyFoundEnvelope = false;
-
-                if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(id.PrecursorChargeState), modeMass))
-                {
-                    var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, id.PrecursorChargeState, peaksBuffer,
-                        alreadyClaimedMzs, intensitiesBuffer);
-
-                    if (envelope != null)
-                    {
-                        envelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime,
-                            id.PrecursorChargeState, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
-
-                        successfullyFoundEnvelope = true;
-                    }
-                }
-
-                if (!successfullyFoundEnvelope)
+                if (!successfullyFoundEnvelope || i == lastScanNum)
                 {
                     if (direction == 1)
                     {
                         direction = -1;
-                        i = id.OneBasedPrecursorScanNumber - 1;
+                        i = id.OneBasedPrecursorScanNumber;
                     }
                     else
                     {
@@ -144,7 +146,7 @@ namespace ProteoformExplorer.Core
                     new List<double> { precursorScan.MassSpectrum.GetClosestPeakXvalue(modeMass.ToMz(id.PrecursorChargeState)).Value }));
             }
 
-            //TODO
+            //TODO: other charge states
             this.ApexRt = envelopes.First().RetentionTime;
             this.RtElutionRange = new DoubleRange(envelopes.Min(p => p.RetentionTime), envelopes.Max(p => p.RetentionTime));
             this.Charges = new List<int> { id.PrecursorChargeState };

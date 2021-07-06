@@ -26,7 +26,7 @@
             Width="10"
             Margin="0 10" 
             Name="gridSplitter"/>
-        
+
         <!--Plotting area-->
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>
@@ -47,12 +47,16 @@
 
                 <!--Area to select species to plot-->
                 <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="8*"/>
+                        <RowDefinition Height="5*"/>
+                    </Grid.RowDefinitions>
                     <TreeView Name="SpeciesListView" ItemsSource="{Binding SelectableAnnotatedSpecies}" SelectedItemChanged="SpeciesListView_SelectedItemChanged" 
-                          VirtualizingPanel.IsVirtualizing="True" PreviewMouseDoubleClick="SpeciesListView_PreviewMouseDoubleClick">
+                          VirtualizingPanel.IsVirtualizing="True" PreviewMouseDoubleClick="SpeciesListView_PreviewMouseDoubleClick" Grid.RowSpan="2">
                         <TreeView.Resources>
                             <HierarchicalDataTemplate DataType="{x:Type local:AnnotatedSpeciesNode}" ItemsSource="{Binding Charges}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
                             </HierarchicalDataTemplate>
                             <DataTemplate DataType="{x:Type local:AnnotatedSpeciesNodeSpecificCharge}">
@@ -61,6 +65,11 @@
                                 </StackPanel>
                             </DataTemplate>
                         </TreeView.Resources>
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <EventSetter Event="RequestBringIntoView" Handler="TreeViewItem_RequestBringIntoView"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
                     </TreeView>
                 </Grid>
 

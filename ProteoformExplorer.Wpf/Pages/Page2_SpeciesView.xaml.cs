@@ -8,6 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using ScottPlot.Plottable;
+using System.Windows.Threading;
+using System;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -232,6 +234,12 @@ namespace ProteoformExplorer.Wpf
         {
             // double click doesn't actually do anything. the program seems to crash when double-clicking, so 
             // this event handler is here just to do nothing if a double-click occurs
+        }
+
+        // https://stackoverflow.com/questions/3225940/prevent-automatic-horizontal-scroll-in-treeview/34269542
+        private void TreeViewItem_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
+        {
+            e.Handled = true;
         }
     }
 }

@@ -67,6 +67,11 @@
                                 </StackPanel>
                             </DataTemplate>
                         </TreeView.Resources>
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <EventSetter Event="RequestBringIntoView" Handler="TreeViewItem_RequestBringIntoView"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
                     </TreeView>
                 </Grid>
 

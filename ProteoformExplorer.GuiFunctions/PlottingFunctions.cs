@@ -261,9 +261,9 @@ namespace ProteoformExplorer.GuiFunctions
                 else
                 {
                     var axisLimits = xicPlot.GetAxisLimits(xicPlot.XAxis.AxisIndex, xicPlot.YAxis.AxisIndex);
-                    double yMin = Math.Max(axisLimits.YMin, ys.Min());
+                    double yMin = Math.Min(axisLimits.YMin, ys.Min());
                     double yMax = Math.Max(axisLimits.YMax, ys.Max());
-                    double xMin = Math.Max(axisLimits.XMin, xs.Min());
+                    double xMin = Math.Min(axisLimits.XMin, xs.Min());
                     double xMax = Math.Max(axisLimits.XMax, xs.Max());
 
                     xicPlot.SetAxisLimitsY(yMin, yMax);
@@ -318,9 +318,9 @@ namespace ProteoformExplorer.GuiFunctions
                 else
                 {
                     var axisLimits = xicPlot.GetAxisLimits(xicPlot.XAxis.AxisIndex, xicPlot.YAxis.AxisIndex);
-                    double yMin = Math.Max(axisLimits.YMin, ys.Min());
+                    double yMin = Math.Min(axisLimits.YMin, ys.Min());
                     double yMax = Math.Max(axisLimits.YMax, ys.Max());
-                    double xMin = Math.Max(axisLimits.XMin, xs.Min());
+                    double xMin = Math.Min(axisLimits.XMin, xs.Min());
                     double xMax = Math.Max(axisLimits.XMax, xs.Max());
 
                     xicPlot.SetAxisLimitsY(yMin, yMax);
