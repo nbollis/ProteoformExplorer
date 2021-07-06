@@ -95,7 +95,7 @@ namespace ProteoformExplorer.Core
             List<AnnotatedEnvelope> envelopes = new List<AnnotatedEnvelope>();
 
             int direction = 1;
-            (int scanNum, double intensity) mostIntenseEnvelope = (0, 0);
+            (int scanNum, double intensity) mostIntenseEnvelope = (id.OneBasedPrecursorScanNumber, 0);
 
             for (int i = id.OneBasedPrecursorScanNumber; i >= 1 && i <= lastScanNum; i += direction)
             {
