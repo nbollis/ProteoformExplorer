@@ -57,7 +57,7 @@ namespace ProteoformExplorer.Wpf
         public static void PopulateTreeViewWithSpeciesAndCharges(ObservableCollection<INode> SelectableAnnotatedSpecies)
         {
             SelectableAnnotatedSpecies.Clear();
-            var nameWithoutExtension = Path.GetFileNameWithoutExtension(DataManagement.CurrentlySelectedFile.Key);
+            var nameWithoutExtension = PfmXplorerUtil.GetFileNameWithoutExtension(DataManagement.CurrentlySelectedFile.Key);
 
             foreach (AnnotatedSpecies species in DataManagement.AllLoadedAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == nameWithoutExtension))
             {
@@ -66,16 +66,16 @@ namespace ProteoformExplorer.Wpf
 
                 if (species.DeconvolutionFeature != null)
                 {
-                    foreach (var charge in species.DeconvolutionFeature.Charges)
+                    foreach (var charge in species.DeconvolutionFeature.Charges.Where(p => species.Identification == null || species.Identification.PrecursorChargeState != p))
                     {
-                        var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge);
+                        var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, "z=" + charge.ToString());
                         parentNode.Charges.Add(childNode);
                     }
                 }
                 if (species.Identification != null)
                 {
                     int charge = species.Identification.PrecursorChargeState;
-                    var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, charge.ToString() + " (ID)");
+                    var childNode = new AnnotatedSpeciesNodeSpecificCharge(species, charge, "z=" + charge.ToString() + " (ID)");
                     parentNode.Charges.Add(childNode);
                 }
             }

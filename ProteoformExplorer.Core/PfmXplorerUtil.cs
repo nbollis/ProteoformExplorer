@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 using UsefulProteomicsDatabases;
+using System.Linq;
 
 namespace ProteoformExplorer.Core
 {
@@ -170,6 +171,18 @@ namespace ProteoformExplorer.Core
             }
 
             return 0;
+        }
+
+        public static string GetFileNameWithoutExtension(string filename)
+        {
+            string str = filename;
+
+            foreach (string extension in InputReaderParser.AllKnownFileFormats.Where(p => str.Contains(p, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                str = str.Replace(extension, string.Empty, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            return str;
         }
     }
 }

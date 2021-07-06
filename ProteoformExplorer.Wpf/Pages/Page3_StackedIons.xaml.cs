@@ -35,7 +35,7 @@ namespace ProteoformExplorer.Wpf
 
             // select the spectra file
             DataListView.SelectedItem = DataLoading.LoadedSpectraFiles.First(p =>
-                Path.GetFileNameWithoutExtension(p.FileNameWithExtension) == species.SpectraFileNameWithoutExtension);
+                PfmXplorerUtil.GetFileNameWithoutExtension(p.FileNameWithExtension) == species.SpectraFileNameWithoutExtension);
 
             // notify the data manager that the spectra file has changed
             WpfFunctions.OnSpectraFileChanged(DataListView, null);
@@ -103,12 +103,13 @@ namespace ProteoformExplorer.Wpf
                 {
                     // plot summed charge states, one line per file
                     //TODO
+                    topPlotView.Plot.Clear();
                 }
                 else
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        fileNum == 0, null, out var errors, 0, 0, file.Key);
+                        fileNum == 0, null, out var errors, 0, 0, true, file.Key);
 
                     if (errors.Any())
                     {
@@ -125,12 +126,12 @@ namespace ProteoformExplorer.Wpf
             // y axis offset
             double yAxisRange = topPlotView.Plot.GetPixelY(axisLimits.YMax) - topPlotView.Plot.GetPixelY(axisLimits.YMin);
             double yUnitsPerDot = (axisLimits.YMax - axisLimits.YMin) / yAxisRange;
-            double offsetUnitStepY = inchOffset * GuiFunctions.GuiSettings.DpiScalingY * yUnitsPerDot;
+            double offsetUnitStepY = inchOffset * GuiFunctions.GuiSettings.DpiScalingY * 96 * yUnitsPerDot;
 
             // x axis offset
             double xAxisRange = topPlotView.Plot.GetPixelX(axisLimits.XMax) - topPlotView.Plot.GetPixelX(axisLimits.XMin);
             double xUnitsPerDot = (axisLimits.XMax - axisLimits.XMin) / xAxisRange;
-            double offsetUnitStepX = inchOffset * GuiFunctions.GuiSettings.DpiScalingX * xUnitsPerDot;
+            double offsetUnitStepX = inchOffset * GuiFunctions.GuiSettings.DpiScalingX * 96 * xUnitsPerDot;
 
             fileNum = 0;
             double xOffset = 0;
@@ -147,7 +148,7 @@ namespace ProteoformExplorer.Wpf
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        fileNum == 0, null, out var errors, xOffset, yOffset, file.Key);
+                        fileNum == 0, null, out var errors, xOffset, yOffset, true, file.Key);
 
                     if (errors.Any())
                     {

@@ -50,7 +50,7 @@ namespace ProteoformExplorer.Wpf
         {
             AnnotatedSpecies = species;
             Charge = charge;
-            Name = "z=" + charge.ToString();
+            Name = name == null ? "z=" + charge.ToString() : name;
         }
 
         protected void OnPropertyChanged(string name)

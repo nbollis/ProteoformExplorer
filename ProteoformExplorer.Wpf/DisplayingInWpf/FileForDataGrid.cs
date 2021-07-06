@@ -3,7 +3,6 @@ using ProteoformExplorer.GuiFunctions;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Windows.Media;
 
 namespace ProteoformExplorer.Wpf
@@ -18,15 +17,16 @@ namespace ProteoformExplorer.Wpf
         public SolidColorBrush BackgroundColor { get; private set; }
         public SolidColorBrush ForegroundColor { get; private set; }
 
-        public FileForDataGrid(string fullFilePath)
+        public FileForDataGrid(string fullFilePath, out List<string> errors)
         {
             FullFilePath = fullFilePath;
             FileNameWithExtension = Path.GetFileName(fullFilePath);
-            DetermineFileType();
+            DetermineFileType(out errors);
         }
 
-        private void DetermineFileType()
+        private void DetermineFileType(out List<string> errors)
         {
+            errors = new List<string>();
             var extension = Path.GetExtension(FullFilePath).ToLowerInvariant();
 
             if (InputReaderParser.AcceptedSpectraFileFormats.Contains(extension))
@@ -61,11 +61,13 @@ namespace ProteoformExplorer.Wpf
                 catch (Exception e)
                 {
                     FileType = FileType.Unknown;
+                    errors.Add("Error reading file: " + e.Message);
                 }
             }
             else
             {
                 FileType = FileType.Unknown;
+                errors.Add("Error reading file: The extension " + extension + " is unknown");
             }
 
             SolidColorBrush brush = Brushes.White;
@@ -98,18 +100,18 @@ namespace ProteoformExplorer.Wpf
                     break;
                 case FileType.Unknown:
                     color = Color.FromArgb(
-                            GuiSettings.TicColor.A,
-                            GuiSettings.TicColor.R,
-                            GuiSettings.TicColor.G,
-                            GuiSettings.TicColor.B);
+                            Colors.Red.A,
+                            Colors.Red.R,
+                            Colors.Red.G,
+                            Colors.Red.B);
                     brush = new SolidColorBrush(color);
                     break;
                 default:
                     color = Color.FromArgb(
-                            GuiSettings.TicColor.A,
-                            GuiSettings.TicColor.R,
-                            GuiSettings.TicColor.G,
-                            GuiSettings.TicColor.B);
+                            Colors.Red.A,
+                            Colors.Red.R,
+                            Colors.Red.G,
+                            Colors.Red.B);
                     brush = new SolidColorBrush(color);
                     break;
             }

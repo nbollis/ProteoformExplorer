@@ -33,11 +33,11 @@ namespace ProteoformExplorer.Wpf
             topPlotView.Configuration.RightClickDragZoom = false;
 
             PercentDeconAnnotation = new Text();
-            PercentDeconAnnotation.Color = GuiFunctions.GuiSettings.DeconvolutedColor;
+            PercentDeconAnnotation.Color = GuiSettings.DeconvolutedColor;
             PercentDeconAnnotation.FontSize = 16;
 
             PercentIdentifiedAnnotation = new Text();
-            PercentIdentifiedAnnotation.Color = GuiFunctions.GuiSettings.IdentifiedColor;
+            PercentIdentifiedAnnotation.Color = GuiSettings.IdentifiedColor;
             PercentIdentifiedAnnotation.FontSize = 16;
         }
 
@@ -58,23 +58,24 @@ namespace ProteoformExplorer.Wpf
 
         private void DisplayAnnotatedSpectrum(int scanNum)
         {
-            var speciesInScan = DataManagement.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
-
-            PlottingFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataManagement.CurrentlySelectedFile, bottomPlotView.Plot, out var scan, out var errors);
-
-            if (errors.Any())
-            {
-                MessageBox.Show(errors.First());
-            }
+            var scan = DataManagement.CurrentlySelectedFile.Value.GetOneBasedScan(scanNum);
 
             if (scan == null)
             {
                 return;
             }
 
+            var speciesInScan = DataManagement.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
             CurrentScan = scan;
-
             CurrentRtIndicator = PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
+            topPlotView.Render();
+
+            PlottingFunctions.PlotSpeciesInSpectrum(speciesInScan, scanNum, DataManagement.CurrentlySelectedFile, bottomPlotView.Plot, out scan, out var errors);
+
+            if (errors.Any())
+            {
+                MessageBox.Show(errors.First());
+            }
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

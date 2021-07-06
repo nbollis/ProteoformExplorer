@@ -27,7 +27,7 @@ namespace ProteoformExplorer.Core
             OneBasedScanToAnnotatedSpecies = new Dictionary<int, HashSet<AnnotatedSpecies>>();
             OneBasedScanToAnnotatedEnvelopes = new Dictionary<int, List<AnnotatedEnvelope>>();
             CachedScans = new Dictionary<(string, int), MsDataScan>();
-            NumScansToCache = 1000;
+            NumScansToCache = 10000;
             CachedScanNumberQueue = new Queue<(string, int)>();
         }
 
@@ -35,7 +35,7 @@ namespace ProteoformExplorer.Core
         {
             OneBasedScanToAnnotatedSpecies.Clear();
 
-            foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(DataFile.Key)))
+            foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key)))
             {
                 if (species.DeconvolutionFeature == null ||
                     species.DeconvolutionFeature.AnnotatedEnvelopes == null ||
@@ -46,50 +46,40 @@ namespace ProteoformExplorer.Core
                     if (species.DeconvolutionFeature == null)
                     {
                         if (species.Identification != null)
-                        { 
-                            //TODO: figure this out
-                            species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification.MonoisotopicMass,
-                                0, 0, 0, new List<int> { species.Identification.PrecursorChargeState }, DataFile.Key, null);
+                        {
+                            // do some peakfinding for species that have been identified but don't have a chromatographic peak assigned to them
+                            // (i.e., from a top-down search program)
+                            species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                         }
                         else
                         {
                             // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
+                            continue;
                         }
                     }
-
-                    species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
-                }
-
-                if (species.DeconvolutionFeature != null)
-                {
-                    foreach (var envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
+                    else
                     {
-                        int scanNum = envelope.OneBasedScanNumber;
-
-                        if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
-                        {
-                            OneBasedScanToAnnotatedSpecies.Add(scanNum, new HashSet<AnnotatedSpecies>());
-                        }
-                        if (!OneBasedScanToAnnotatedEnvelopes.ContainsKey(scanNum))
-                        {
-                            OneBasedScanToAnnotatedEnvelopes.Add(scanNum, new List<AnnotatedEnvelope>());
-                        }
-
-                        OneBasedScanToAnnotatedSpecies[scanNum].Add(species);
-                        OneBasedScanToAnnotatedEnvelopes[scanNum].Add(envelope);
+                        species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                     }
                 }
 
-                if (species.Identification != null)
+                foreach (AnnotatedEnvelope envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
                 {
-                    int scanNum = species.Identification.OneBasedPrecursorScanNumber;
+                    int scanNum = envelope.OneBasedScanNumber;
 
                     if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
                     {
                         OneBasedScanToAnnotatedSpecies.Add(scanNum, new HashSet<AnnotatedSpecies>());
                     }
+                    if (!OneBasedScanToAnnotatedEnvelopes.ContainsKey(scanNum))
+                    {
+                        OneBasedScanToAnnotatedEnvelopes.Add(scanNum, new List<AnnotatedEnvelope>());
+                    }
 
                     OneBasedScanToAnnotatedSpecies[scanNum].Add(species);
+                    OneBasedScanToAnnotatedEnvelopes[scanNum].Add(envelope);
+
+                    envelope.Species = species;
                 }
             }
         }
@@ -125,25 +115,35 @@ namespace ProteoformExplorer.Core
 
         public List<Datum> GetTicChromatogram()
         {
-            HashSet<double> claimedMzs = new HashSet<double>();
+            HashSet<double> deconClaimedMzs = new HashSet<double>();
+            HashSet<double> identClaimedMzs = new HashSet<double>();
+
             if (TicData.Count == 0)
             {
                 int lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
 
                 for (int i = 1; i <= lastScanNum; i++)
                 {
-                    claimedMzs.Clear();
+                    deconClaimedMzs.Clear();
                     var scan = GetOneBasedScan(i);
                     double deconvolutedTic = 0;
+                    double identifiedTic = 0;
 
                     // tic
                     if (scan != null && scan.MsnOrder == 1)
                     {
                         TicData.Add(new Datum(scan.RetentionTime, scan.TotalIonCurrent, scan.OneBasedScanNumber));
                     }
+                    else
+                    {
+                        continue;
+                    }
 
-                    // deconvoluted tic
-                    if (OneBasedScanToAnnotatedEnvelopes.TryGetValue(i, out var annotatedEnvelopes) && scan.MsnOrder == 1)
+                    // deconvoluted and identified tic
+                    var deconDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
+                    var identDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
+
+                    if (OneBasedScanToAnnotatedEnvelopes.TryGetValue(i, out var annotatedEnvelopes))
                     {
                         foreach (var envelope in annotatedEnvelopes)
                         {
@@ -152,20 +152,26 @@ namespace ProteoformExplorer.Core
                                 int index = scan.MassSpectrum.GetClosestPeakIndex(mz);
                                 double actualMz = scan.MassSpectrum.XArray[index];
 
-                                if (claimedMzs.Contains(actualMz))
+                                if (!deconClaimedMzs.Contains(actualMz))
                                 {
-                                    continue;
+                                    deconClaimedMzs.Add(actualMz);
+                                    deconvolutedTic += scan.MassSpectrum.YArray[index];
                                 }
 
-                                claimedMzs.Add(actualMz);
-                                deconvolutedTic += scan.MassSpectrum.YArray[index];
+                                if (envelope.Species.Identification != null && !identClaimedMzs.Contains(actualMz))
+                                {
+                                    identClaimedMzs.Add(actualMz);
+                                    identifiedTic += scan.MassSpectrum.YArray[index];
+                                }
                             }
                         }
 
-                        DeconvolutedTicData.Add(new Datum(scan.RetentionTime, deconvolutedTic, scan.OneBasedScanNumber));
+                        deconDatum = new Datum(scan.RetentionTime, deconvolutedTic, scan.OneBasedScanNumber);
+                        identDatum = new Datum(scan.RetentionTime, identifiedTic, scan.OneBasedScanNumber);
                     }
 
-                    // TODO: identified tic
+                    DeconvolutedTicData.Add(deconDatum);
+                    IdentifiedTicData.Add(identDatum);
                 }
             }
 

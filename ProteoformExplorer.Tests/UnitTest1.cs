@@ -185,7 +185,7 @@ namespace Test
             Assert.That(species.All(p => p.DeconvolutionFeature != null));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes != null && p.DeconvolutionFeature.AnnotatedEnvelopes.Count > 0));
             Assert.That(species.All(p => p.DeconvolutionFeature.AnnotatedEnvelopes.All(v => v.PeakMzs.Count > 0)));
-            Assert.That(species.All(p => p.DeconvolutionFeature.SpectraFileNameWithoutExtension == Path.GetFileNameWithoutExtension(filePath)));
+            Assert.That(species.All(p => p.DeconvolutionFeature.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(filePath)));
         }
 
         //[Test]

@@ -281,7 +281,7 @@ namespace ProteoformExplorer.GuiFunctions
         }
 
         public static void PlotSummedChargeStateXic(double modeMass, int z, double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data, Plot xicPlot,
-            bool clearOldPlot, VLine rtIndicator, out List<string> errors, double xOffset = 0, double yOffset = 0, string label = null)
+            bool clearOldPlot, VLine rtIndicator, out List<string> errors, double xOffset = 0, double yOffset = 0, bool waterfall = false, string label = null)
         {
             errors = new List<string>();
 
@@ -304,9 +304,7 @@ namespace ProteoformExplorer.GuiFunctions
                 xicPlot.AddScatterLines(xs, ys, color, lineWidth: (float)GuiSettings.ChartLineWidth, label: label);
                 xicPlot.Legend(label != null, location: GuiSettings.LegendLocation);
 
-                bool isWaterfall = xOffset != 0 || yOffset != 0;
-
-                if ((isWaterfall && GuiSettings.FillWaterfall) || (!isWaterfall && GuiSettings.FillSideView))
+                if ((waterfall && GuiSettings.FillWaterfall) || (!waterfall && GuiSettings.FillSideView))
                 {
                     var colorWithTransparency = Color.FromArgb(GuiSettings.FillAlpha, color.R, color.G, color.B);
                     xicPlot.AddFill(xs, ys, baseline: yOffset, color: colorWithTransparency);
@@ -362,16 +360,6 @@ namespace ProteoformExplorer.GuiFunctions
                 // display identified TIC chromatogram
                 if (DataManagement.AllLoadedAnnotatedSpecies.Any())
                 {
-                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram();
-
-                    if (identifiedTicChromatogram.Any())
-                    {
-                        plot.AddScatterLines(
-                            identifiedTicChromatogram.Select(p => p.X).ToArray(),
-                            identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                            GuiSettings.IdentifiedColor, (float)GuiSettings.ChartLineWidth, label: "Identified TIC");
-                    }
-
                     var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram();
 
                     if (deconvolutedTicChromatogram.Any())
@@ -380,6 +368,16 @@ namespace ProteoformExplorer.GuiFunctions
                             deconvolutedTicChromatogram.Select(p => p.X).ToArray(),
                             deconvolutedTicChromatogram.Select(p => p.Y.Value).ToArray(),
                             GuiSettings.DeconvolutedColor, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
+                    }
+
+                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram();
+
+                    if (identifiedTicChromatogram.Any())
+                    {
+                        plot.AddScatterLines(
+                            identifiedTicChromatogram.Select(p => p.X).ToArray(),
+                            identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
+                            GuiSettings.IdentifiedColor, (float)GuiSettings.ChartLineWidth, label: "Identified TIC");
                     }
                 }
 
@@ -428,7 +426,7 @@ namespace ProteoformExplorer.GuiFunctions
                         identifiedTic = identifiedTicChromatogram.Sum(p => p.Y.Value);
                     }
 
-                    ticValues.Add((Path.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTic));
+                    ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTic));
                 }
 
                 double[] positions = Enumerable.Range(0, ticValues.Count).Select(p => (double)p).ToArray();
@@ -479,7 +477,7 @@ namespace ProteoformExplorer.GuiFunctions
                 foreach (var file in DataManagement.SpectraFiles)
                 {
                     int envs = file.Value.OneBasedScanToAnnotatedEnvelopes.Sum(p => p.Value.Count);
-                    numFilteredEnvelopesPerFile.Add((Path.GetFileNameWithoutExtension(file.Key), envs));
+                    numFilteredEnvelopesPerFile.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), envs));
                 }
 
                 double[] values = numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray();
@@ -548,7 +546,7 @@ namespace ProteoformExplorer.GuiFunctions
                     bar.BorderLineWidth = 0;
                     bar.Orientation = ScottPlot.Orientation.Horizontal;
                     bar.ValueOffsets = locations.Select(p => (double)fileNum).ToArray();
-                    bar.Label = Path.GetFileNameWithoutExtension(file.Key);
+                    bar.Label = PfmXplorerUtil.GetFileNameWithoutExtension(file.Key);
 
                     fileNum++;
                 }
@@ -557,7 +555,7 @@ namespace ProteoformExplorer.GuiFunctions
                 plot.SetAxisLimitsY(0, maxMass * 1.2);
 
                 double[] xPositions = Enumerable.Range(0, DataManagement.SpectraFiles.Count).Select(p => (double)p).ToArray();
-                string[] xLabels = DataManagement.SpectraFiles.Select(p => Path.GetFileNameWithoutExtension(p.Key)).ToArray();
+                string[] xLabels = DataManagement.SpectraFiles.Select(p => PfmXplorerUtil.GetFileNameWithoutExtension(p.Key)).ToArray();
                 plot.XTicks(xPositions, xLabels);
 
                 StyleDashboardPlot(plot);
@@ -608,15 +606,16 @@ namespace ProteoformExplorer.GuiFunctions
                 return indicator;
             }
 
-            var plottables = plot.GetPlottables();
-            if (indicator == null || !plottables.Any(p => p is VLine line))
+            if (indicator == null)
             {
                 indicator = plot.AddVerticalLine(scan.RetentionTime, color: GuiSettings.RtIndicatorColor,
                     width: (float)(GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX));
             }
 
             indicator.X = scan.RetentionTime;
-            plot.Render();
+
+            // this does not seem to update properly. need to call .Render() on the WpfPlot object, not the Plot
+            //plot.Render();
 
             return indicator;
         }

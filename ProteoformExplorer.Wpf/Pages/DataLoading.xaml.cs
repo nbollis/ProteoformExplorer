@@ -120,7 +120,15 @@ namespace ProteoformExplorer.Wpf
 
             if (InputReaderParser.AcceptedSpectraFileFormats.Contains(ext) || InputReaderParser.AcceptedTextFileFormats.Contains(ext))
             {
-                FilesToLoad.Add(new FileForDataGrid(filePath));
+                var file = new FileForDataGrid(filePath, out var errors);
+
+                if (errors.Any())
+                {
+                    MessageBox.Show(errors.First());
+                    return;
+                }
+
+                FilesToLoad.Add(file);
             }
         }
 

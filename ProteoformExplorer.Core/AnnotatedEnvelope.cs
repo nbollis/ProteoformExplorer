@@ -8,6 +8,7 @@ namespace ProteoformExplorer.Core
         public double RetentionTime { get; private set; }
         public int Charge { get; private set; }
         public List<double> PeakMzs { get; private set; }
+        public AnnotatedSpecies Species { get; set; }
 
         public AnnotatedEnvelope(int oneBasedScan, double rt, int charge, List<double> peakMzs)
         {

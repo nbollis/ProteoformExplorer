@@ -11,6 +11,10 @@ namespace ProteoformExplorer.Core
         public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt" };
         public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
+        // populated from KnownFileExtensions.txt
+        public static List<string> AllKnownFileFormats = new List<string> { ".raw", ".mzml", ".wiff", ".mzxml", ".mgf", ".d", ".yep", ".baf", ".fid", ".tdf", ".t2d", ".pkl",
+            ".dat", ".ms", ".qgd", ".lcd", ".spc", ".sms", ".xms", ".itm", ".ita", ".tdc", ".psmtsv", ".tsv", ".txt", ".csv", ".tab" };
+
         private static int SpeciesNameColumn;
         private static int SpectraFileNameColumn;
         private static int MonoisotopicMassColumn;

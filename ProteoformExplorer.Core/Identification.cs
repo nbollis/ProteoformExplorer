@@ -20,7 +20,7 @@ namespace ProteoformExplorer.Core
             this.PrecursorChargeState = chargeState;
             this.OneBasedPrecursorScanNumber = precursorScanNum;
 
-            this.SpectraFileNameWithoutExtension = Path.GetFileNameWithoutExtension(spectraFileNameWithoutExtension);
+            this.SpectraFileNameWithoutExtension = PfmXplorerUtil.GetFileNameWithoutExtension(spectraFileNameWithoutExtension);
         }
     }
 }

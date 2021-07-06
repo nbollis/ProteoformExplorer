@@ -86,7 +86,7 @@ namespace ProteoformExplorer.Wpf
                     int z = chargesToPlot[i];
 
                     GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, z, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow,
-                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, i == 0, CurrentRtIndicator, out var errors, 0, 0, "z=" + z);
+                        DataManagement.CurrentlySelectedFile, topPlotView.Plot, i == 0, CurrentRtIndicator, out var errors, 0, 0, false, "z=" + z);
 
                     if (errors.Any())
                     {
@@ -154,6 +154,7 @@ namespace ProteoformExplorer.Wpf
             CurrentScan = scan;
 
             CurrentRtIndicator = GuiFunctions.PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
+            topPlotView.Render();
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

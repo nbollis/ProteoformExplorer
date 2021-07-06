@@ -26,7 +26,7 @@ namespace ProteoformExplorer.Wpf
         public static bool TicDashboardItem = true;
         public static bool SpeciesViewDashboardItem = true;
         public static bool WaterfallPlotDashboardItem = true;
-        public static bool ProteoformVisualization = true;
+        public static bool ProteoformVisualization = false;
 
         public Dashboard()
         {
