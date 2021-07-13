@@ -114,7 +114,6 @@ namespace ProteoformExplorer.GuiFunctions
         {
             scan = null;
             errors = new List<string>();
-            Dictionary<string, Color> speciesLabelToColor = new Dictionary<string, Color>();
 
             try
             {
@@ -148,6 +147,8 @@ namespace ProteoformExplorer.GuiFunctions
 
                 if (allSpeciesToPlot != null && scan.MsnOrder == 1)
                 {
+                    Dictionary<string, Color> speciesLabelToColor = new Dictionary<string, Color>();
+
                     // add annotated peaks
                     HashSet<double> claimedMzs = new HashSet<double>();
                     foreach (var species in allSpeciesToPlot)
@@ -163,52 +164,40 @@ namespace ProteoformExplorer.GuiFunctions
 
                         if (species.DeconvolutionFeature != null)
                         {
-                            double mass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.DeconvolutionFeature.MonoisotopicMass);
-
-                            if (charge != null)
+                            foreach (var envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
                             {
-                                chargesToPlot.Add(charge.Value);
-                            }
-                            else
-                            {
-                                chargesToPlot.AddRange(species.DeconvolutionFeature.Charges);
-                            }
+                                int added = 0;
 
-                            foreach (var z in chargesToPlot)
-                            {
-                                int index = scan.MassSpectrum.GetClosestPeakIndex(mass.ToMz(z));
-                                double expMz = scan.MassSpectrum.XArray[index];
-                                double expIntensity = scan.MassSpectrum.YArray[index];
-
-                                var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
-                                    claimedMzs, new List<(double, double)>());
-
-                                if (envelope != null)
+                                if (charge != null && charge.Value != envelope.Charge)
                                 {
-                                    annotatedData.AddRange(envelope.Peaks.Select(p => new Datum(p.ExperimentalMz, p.ExperimentalIntensity)));
+                                    continue;
                                 }
-                                else
+
+                                foreach (var mz in envelope.PeakMzs)
                                 {
+                                    int index = scan.MassSpectrum.GetClosestPeakIndex(mz);
+                                    double expMz = scan.MassSpectrum.XArray[index];
+                                    double expIntensity = scan.MassSpectrum.YArray[index];
+
+                                    if (!claimedMzs.Contains(expMz))
+                                    {
+                                        annotatedData.Add(new Datum(expMz, expIntensity));
+                                        added++;
+                                        claimedMzs.Add(expMz);
+                                    }
+                                }
+
+                                if (added == 0)
+                                {
+                                    var firstMz = envelope.PeakMzs.First();
+
+                                    int index = scan.MassSpectrum.GetClosestPeakIndex(firstMz);
+                                    double expMz = scan.MassSpectrum.XArray[index];
+                                    double expIntensity = scan.MassSpectrum.YArray[index];
+
                                     annotatedData.Add(new Datum(expMz, expIntensity));
                                 }
                             }
-
-                            foreach (var item in annotatedData)
-                            {
-                                claimedMzs.Add(item.X);
-                            }
-                        }
-                        else if (species.Identification != null)
-                        {
-                            double mass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(species.Identification.MonoisotopicMass);
-                            int z = species.Identification.PrecursorChargeState;
-
-                            int index = scan.MassSpectrum.GetClosestPeakIndex(mass.ToMz(z));
-                            double expMz = scan.MassSpectrum.XArray[index];
-                            double expIntensity = scan.MassSpectrum.YArray[index];
-
-                            var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, z, new List<Deconvoluter.DeconvolutedPeak>(),
-                                claimedMzs, new List<(double, double)>());
                         }
 
                         foreach (var item in annotatedData)
@@ -601,11 +590,15 @@ namespace ProteoformExplorer.GuiFunctions
 
             if (DataManagement.CurrentlySelectedFile.Value.OneBasedScanToAnnotatedEnvelopes.TryGetValue(scan.OneBasedScanNumber, out var envelopes))
             {
-                var selectedEnvelope = envelopes.FirstOrDefault(p => p.PeakMzs.Any(v => t.Within(mz, v)));
+                var items = envelopes.Where(p => p.PeakMzs.Any(v => t.Within(mz, v))).ToList();
 
-                if (selectedEnvelope != null)
+                if (items.Any())
                 {
-                    textAnnotation.Label = mz.ToString("F3") + "\n" + "z=" + selectedEnvelope.Charge;
+                    string label = mz.ToString("F3") + "\n" + "z=";
+
+                    label += string.Join('|', items.Select(p => p.Charge));
+
+                    textAnnotation.Label = label;
                 }
             }
 
