@@ -43,8 +43,9 @@
             <WpfPlot Name="topPlotView" Grid.Row="1" 
                      PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftOrRightButtonDown" 
                      PreviewMouseRightButtonDown="topPlotView_PreviewMouseLeftOrRightButtonDown" 
-                     PreviewMouseRightButtonUp="topPlotView_PreviewMouseRightButtonUp" />
-            <WpfPlot Name="bottomPlotView" Grid.Row="2" />
+                     PreviewMouseRightButtonUp="topPlotView_PreviewMouseRightButtonUp"
+                     PreviewKeyDown="Window_PreviewKeyDown"/>
+            <WpfPlot Name="bottomPlotView" Grid.Row="2" PreviewKeyDown="Window_PreviewKeyDown" />
         </Grid>
     </Grid>
 </Page>

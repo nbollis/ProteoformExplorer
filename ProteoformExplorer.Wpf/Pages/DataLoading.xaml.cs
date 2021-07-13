@@ -221,7 +221,7 @@ namespace ProteoformExplorer.Wpf
             // pre-compute TIC stuff and report loading progress
             foreach (var file in DataManagement.SpectraFiles)
             {
-                file.Value.BuildScanToSpeciesDictionary(DataManagement.AllLoadedAnnotatedSpecies.ToList());
+                file.Value.CreateAnnotatedDeconvolutionFeatures(DataManagement.AllLoadedAnnotatedSpecies.ToList());
                 file.Value.GetTicChromatogram();
                 itemsLoaded++;
 

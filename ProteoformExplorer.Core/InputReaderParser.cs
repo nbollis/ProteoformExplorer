@@ -76,27 +76,35 @@ namespace ProteoformExplorer.Core
 
                 // read the line + create the species object
                 AnnotatedSpecies species = null;
-                switch (fileType)
+
+                try
                 {
-                    case InputSourceType.MetaMorpheus:
-                        species = GetMetaMorpheusSpecies(line);
-                        break;
+                    switch (fileType)
+                    {
+                        case InputSourceType.MetaMorpheus:
+                            species = GetMetaMorpheusSpecies(line);
+                            break;
 
-                    case InputSourceType.FlashDeconv:
-                        species = GetFlashDeconvSpecies(line);
-                        break;
+                        case InputSourceType.FlashDeconv:
+                            species = GetFlashDeconvSpecies(line);
+                            break;
 
-                    case InputSourceType.TDPortal:
-                        species = GetTdPortalSpecies(line);
-                        break;
+                        case InputSourceType.TDPortal:
+                            species = GetTdPortalSpecies(line);
+                            break;
 
-                    case InputSourceType.ThermoDecon:
-                        species = GetThermoDeconSpecies(line, reader, filePath);
-                        break;
+                        case InputSourceType.ThermoDecon:
+                            species = GetThermoDeconSpecies(line, reader, filePath);
+                            break;
 
-                    case InputSourceType.ProteoformExplorer:
-                        species = GetProteoformExplorerSpecies(line, reader);
-                        break;
+                        case InputSourceType.ProteoformExplorer:
+                            species = GetProteoformExplorerSpecies(line, reader);
+                            break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    errors.Add("Error on line " + lineNum + "; " + e.Message);
                 }
 
                 // add the item to the list
@@ -104,13 +112,6 @@ namespace ProteoformExplorer.Core
                 {
                     listOfSpecies.Add(species);
                 }
-            }
-
-            int linesWithSpecies = lineNum - 1; // first line is header
-
-            if (linesWithSpecies != listOfSpecies.Count)
-            {
-                errors.Add(filePath + ": " + (linesWithSpecies - listOfSpecies.Count) + " lines of text did not contain valid species");
             }
 
             return listOfSpecies;
@@ -123,7 +124,7 @@ namespace ProteoformExplorer.Core
             string baseSequence = items[SpeciesNameColumn];
             string modSequence = items[SpeciesNameColumn];
 
-            if (items[MonoisotopicMassColumn].Contains("|"))
+            if (items[MonoisotopicMassColumn].Contains("|") || string.IsNullOrWhiteSpace(items[MonoisotopicMassColumn]))
             {
                 return null;
             }
@@ -173,7 +174,7 @@ namespace ProteoformExplorer.Core
             double rtEnd = double.Parse(items[FeatureRtEndColumn]) / 60;
             string fileName = items[SpectraFileNameColumn];
             var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
-            var species = new AnnotatedSpecies(deconFeature);
+            var species = new AnnotatedSpecies(deconFeature, identifier);
 
             return species;
         }
@@ -208,7 +209,7 @@ namespace ProteoformExplorer.Core
             }
 
             var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
-            var species = new AnnotatedSpecies(deconFeature);
+            var species = new AnnotatedSpecies(deconFeature, speciesName);
 
             return species;
         }
@@ -226,8 +227,8 @@ namespace ProteoformExplorer.Core
             int scan = int.Parse(items[ScanNumberColumn]);
             var peaks = items[PeaksListColumn].Split(',').Select(p => double.Parse(p)).ToList();
 
-            var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
-            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName, new List<AnnotatedEnvelope> { annotEnvelope });
+            //var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName);
             var species = new AnnotatedSpecies(deconFeature);
 
             return species;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Windows.Input;
 using UsefulProteomicsDatabases;
 using System.Linq;
+using System.IO;
 
 namespace ProteoformExplorer.Core
 {
@@ -175,7 +176,7 @@ namespace ProteoformExplorer.Core
 
         public static string GetFileNameWithoutExtension(string filename)
         {
-            string str = filename;
+            string str = Path.GetFileName(filename);
 
             foreach (string extension in InputReaderParser.AllKnownFileFormats.Where(p => str.Contains(p, StringComparison.InvariantCultureIgnoreCase)))
             {

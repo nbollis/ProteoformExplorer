@@ -79,6 +79,19 @@ namespace ProteoformExplorer.Core
                     }
                 }
             }
+
+            if (AnnotatedEnvelopes.Count == 0)
+            {
+                var scan = data.Value.GetOneBasedScan(start.OneBasedScanNumber);
+
+                if (Charges.Any() && scan != null)
+                {
+                    var mz = scan.MassSpectrum.GetClosestPeakXvalue(modeMass.ToMz(Charges.First()));
+
+                    AnnotatedEnvelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime,
+                                Charges.First(), new List<double> { mz.Value }));
+                }
+            }
         }
 
         private void GenerateDeconvolutionFeatureFromIdentification(Identification id, KeyValuePair<string, CachedSpectraFileData> data)
@@ -195,8 +208,6 @@ namespace ProteoformExplorer.Core
             this.ApexRt = envelopes.First().RetentionTime;
             this.RtElutionRange = new DoubleRange(envelopes.Min(p => p.RetentionTime), envelopes.Max(p => p.RetentionTime));
             this.Charges = Enumerable.Range(envelopes.Min(p => p.Charge), envelopes.Max(p => p.Charge) - envelopes.Min(p => p.Charge) + 1).ToList();
-
-            FindAnnotatedEnvelopesInData(data);
         }
     }
 }

@@ -31,41 +31,36 @@ namespace ProteoformExplorer.Core
             CachedScanNumberQueue = new Queue<(string, int)>();
         }
 
-        public void BuildScanToSpeciesDictionary(List<AnnotatedSpecies> allAnnotatedSpecies)
+        public void CreateAnnotatedDeconvolutionFeatures(List<AnnotatedSpecies> allAnnotatedSpecies)
         {
             OneBasedScanToAnnotatedSpecies.Clear();
+            OneBasedScanToAnnotatedEnvelopes.Clear();
 
             foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key)))
             {
-                if (species.DeconvolutionFeature == null ||
-                    species.DeconvolutionFeature.AnnotatedEnvelopes == null ||
-                    species.DeconvolutionFeature.AnnotatedEnvelopes.Count == 0)
+                // the deconvoluted species is from a file type that does not specify the envelopes in the deconvolution feature
+                // therefore, we'll have to do some peakfinding and guess what envelopes are part of this feature
+                if (species.DeconvolutionFeature == null)
                 {
-                    // the deconvoluted species is from a file type that does not specify the envelopes in the deconvolution feature
-                    // therefore, we'll have to do some peakfinding and guess what envelopes are part of this feature
-                    if (species.DeconvolutionFeature == null)
+                    if (species.Identification != null)
                     {
-                        if (species.Identification != null)
-                        {
-                            // do some peakfinding for species that have been identified but don't have a chromatographic peak assigned to them
-                            // (i.e., from a top-down search program)
-                            species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
-                        }
-                        else
-                        {
-                            // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
-                            continue;
-                        }
+                        // do some peakfinding for species that have been identified but don't have a chromatographic peak assigned to them
+                        // (i.e., from a top-down search program)
+                        species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                     }
                     else
                     {
-                        species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                        // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
+                        continue;
                     }
                 }
+
+                species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
 
                 foreach (AnnotatedEnvelope envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
                 {
                     int scanNum = envelope.OneBasedScanNumber;
+                    envelope.Species = species;
 
                     if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
                     {
@@ -78,8 +73,6 @@ namespace ProteoformExplorer.Core
 
                     OneBasedScanToAnnotatedSpecies[scanNum].Add(species);
                     OneBasedScanToAnnotatedEnvelopes[scanNum].Add(envelope);
-
-                    envelope.Species = species;
                 }
             }
         }

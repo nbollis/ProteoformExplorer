@@ -9,6 +9,7 @@ namespace ProteoformExplorer.Core
         public int Charge { get; private set; }
         public List<double> PeakMzs { get; private set; }
         public AnnotatedSpecies Species { get; set; }
+        public bool IsValidEnvelope { get { return PeakMzs != null && PeakMzs.Count > 1; } }
 
         public AnnotatedEnvelope(int oneBasedScan, double rt, int charge, List<double> peakMzs)
         {

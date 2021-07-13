@@ -7,9 +7,9 @@
         public Identification Identification { get; private set; }
         public DeconvolutionFeature DeconvolutionFeature { get; set; }
 
-        public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature)
+        public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature, string speciesLabel = null)
         {
-            SpeciesLabel = deconvolutionFeature.MonoisotopicMass.ToString("F2");
+            SpeciesLabel = speciesLabel == null ? deconvolutionFeature.MonoisotopicMass.ToString("F2") : speciesLabel;
             DeconvolutionFeature = deconvolutionFeature;
             SpectraFileNameWithoutExtension = deconvolutionFeature.SpectraFileNameWithoutExtension;
         }

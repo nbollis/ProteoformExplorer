@@ -80,8 +80,8 @@
                         <RowDefinition Height="1*" />
                     </Grid.RowDefinitions>
 
-                    <WpfPlot Name="topPlotView" Grid.Row="0" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown"/>
-                    <WpfPlot Name="bottomPlotView" Grid.Row="1" />
+                    <WpfPlot Name="topPlotView" Grid.Row="0" PreviewMouseLeftButtonDown="topPlotView_PreviewMouseLeftButtonDown" PreviewKeyDown="Window_PreviewKeyDown"/>
+                    <WpfPlot Name="bottomPlotView" Grid.Row="1" PreviewKeyDown="Window_PreviewKeyDown" />
                 </Grid>
             </Grid>
         </Grid>
