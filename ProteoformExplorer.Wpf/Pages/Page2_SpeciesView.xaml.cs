@@ -147,7 +147,7 @@ namespace ProteoformExplorer.Wpf
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            GuiFunctions.PlottingFunctions.PlotSpeciesInSpectrum(new List<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
+            PlottingFunctions.PlotSpeciesInSpectrum(new List<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
                 bottomPlotView.Plot, out var scan2, out var errors, charge);
 
             if (errors.Any())
@@ -157,7 +157,7 @@ namespace ProteoformExplorer.Wpf
 
             CurrentScan = scan;
 
-            CurrentRtIndicator = GuiFunctions.PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
+            CurrentRtIndicator = PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
             topPlotView.Render();
         }
 
@@ -217,7 +217,7 @@ namespace ProteoformExplorer.Wpf
                 PlotSpecies(annotatedSpeciesNodeSpecificCharge.AnnotatedSpecies, annotatedSpeciesNodeSpecificCharge.Charge);
             }
 
-            GuiFunctions.PlottingFunctions.OnSpeciesChanged();
+            PlottingFunctions.OnSpeciesChanged();
         }
 
         private void DataListView_SelectionChanged(object sender, SelectionChangedEventArgs e)

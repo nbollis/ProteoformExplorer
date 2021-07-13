@@ -470,7 +470,7 @@ namespace ProteoformExplorer.GuiFunctions
 
                 foreach (var file in DataManagement.SpectraFiles)
                 {
-                    int envs = file.Value.OneBasedScanToAnnotatedEnvelopes.Sum(p => p.Value.Count(v => v.IsValidEnvelope));
+                    int envs = file.Value.GetDistinctEnvelopes().Count;
                     numFilteredEnvelopesPerFile.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), envs));
                 }
 
@@ -511,8 +511,9 @@ namespace ProteoformExplorer.GuiFunctions
                 foreach (var file in DataManagement.SpectraFiles)
                 {
                     //TODO: decon feature could be null
-                    var envelopeMasses = file.Value.OneBasedScanToAnnotatedEnvelopes
-                        .SelectMany(p => p.Value.Where(f => f.IsValidEnvelope).Select(v => v.PeakMzs.First().ToMass(v.Charge)))
+                    var envelopeMasses = file.Value
+                        .GetDistinctEnvelopes()
+                        .Select(v => v.PeakMzs.First().ToMass(v.Charge))
                         .ToArray();
                     maxMass = Math.Max(maxMass, envelopeMasses.Max());
 

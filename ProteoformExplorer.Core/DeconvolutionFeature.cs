@@ -37,7 +37,7 @@ namespace ProteoformExplorer.Core
 
         public void FindAnnotatedEnvelopesInData(KeyValuePair<string, CachedSpectraFileData> data)
         {
-            if (AnnotatedEnvelopes != null)
+            if (AnnotatedEnvelopes != null && AnnotatedEnvelopes.Count > 0)
             {
                 return;
             }

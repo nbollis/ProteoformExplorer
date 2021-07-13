@@ -225,5 +225,38 @@ namespace ProteoformExplorer.Core
 
             return scans;
         }
+
+        public List<AnnotatedEnvelope> GetDistinctEnvelopes()
+        {
+            var envelopes = new List<AnnotatedEnvelope>();
+
+            HashSet<double> mzsClaimed = new HashSet<double>();
+
+            foreach (var scan in OneBasedScanToAnnotatedEnvelopes)
+            {
+                mzsClaimed.Clear();
+
+                foreach (AnnotatedEnvelope envelope in scan.Value)
+                {
+                    int uniquePeakCount = 0;
+
+                    foreach (double peakMz in envelope.PeakMzs)
+                    {
+                        if (!mzsClaimed.Contains(peakMz))
+                        {
+                            uniquePeakCount++;
+                            mzsClaimed.Add(peakMz);
+                        }
+                    }
+
+                    if (uniquePeakCount > 1)
+                    {
+                        envelopes.Add(envelope);
+                    }
+                }
+            }
+
+            return envelopes;
+        }
     }
 }
