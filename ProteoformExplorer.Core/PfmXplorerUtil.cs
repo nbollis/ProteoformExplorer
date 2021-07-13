@@ -6,6 +6,8 @@ using System.Windows.Input;
 using UsefulProteomicsDatabases;
 using System.Linq;
 using System.IO;
+using MzLibUtil;
+using Chemistry;
 
 namespace ProteoformExplorer.Core
 {
@@ -184,6 +186,56 @@ namespace ProteoformExplorer.Core
             }
 
             return str;
+        }
+
+        public static List<Datum> GetXicData(List<MsDataScan> scans, double mz, int z, Tolerance tolerance)
+        {
+            List<Datum> xicData = new List<Datum>();
+            foreach (var scan in scans)
+            {
+                int ind = scan.MassSpectrum.GetClosestPeakIndex(mz);
+                double expMz = scan.MassSpectrum.XArray[ind];
+                double expIntensity = scan.MassSpectrum.YArray[ind];
+
+                if (tolerance.Within(expMz.ToMass(z), mz.ToMass(z)))
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, expIntensity));
+                }
+                else
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, 0));
+                }
+            }
+
+            return xicData;
+        }
+
+        public static List<Datum> GetSummedChargeXics(List<MsDataScan> scans, double modeMass, int z)
+        {
+            List<Datum> xicData = new List<Datum>();
+            List<DeconvolutedPeak> peaks = new List<DeconvolutedPeak>();
+            HashSet<double> temp = new HashSet<double>();
+            List<(double, double)> temp2 = new List<(double, double)>();
+
+            foreach (var scan in scans)
+            {
+                int ind = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(z));
+                double expMz = scan.MassSpectrum.XArray[ind];
+                double expIntensity = scan.MassSpectrum.YArray[ind];
+
+                var env = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, ind, z, peaks, temp, temp2);
+
+                if (env != null)
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, env.Peaks.Sum(p => p.ExperimentalIntensity)));
+                }
+                else
+                {
+                    xicData.Add(new Datum(scan.RetentionTime, 0));
+                }
+            }
+
+            return xicData;
         }
     }
 }

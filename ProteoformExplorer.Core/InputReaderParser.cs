@@ -227,8 +227,8 @@ namespace ProteoformExplorer.Core
             int scan = int.Parse(items[ScanNumberColumn]);
             var peaks = items[PeaksListColumn].Split(',').Select(p => double.Parse(p)).ToList();
 
-            //var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
-            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName);
+            var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName, new List<AnnotatedEnvelope> { annotEnvelope });
             var species = new AnnotatedSpecies(deconFeature);
 
             return species;

@@ -10,6 +10,7 @@ using System.Windows.Input;
 using ScottPlot.Plottable;
 using System.Windows.Threading;
 using System;
+using ProteoformExplorer.GuiFunctions;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -23,6 +24,7 @@ namespace ProteoformExplorer.Wpf
         private AnnotatedSpecies CurrentlyDisplayedSpecies;
         private int? CurrentlyDisplayedCharge;
         private VLine CurrentRtIndicator;
+        private Text SelectedSpectrumItemAnnotation;
 
         public Page2_SpeciesView()
         {
@@ -145,7 +147,7 @@ namespace ProteoformExplorer.Wpf
 
         private void PlotSpeciesInSpectrum(AnnotatedSpecies species, MsDataScan scan, int? charge = null)
         {
-            GuiFunctions.PlottingFunctions.PlotSpeciesInSpectrum(new HashSet<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
+            GuiFunctions.PlottingFunctions.PlotSpeciesInSpectrum(new List<AnnotatedSpecies> { species }, scan.OneBasedScanNumber, DataManagement.CurrentlySelectedFile,
                 bottomPlotView.Plot, out var scan2, out var errors, charge);
 
             if (errors.Any())
@@ -240,6 +242,17 @@ namespace ProteoformExplorer.Wpf
         private void TreeViewItem_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
         {
             e.Handled = true;
+        }
+
+        private void bottomPlotView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var xval = WpfFunctions.GetXPositionFromMouseClickOnChart(sender, e);
+            SelectedSpectrumItemAnnotation = PlottingFunctions.OnSpectrumPeakSelected(xval, CurrentScan, SelectedSpectrumItemAnnotation);
+
+            if (!bottomPlotView.Plot.GetPlottables().Contains(SelectedSpectrumItemAnnotation))
+            {
+                bottomPlotView.Plot.Add(SelectedSpectrumItemAnnotation);
+            }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace ProteoformExplorer.GuiFunctions
             plot.YAxis.TickMarkColor(Color.Transparent);
 
             plot.XAxis.Line(width: (float)GuiSettings.DpiScalingY);
-            plot.XAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingY)
+            plot.XAxis.Label(size: (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingY)
                 //    , bold: true
                 );
             plot.XAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * GuiSettings.DpiScalingY)
@@ -36,7 +36,7 @@ namespace ProteoformExplorer.GuiFunctions
                 );
 
             plot.YAxis.Line(width: (float)GuiSettings.DpiScalingX);
-            plot.YAxis.Label(size: (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX)
+            plot.YAxis.Label(size: (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX)
                 //    , bold: true
                 );
             plot.YAxis.TickLabelStyle(fontSize: (float)(GuiSettings.ChartTickFontSize * GuiSettings.DpiScalingX)
@@ -109,11 +109,12 @@ namespace ProteoformExplorer.GuiFunctions
             plot.SetViewLimits(scan.ScanWindowRange.Minimum, scan.ScanWindowRange.Maximum, 0, scan.MassSpectrum.YArray.Max() * 2.0);
         }
 
-        public static void PlotSpeciesInSpectrum(HashSet<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data,
+        public static void PlotSpeciesInSpectrum(List<AnnotatedSpecies> allSpeciesToPlot, int oneBasedScan, KeyValuePair<string, CachedSpectraFileData> data,
             Plot spectrumPlot, out MsDataScan scan, out List<string> errors, int? charge = null)
         {
             scan = null;
             errors = new List<string>();
+            Dictionary<string, Color> speciesLabelToColor = new Dictionary<string, Color>();
 
             try
             {
@@ -151,6 +152,12 @@ namespace ProteoformExplorer.GuiFunctions
                     HashSet<double> claimedMzs = new HashSet<double>();
                     foreach (var species in allSpeciesToPlot)
                     {
+                        if (!speciesLabelToColor.TryGetValue(species.SpeciesLabel, out var color))
+                        {
+                            speciesLabelToColor.Add(species.SpeciesLabel, spectrumPlot.GetNextColor());
+                            color = speciesLabelToColor[species.SpeciesLabel];
+                        }
+
                         List<Datum> annotatedData = new List<Datum>();
                         List<int> chargesToPlot = new List<int>();
 
@@ -204,8 +211,6 @@ namespace ProteoformExplorer.GuiFunctions
                                 claimedMzs, new List<(double, double)>());
                         }
 
-                        var color = spectrumPlot.GetNextColor();
-
                         foreach (var item in annotatedData)
                         {
                             spectrumPlot.AddLine(item.X, 0, item.X, item.Y.Value, color, (float)GuiSettings.AnnotatedEnvelopeLineWidth);
@@ -234,9 +239,9 @@ namespace ProteoformExplorer.GuiFunctions
                     xicPlot.Clear();
                 }
 
-                var scans = GetScansInRtWindow(rt, rtWindow, data);
+                var scans = data.Value.GetScansInRtWindow(rt, rtWindow);
 
-                var xicData = GetXicData(scans, mz, z, tolerance);
+                var xicData = PfmXplorerUtil.GetXicData(scans, mz, z, tolerance);
 
                 var xs = xicData.Select(p => p.X).ToArray();
                 var ys = xicData.Select(p => p.Y.Value).ToArray();
@@ -293,9 +298,9 @@ namespace ProteoformExplorer.GuiFunctions
                     xicPlot.Clear();
                 }
 
-                var scans = GetScansInRtWindow(rt, rtWindow, data);
+                var scans = data.Value.GetScansInRtWindow(rt, rtWindow);
 
-                var xicData = GetSummedChargeXics(scans, modeMass, z);
+                var xicData = PfmXplorerUtil.GetSummedChargeXics(scans, modeMass, z);
 
                 var xs = xicData.Select(p => p.X + xOffset).ToArray();
                 var ys = xicData.Select(p => p.Y.Value + yOffset).ToArray();
@@ -574,31 +579,37 @@ namespace ProteoformExplorer.GuiFunctions
 
         }
 
-        private static List<MsDataScan> GetScansInRtWindow(double rt, double rtWindow, KeyValuePair<string, CachedSpectraFileData> data)
+        public static Text OnSpectrumPeakSelected(double xClickLocation, MsDataScan scan, Text textAnnotation)
         {
-            double rtWindowHalfWidth = rtWindow / 2;
-
-            var xic = data.Value.GetTicChromatogram();
-            var firstScan = xic.First(p => p.X > rt - rtWindowHalfWidth);
-
-            var scans = new List<MsDataScan>();
-            for (int i = xic.IndexOf(firstScan); i < xic.Count; i++)
+            if (textAnnotation == null)
             {
-                int scanNum = (int)Math.Round(xic[i].Z.Value);
-                var theScan = data.Value.GetOneBasedScan(scanNum);
+                textAnnotation = new Text();
+            }
 
-                if (theScan.MsnOrder == 1)
-                {
-                    scans.Add(theScan);
-                }
+            var mzIndex = scan.MassSpectrum.GetClosestPeakIndex(xClickLocation);
 
-                if (theScan.RetentionTime >= rt + rtWindowHalfWidth)
+            double mz = scan.MassSpectrum.XArray[mzIndex];
+            double intensity = scan.MassSpectrum.YArray[mzIndex];
+
+            textAnnotation.Label = mz.ToString("F3");
+            textAnnotation.X = mz;
+            textAnnotation.Y = intensity;
+            textAnnotation.Alignment = Alignment.LowerCenter;
+            textAnnotation.FontSize = (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX);
+
+            Tolerance t = new AbsoluteTolerance(0.0001);
+
+            if (DataManagement.CurrentlySelectedFile.Value.OneBasedScanToAnnotatedEnvelopes.TryGetValue(scan.OneBasedScanNumber, out var envelopes))
+            {
+                var selectedEnvelope = envelopes.FirstOrDefault(p => p.PeakMzs.Any(v => t.Within(mz, v)));
+
+                if (selectedEnvelope != null)
                 {
-                    break;
+                    textAnnotation.Label = mz.ToString("F3") + "\n" + "z=" + selectedEnvelope.Charge;
                 }
             }
 
-            return scans;
+            return textAnnotation;
         }
 
         public static VLine UpdateRtIndicator(MsDataScan scan, VLine indicator, Plot plot)
@@ -620,56 +631,6 @@ namespace ProteoformExplorer.GuiFunctions
             //plot.Render();
 
             return indicator;
-        }
-
-        private static List<Datum> GetXicData(List<MsDataScan> scans, double mz, int z, Tolerance tolerance)
-        {
-            List<Datum> xicData = new List<Datum>();
-            foreach (var scan in scans)
-            {
-                int ind = scan.MassSpectrum.GetClosestPeakIndex(mz);
-                double expMz = scan.MassSpectrum.XArray[ind];
-                double expIntensity = scan.MassSpectrum.YArray[ind];
-
-                if (tolerance.Within(expMz.ToMass(z), mz.ToMass(z)))
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, expIntensity));
-                }
-                else
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, 0));
-                }
-            }
-
-            return xicData;
-        }
-
-        private static List<Datum> GetSummedChargeXics(List<MsDataScan> scans, double modeMass, int z)
-        {
-            List<Datum> xicData = new List<Datum>();
-            List<DeconvolutedPeak> peaks = new List<DeconvolutedPeak>();
-            HashSet<double> temp = new HashSet<double>();
-            List<(double, double)> temp2 = new List<(double, double)>();
-
-            foreach (var scan in scans)
-            {
-                int ind = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(z));
-                double expMz = scan.MassSpectrum.XArray[ind];
-                double expIntensity = scan.MassSpectrum.YArray[ind];
-
-                var env = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, ind, z, peaks, temp, temp2);
-
-                if (env != null)
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, env.Peaks.Sum(p => p.ExperimentalIntensity)));
-                }
-                else
-                {
-                    xicData.Add(new Datum(scan.RetentionTime, 0));
-                }
-            }
-
-            return xicData;
         }
     }
 }

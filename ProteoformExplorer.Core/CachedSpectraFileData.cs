@@ -1,5 +1,8 @@
-﻿using MassSpectrometry;
+﻿using Chemistry;
+using MassSpectrometry;
 using MzLibUtil;
+using ProteoformExplorer.Deconvoluter;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,7 +12,7 @@ namespace ProteoformExplorer.Core
     public class CachedSpectraFileData
     {
         public KeyValuePair<string, DynamicDataConnection> DataFile { get; private set; }
-        public Dictionary<int, HashSet<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
+        public Dictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
         public Dictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
         private List<Datum> TicData;
         private List<Datum> IdentifiedTicData;
@@ -24,7 +27,7 @@ namespace ProteoformExplorer.Core
             TicData = new List<Datum>();
             IdentifiedTicData = new List<Datum>();
             DeconvolutedTicData = new List<Datum>();
-            OneBasedScanToAnnotatedSpecies = new Dictionary<int, HashSet<AnnotatedSpecies>>();
+            OneBasedScanToAnnotatedSpecies = new Dictionary<int, List<AnnotatedSpecies>>();
             OneBasedScanToAnnotatedEnvelopes = new Dictionary<int, List<AnnotatedEnvelope>>();
             CachedScans = new Dictionary<(string, int), MsDataScan>();
             NumScansToCache = 10000;
@@ -64,7 +67,7 @@ namespace ProteoformExplorer.Core
 
                     if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
                     {
-                        OneBasedScanToAnnotatedSpecies.Add(scanNum, new HashSet<AnnotatedSpecies>());
+                        OneBasedScanToAnnotatedSpecies.Add(scanNum, new List<AnnotatedSpecies>());
                     }
                     if (!OneBasedScanToAnnotatedEnvelopes.ContainsKey(scanNum))
                     {
@@ -186,7 +189,7 @@ namespace ProteoformExplorer.Core
             return IdentifiedTicData;
         }
 
-        public HashSet<AnnotatedSpecies> SpeciesInScan(int oneBasedScan)
+        public List<AnnotatedSpecies> GetSpeciesInScan(int oneBasedScan)
         {
             if (OneBasedScanToAnnotatedSpecies.TryGetValue(oneBasedScan, out var species))
             {
@@ -194,6 +197,33 @@ namespace ProteoformExplorer.Core
             }
 
             return null;
+        }
+
+        public List<MsDataScan> GetScansInRtWindow(double rt, double rtWindow)
+        {
+            double rtWindowHalfWidth = rtWindow / 2;
+
+            var xic = GetTicChromatogram();
+            var firstScan = xic.First(p => p.X > rt - rtWindowHalfWidth);
+
+            var scans = new List<MsDataScan>();
+            for (int i = xic.IndexOf(firstScan); i < xic.Count; i++)
+            {
+                int scanNum = (int)Math.Round(xic[i].Z.Value);
+                var theScan = GetOneBasedScan(scanNum);
+
+                if (theScan.MsnOrder == 1)
+                {
+                    scans.Add(theScan);
+                }
+
+                if (theScan.RetentionTime >= rt + rtWindowHalfWidth)
+                {
+                    break;
+                }
+            }
+
+            return scans;
         }
     }
 }

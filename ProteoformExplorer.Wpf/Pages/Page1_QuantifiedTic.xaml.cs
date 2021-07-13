@@ -23,6 +23,7 @@ namespace ProteoformExplorer.Wpf
         private VLine CurrentRtIndicator;
         private Text PercentDeconAnnotation;
         private Text PercentIdentifiedAnnotation;
+        private Text SelectedSpectrumItemAnnotation;
 
         public Page1_QuantifiedTic()
         {
@@ -65,7 +66,7 @@ namespace ProteoformExplorer.Wpf
                 return;
             }
 
-            var speciesInScan = DataManagement.CurrentlySelectedFile.Value.SpeciesInScan(scanNum);
+            var speciesInScan = DataManagement.CurrentlySelectedFile.Value.GetSpeciesInScan(scanNum);
             CurrentScan = scan;
             CurrentRtIndicator = PlottingFunctions.UpdateRtIndicator(scan, CurrentRtIndicator, topPlotView.Plot);
             topPlotView.Render();
@@ -188,7 +189,7 @@ namespace ProteoformExplorer.Wpf
                         xs[xs.Length - 1] = pointsX[endInd];
                         ys[xs.Length - 1] = 0;
 
-                        var color = Color.FromArgb(GuiFunctions.GuiSettings.IntegrationFillAlpha, scatter.Color);
+                        var color = Color.FromArgb(GuiSettings.IntegrationFillAlpha, scatter.Color);
                         var poly = topPlotView.Plot.AddPolygon(xs, ys, fillColor: color);
                         summedTic = ys.Sum();
 
@@ -206,7 +207,7 @@ namespace ProteoformExplorer.Wpf
                     PercentDeconAnnotation.Label = (percentTicDeconvoluted * 100).ToString("F1") + "%";
                     PercentDeconAnnotation.X = deconTic.xLoc;
                     PercentDeconAnnotation.Y = axisDims.YMax;
-                    PercentDeconAnnotation.FontSize = (float)(GuiFunctions.GuiSettings.ChartLabelFontSize * GuiFunctions.GuiSettings.DpiScalingX);
+                    PercentDeconAnnotation.FontSize = (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX);
                     PercentDeconAnnotation.FontBold = true;
 
                     if (!topPlotView.Plot.GetPlottables().Contains(PercentDeconAnnotation))
@@ -224,7 +225,7 @@ namespace ProteoformExplorer.Wpf
                     PercentIdentifiedAnnotation.Label = (percentTicIdentified * 100).ToString("F1") + "%";
                     PercentIdentifiedAnnotation.X = identTic.xLoc;
                     PercentIdentifiedAnnotation.Y = axisDims.YCenter;
-                    PercentIdentifiedAnnotation.FontSize = (float)(GuiFunctions.GuiSettings.ChartLabelFontSize * GuiFunctions.GuiSettings.DpiScalingX);
+                    PercentIdentifiedAnnotation.FontSize = (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX);
                     PercentDeconAnnotation.FontBold = true;
 
                     if (!topPlotView.Plot.GetPlottables().Contains(PercentIdentifiedAnnotation))
@@ -245,6 +246,17 @@ namespace ProteoformExplorer.Wpf
             foreach (var item in itemsToRemove)
             {
                 topPlotView.Plot.Remove(item);
+            }
+        }
+
+        private void bottomPlotView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var xval = WpfFunctions.GetXPositionFromMouseClickOnChart(sender, e);
+            SelectedSpectrumItemAnnotation = PlottingFunctions.OnSpectrumPeakSelected(xval, CurrentScan, SelectedSpectrumItemAnnotation);
+
+            if (!bottomPlotView.Plot.GetPlottables().Contains(SelectedSpectrumItemAnnotation))
+            {
+                bottomPlotView.Plot.Add(SelectedSpectrumItemAnnotation);
             }
         }
     }

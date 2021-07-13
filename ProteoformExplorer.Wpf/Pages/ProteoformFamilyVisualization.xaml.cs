@@ -50,7 +50,7 @@ namespace ProteoformExplorer.Wpf
                     connection.VisualRepresentation.LineWidth = GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX;
                     connection.VisualRepresentation.Color = Color.FromArgb(124, 124, 124); // gray
                     connection.TextAnnotation.Color = Color.FromArgb(255, 113, 79); // orange text annotation for edge
-                    connection.TextAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
+                    connection.TextAnnotation.FontSize = (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX);
 
                     pfmFamilyVisualizationChart.Plot.Add(connection.VisualRepresentation);
                     pfmFamilyVisualizationChart.Plot.Add(connection.TextAnnotation);
@@ -198,7 +198,7 @@ namespace ProteoformExplorer.Wpf
         private void BuildProteoformVisualRepresentation()
         {
             Node.TextAnnotation.Color = Color.Black; // black text annotation for node
-            Node.TextAnnotation.FontSize = (float)(GuiSettings.ChartLabelFontSize * GuiSettings.DpiScalingX);
+            Node.TextAnnotation.FontSize = (float)(GuiSettings.ChartAxisLabelFontSize * GuiSettings.DpiScalingX);
 
             switch (Type)
             {

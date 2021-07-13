@@ -32,7 +32,7 @@ namespace ProteoformExplorer.GuiFunctions
         public static double ChartTickFontSize = 10;
         public static double ChartHeaderFontSize = 14;
         public static double ChartLegendFontSize = 10;
-        public static double ChartLabelFontSize = 13;
+        public static double ChartAxisLabelFontSize = 13;
         public static double ChartLineWidth = 1;
         public static double AnnotatedEnvelopeLineWidth = 2;
         public static ScottPlot.Alignment LegendLocation = ScottPlot.Alignment.UpperRight;
