@@ -96,6 +96,14 @@ namespace ProteoformExplorer.Core
 
         private void GenerateDeconvolutionFeatureFromIdentification(Identification id, KeyValuePair<string, CachedSpectraFileData> data)
         {
+            id.GetPrecursorInfoForIdentification();
+
+            if (id.OneBasedPrecursorScanNumber <= 0 || id.PrecursorChargeState <= 0)
+            {
+                // TODO: some kind of error here?
+                return;
+            }
+
             var deconEngine = PfmXplorerUtil.DeconvolutionEngine;
 
             double modeMass = deconEngine.GetModeMassFromMonoisotopicMass(MonoisotopicMass);

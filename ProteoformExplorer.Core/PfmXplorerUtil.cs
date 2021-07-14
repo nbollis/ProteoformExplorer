@@ -182,7 +182,8 @@ namespace ProteoformExplorer.Core
 
             foreach (string extension in InputReaderParser.AllKnownFileFormats.Where(p => str.Contains(p, StringComparison.InvariantCultureIgnoreCase)))
             {
-                str = str.Replace(extension, string.Empty, StringComparison.InvariantCultureIgnoreCase);
+                int loc = str.IndexOf(extension, StringComparison.InvariantCultureIgnoreCase);
+                str = str.Substring(0, loc);
             }
 
             return str;

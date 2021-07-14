@@ -49,7 +49,16 @@ namespace ProteoformExplorer.Core
                     {
                         // do some peakfinding for species that have been identified but don't have a chromatographic peak assigned to them
                         // (i.e., from a top-down search program)
-                        species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                        species.Identification.GetPrecursorInfoForIdentification();
+
+                        if (species.Identification.PrecursorChargeState > 0 && species.Identification.OneBasedPrecursorScanNumber > 0)
+                        {
+                            species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                        }
+                        else
+                        {
+                            continue;
+                        }
                     }
                     else
                     {

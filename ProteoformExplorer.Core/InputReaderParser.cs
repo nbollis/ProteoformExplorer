@@ -12,13 +12,18 @@ namespace ProteoformExplorer.Core
         public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
         // populated from KnownFileExtensions.txt
-        public static List<string> AllKnownFileFormats = new List<string> { ".raw", ".mzml", ".wiff", ".mzxml", ".mgf", ".d", ".yep", ".baf", ".fid", ".tdf", ".t2d", ".pkl",
-            ".dat", ".ms", ".qgd", ".lcd", ".spc", ".sms", ".xms", ".itm", ".ita", ".tdc", ".psmtsv", ".tsv", ".txt", ".csv", ".tab" };
+        public static List<string> AllKnownFileFormats = new List<string> 
+        { 
+          ".raw", ".mzml", ".wiff", ".mzxml", ".mgf", ".d", ".yep", ".baf", ".fid", ".tdf", ".t2d", ".pkl",
+          ".dat", ".ms", ".qgd", ".lcd", ".spc", ".sms", ".xms", ".itm", ".ita", ".tdc", ".psmtsv", ".tsv", 
+          ".txt", ".csv", ".tab" 
+        };
 
         private static int SpeciesNameColumn;
         private static int SpectraFileNameColumn;
         private static int MonoisotopicMassColumn;
-        private static int ScanNumberColumn;
+        private static int PrecursorScanNumberColumn;
+        private static int IdentScanNumberColumn;
         private static int RetentionTimeColumn;
         private static int FeatureRtStartColumn;
         private static int FeatureRtEndColumn;
@@ -131,10 +136,12 @@ namespace ProteoformExplorer.Core
 
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             int charge = (int)double.Parse(items[ChargeColumn]);
-            int precursorScanNumber = int.Parse(items[ScanNumberColumn]);
+            int precursorScanNumber = int.Parse(items[PrecursorScanNumberColumn]);
+            int identificationScanNum = int.Parse(items[IdentScanNumberColumn]);
             string fileNameWithExtension = items[SpectraFileNameColumn];
 
-            var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber, fileNameWithExtension);
+            var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber, 
+                identificationScanNum, fileNameWithExtension);
 
             var species = new AnnotatedSpecies(id);
 
@@ -150,9 +157,10 @@ namespace ProteoformExplorer.Core
             double mass = double.Parse(items[MonoisotopicMassColumn]);
             // TD portal does not report precursor charge
             //TODO: figure out charge + precursor one based scan num
+            int identificationScanNum = int.Parse(items[IdentScanNumberColumn]);
             string fileNameWithExtension = items[SpectraFileNameColumn];
-
-            var id = new Identification(baseSequence, modSequence, mass, -1, -1, fileNameWithExtension);
+            
+            var id = new Identification(baseSequence, modSequence, mass, -1, -1, identificationScanNum, fileNameWithExtension);
 
             var species = new AnnotatedSpecies(id);
 
@@ -163,9 +171,9 @@ namespace ProteoformExplorer.Core
         {
             string[] items = line.Split(ItemDelimiter);
 
-            string identifier = items[SpeciesNameColumn];
             double mass = double.Parse(items[MonoisotopicMassColumn]);
-
+            string identifier = items[SpeciesNameColumn] + " (" + mass.ToString("F3") + ")";
+            
             int minChargeState = int.Parse(items[MinChargeColumn]);
             int maxChargeState = int.Parse(items[MaxChargeColumn]);
             var chargeList = Enumerable.Range(minChargeState, maxChargeState - minChargeState + 1).ToList();
@@ -189,7 +197,7 @@ namespace ProteoformExplorer.Core
             List<int> chargeList = new List<int>();
 
             double mass = double.Parse(items[MonoisotopicMassColumn]);
-            string speciesName = items[SpeciesNameColumn] + " (" + mass.ToString("F1") + ")";
+            string speciesName = items[SpeciesNameColumn] + " (" + mass.ToString("F3") + ")";
             double apexRt = double.Parse(items[RetentionTimeColumn]);
             string rtRange = items[FeatureRtStartColumn];
             double rtStart = double.Parse(rtRange.Split('-')[0].Trim());
@@ -224,11 +232,12 @@ namespace ProteoformExplorer.Core
             int charge = int.Parse(items[ChargeColumn]);
             double apexRt = double.Parse(items[RetentionTimeColumn]);
             string fileName = items[SpectraFileNameColumn];
-            int scan = int.Parse(items[ScanNumberColumn]);
+            int scan = int.Parse(items[PrecursorScanNumberColumn]);
             var peaks = items[PeaksListColumn].Split(',').Select(p => double.Parse(p)).ToList();
 
             var annotEnvelope = new AnnotatedEnvelope(scan, apexRt, charge, peaks);
-            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName, new List<AnnotatedEnvelope> { annotEnvelope });
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, apexRt, apexRt, new List<int> { charge }, fileName, 
+                new List<AnnotatedEnvelope> { annotEnvelope });
             var species = new AnnotatedSpecies(deconFeature);
 
             return species;
@@ -246,7 +255,8 @@ namespace ProteoformExplorer.Core
                 MonoisotopicMassColumn = Array.IndexOf(split, "Peptide Monoisotopic Mass");
                 RetentionTimeColumn = Array.IndexOf(split, "Scan Retention Time");
                 ChargeColumn = Array.IndexOf(split, "Precursor Charge");
-                ScanNumberColumn = Array.IndexOf(split, "Precursor Scan Number");
+                PrecursorScanNumberColumn = Array.IndexOf(split, "Precursor Scan Number");
+                IdentScanNumberColumn = Array.IndexOf(split, "Scan Number");
 
                 return InputSourceType.MetaMorpheus;
             }
@@ -283,7 +293,8 @@ namespace ProteoformExplorer.Core
                 SpectraFileNameColumn = Array.IndexOf(split, "File Name");
                 MonoisotopicMassColumn = Array.IndexOf(split, "Monoisotopic Mass");
                 RetentionTimeColumn = Array.IndexOf(split, "RetentionTime");
-                //ChargeColumn = Array.IndexOf(split, "Precursor Charge"); // tdportal doesn't seem to report precursor charge
+                IdentScanNumberColumn = Array.IndexOf(split, "ScanIndex");
+                // tdportal doesn't seem to report precursor charge
 
                 return InputSourceType.TDPortal;
             }
@@ -291,7 +302,7 @@ namespace ProteoformExplorer.Core
             else if (HeadersProteoformExplorer.All(p => split.Contains(p)))
             {
                 SpectraFileNameColumn = Array.IndexOf(split, "File Name");
-                ScanNumberColumn = Array.IndexOf(split, "Scan Number");
+                PrecursorScanNumberColumn = Array.IndexOf(split, "Scan Number");
                 RetentionTimeColumn = Array.IndexOf(split, "Retention Time");
                 SpeciesNameColumn = Array.IndexOf(split, "Species");
                 MonoisotopicMassColumn = Array.IndexOf(split, "Monoisotopic Mass");
