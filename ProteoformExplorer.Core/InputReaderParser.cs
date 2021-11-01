@@ -7,7 +7,7 @@ namespace ProteoformExplorer.Core
 {
     public static class InputReaderParser
     {
-        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, ProteoformExplorer, MetaMorpheus, TDPortal, Unknown }
+        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, ProteoformExplorer, MetaMorpheus, TDPortal, ProteoformSuiteNodes, ProteoformSuiteEdges, Unknown }
         public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt" };
         public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
@@ -38,6 +38,8 @@ namespace ProteoformExplorer.Core
         private static string[] HeadersThermoDecon = new string[] { "No.", "Monoisotopic Mass", "Number of Charge States", "Scan Range" };
         private static string[] HeadersTdPortal = new string[] { "PFR", "Uniprot Id", "Monoisotopic Mass", "Result Set" };
         private static string[] HeadersProteoformExplorer = new string[] { "File Name", "Scan Number", "Retention Time", "Species", "Monoisotopic Mass", "Charge", "Peaks List" };
+        private static string[] HeadersProteoformSuiteNodes = new string[] { "accession", "E_or_T", "total_intensity", "more_info", "layout" };
+        private static string[] HeadersProteoformSuiteEdges = new string[] { "accession_1", "lysine_ct", "accession_2", "delta_mass", "modification" };
 
         public static List<AnnotatedSpecies> ReadSpeciesFromFile(string filePath, out List<string> errors)
         {

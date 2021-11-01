@@ -45,6 +45,7 @@ namespace ProteoformExplorer.Wpf
 
             foreach (var proteoform in AllVisualizedProteoforms)
             {
+                // add the edges
                 foreach (var connection in proteoform.Node.Edges)
                 {
                     connection.VisualRepresentation.LineWidth = GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX;
@@ -57,13 +58,24 @@ namespace ProteoformExplorer.Wpf
                 }
             }
 
-            foreach (var proteoform in AllVisualizedProteoforms)
+            // nodes plotted in batches instead of one-at-a-time for performance reasons
+            foreach (var polygonType in AllVisualizedProteoforms.Select(p => p.Node).SelectMany(p => p.VisualRepresentation).GroupBy(p => p.FillColor))
             {
-                foreach (var item in proteoform.Node.VisualRepresentation)
+                List<List<(double x, double y)>> polys = new List<List<(double x, double y)>>();
+                var fillColor = polygonType.First().FillColor;
+
+                foreach (var polygon in polygonType)
                 {
-                    pfmFamilyVisualizationChart.Plot.Add(item);
+                    var thePoly = polygon.Xs.Zip(polygon.Ys, (xp, yp) => (xp, yp)).ToList();
+                    polys.Add(thePoly);
                 }
 
+                pfmFamilyVisualizationChart.Plot.AddPolygons(polys, fillColor: fillColor);
+            }
+
+            // add the text. this is done last to draw it on top of everything else
+            foreach (var proteoform in AllVisualizedProteoforms)
+            {
                 pfmFamilyVisualizationChart.Plot.Add(proteoform.Node.TextAnnotation);
             }
         }
@@ -105,15 +117,12 @@ namespace ProteoformExplorer.Wpf
 
         private void DeployCustomMenu(VisualizedProteoformFamilyMember proteoform)
         {
-            MenuItem addSinMenuItem = new MenuItem() { Header = "View Proteoform in Waterfall XIC" };
-            addSinMenuItem.Click += DisplayProteoformInWaterfallPlot;
-            addSinMenuItem.Tag = proteoform;
-            //MenuItem clearPlotMenuItem = new MenuItem() { Header = "Clear Plot" };
-            //clearPlotMenuItem.Click += ClearPlot;
+            MenuItem waterfallMenuItem = new MenuItem() { Header = "View Proteoform in Waterfall XIC" };
+            waterfallMenuItem.Click += DisplayProteoformInWaterfallPlot;
+            waterfallMenuItem.Tag = proteoform;
 
             ContextMenu rightClickMenu = new ContextMenu();
-            rightClickMenu.Items.Add(addSinMenuItem);
-            //rightClickMenu.Items.Add(clearPlotMenuItem);
+            rightClickMenu.Items.Add(waterfallMenuItem);
 
             rightClickMenu.IsOpen = true;
         }
@@ -204,31 +213,31 @@ namespace ProteoformExplorer.Wpf
             {
                 case VisualizedType.Gene:
                     var qualitativeMarker = GetSquare(Node.X, Node.Y, 2, Color.FromArgb(255, 116, 175)); // pink
-                    Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
+                    Node.VisualRepresentation = new List<Polygon> { qualitativeMarker };
                     break;
 
                 case VisualizedType.Transcript:
                     qualitativeMarker = GetDiamond(Node.X, Node.Y, 2, Color.FromArgb(255, 116, 175)); // pink
-                    Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
+                    Node.VisualRepresentation = new List<Polygon> { qualitativeMarker };
                     break;
 
                 case VisualizedType.TheoreticalProteoform:
                     qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(0, 183, 62)); // green
-                    Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
+                    Node.VisualRepresentation = new List<Polygon> { qualitativeMarker };
                     break;
 
                 case VisualizedType.TopDownExperimentalProteoform:
                     qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(144, 123, 189)); // purple
-                    Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
+                    Node.VisualRepresentation = new List<Polygon> { qualitativeMarker };
                     break;
 
                 case VisualizedType.IntactMassExperimentalProteoform:
                     qualitativeMarker = GetSemiCircle(0, 2 * Math.PI, Node.X, Node.Y, 1, Color.FromArgb(0, 193, 245)); // blue
-                    Node.VisualRepresentation = new List<IPlottable> { qualitativeMarker };
+                    Node.VisualRepresentation = new List<Polygon> { qualitativeMarker };
                     break;
 
                 case VisualizedType.QuantifiedExperimentalProteoform:
-                    List<IPlottable> polygons = new List<IPlottable>();
+                    List<Polygon> polygons = new List<Polygon>();
                     double volume = QuantifiedIntensities.Sum();
                     double radius = Math.Sqrt(volume / Math.PI);
 
@@ -256,7 +265,7 @@ namespace ProteoformExplorer.Wpf
                         polygons.Add(outline);
                     }
 
-                    Node.VisualRepresentation = new List<IPlottable>(polygons);
+                    Node.VisualRepresentation = new List<Polygon>(polygons);
 
                     break;
             }

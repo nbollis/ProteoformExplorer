@@ -13,7 +13,7 @@ namespace ProteoformExplorer.GuiFunctions
         public double X { get; private set; }
         public double Y { get; private set; }
         private List<Edge> _edges;
-        public List<IPlottable> VisualRepresentation { get; set; }
+        public List<Polygon> VisualRepresentation { get; set; }
         public Text TextAnnotation;
 
         public Node(double x, double y, string textAnnotation = null)
@@ -22,7 +22,7 @@ namespace ProteoformExplorer.GuiFunctions
             this.Y = y;
             _edges = new List<Edge>();
 
-            VisualRepresentation = new List<IPlottable> { new ScatterPlot(new double[] { x }, new double[] { y }) };
+            VisualRepresentation = new List<Polygon>();
 
             TextAnnotation = new Text();
             TextAnnotation.X = X;
