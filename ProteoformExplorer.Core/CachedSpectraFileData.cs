@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Easy.Common.Extensions;
 
 namespace ProteoformExplorer.Core
 {
@@ -126,6 +127,11 @@ namespace ProteoformExplorer.Core
             if (TicData.Count == 0)
             {
                 int lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                var identifiedTicDict = OneBasedScanToAnnotatedSpecies.Values
+                    .SelectMany(p => p.Where(m => m.Identification != null))
+                    .Select(species => species.Identification.Dataset)
+                    .Distinct()
+                    .ToDictionary(p => p, p => 0.0);
 
                 for (int i = 1; i <= lastScanNum; i++)
                 {
@@ -133,7 +139,8 @@ namespace ProteoformExplorer.Core
                     identClaimedMzs.Clear();
                     var scan = GetOneBasedScan(i);
                     double deconvolutedTic = 0;
-                    double identifiedTic = 0;
+                    identifiedTicDict.ForEach(p => identifiedTicDict[p.Key] = 0.0);
+                    
 
                     // tic
                     if (scan != null && scan.MsnOrder == 1)
@@ -147,7 +154,7 @@ namespace ProteoformExplorer.Core
 
                     // deconvoluted and identified tic
                     var deconDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
-                    var identDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
+                    var identifiedDatumDict = identifiedTicDict.ToDictionary(p => p.Key, p => new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber));
 
                     if (OneBasedScanToAnnotatedEnvelopes.TryGetValue(i, out var annotatedEnvelopes))
                     {
@@ -167,17 +174,18 @@ namespace ProteoformExplorer.Core
                                 if (envelope.Species.Identification != null && !identClaimedMzs.Contains(actualMz))
                                 {
                                     identClaimedMzs.Add(actualMz);
-                                    identifiedTic += scan.MassSpectrum.YArray[index];
+                                    identifiedTicDict[envelope.Species.Identification.Dataset] += scan.MassSpectrum.YArray[index];
                                 }
                             }
                         }
 
                         deconDatum = new Datum(scan.RetentionTime, deconvolutedTic, scan.OneBasedScanNumber);
-                        identDatum = new Datum(scan.RetentionTime, identifiedTic, scan.OneBasedScanNumber);
+                        identifiedTicDict.ForEach(p => identifiedDatumDict[p.Key] = 
+                            new Datum(scan.RetentionTime, identifiedTicDict[p.Key], scan.OneBasedScanNumber, p.Key));
                     }
 
                     DeconvolutedTicData.Add(deconDatum);
-                    IdentifiedTicData.Add(identDatum);
+                    IdentifiedTicData.AddRange(identifiedDatumDict.Values);
                 }
             }
 
