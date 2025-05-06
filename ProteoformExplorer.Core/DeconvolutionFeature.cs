@@ -105,10 +105,9 @@ namespace ProteoformExplorer.Core
             }
 
             var deconEngine = PfmXplorerUtil.DeconvolutionEngine;
-
             double modeMass = deconEngine.GetModeMassFromMonoisotopicMass(MonoisotopicMass);
+            int lastScanNum = data.Value.DataFile.Value.Scans[^1].OneBasedScanNumber;
 
-            int lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(data);
             List<DeconvolutedPeak> peaksBuffer = new List<DeconvolutedPeak>();
             HashSet<double> alreadyClaimedMzs = new HashSet<double>();
             List<(double, double)> intensitiesBuffer = new List<(double, double)>();

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using Easy.Common.Extensions;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 namespace ProteoformExplorer.Core
 {
@@ -26,13 +27,14 @@ namespace ProteoformExplorer.Core
         public CachedSpectraFileData(KeyValuePair<string, MsDataFile> loadedDataFile)
         {
             DataFile = loadedDataFile;
+            DataFile.Value.LoadAllStaticData();
             TicData = new List<Datum>();
             IdentifiedTicData = new List<Datum>();
             DeconvolutedTicData = new List<Datum>();
             OneBasedScanToAnnotatedSpecies = new ConcurrentDictionary<int, List<AnnotatedSpecies>>();
             OneBasedScanToAnnotatedEnvelopes = new ConcurrentDictionary<int, List<AnnotatedEnvelope>>();
             CachedScans = new ConcurrentDictionary<(string, int), MsDataScan>();
-            NumScansToCache = 10000;
+            NumScansToCache = 50000;
             CachedScanNumberQueue = new ConcurrentQueue<(string, int)>();
         }
 
@@ -41,7 +43,11 @@ namespace ProteoformExplorer.Core
             OneBasedScanToAnnotatedSpecies.Clear();
             OneBasedScanToAnnotatedEnvelopes.Clear();
 
-            foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key)))
+            var relevantSpecies = allAnnotatedSpecies
+                .Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key))
+                .ToList();
+
+            Parallel.ForEach(relevantSpecies, species =>
             {
                 // the deconvoluted species is from a file type that does not specify the envelopes in the deconvolution feature
                 // therefore, we'll have to do some peakfinding and guess what envelopes are part of this feature
@@ -59,13 +65,13 @@ namespace ProteoformExplorer.Core
                         }
                         else
                         {
-                            continue;
+                            return; // Skip this species if precursor info is invalid
                         }
                     }
                     else
                     {
                         // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
-                        continue;
+                        return; // Skip this species if it has no deconvolution feature or identification
                     }
                 }
 
@@ -76,18 +82,25 @@ namespace ProteoformExplorer.Core
                     int scanNum = envelope.OneBasedScanNumber;
                     envelope.Species = species;
 
-                    OneBasedScanToAnnotatedEnvelopes.AddOrUpdate(scanNum, [envelope], (key, list) =>
+                    OneBasedScanToAnnotatedEnvelopes.AddOrUpdate(scanNum, _ => new List<AnnotatedEnvelope> { envelope }, (_, list) =>
                     {
-                        list.Add(envelope);
+                        lock (list) // Ensure thread-safe updates to the list
+                        {
+                            list.Add(envelope);
+                        }
                         return list;
                     });
-                    OneBasedScanToAnnotatedSpecies.AddOrUpdate(scanNum, [species], (key, list) =>
+
+                    OneBasedScanToAnnotatedSpecies.AddOrUpdate(scanNum, _ => new List<AnnotatedSpecies> { species }, (_, list) =>
                     {
-                        list.Add(species);
+                        lock (list) // Ensure thread-safe updates to the list
+                        {
+                            list.Add(species);
+                        }
                         return list;
                     });
                 }
-            }
+            });
         }
 
         public MsDataScan GetOneBasedScan(int oneBasedScanNum)
@@ -99,26 +112,23 @@ namespace ProteoformExplorer.Core
                 return scan;
             }
 
-            lock (CachedScans)
+            if (!CachedScans.TryGetValue(cacheKey, out scan))
             {
-                if (!CachedScans.TryGetValue(cacheKey, out scan))
+                scan = DataFile.Value.GetOneBasedScan(oneBasedScanNum);
+
+                if (scan == null)
                 {
-                    scan = DataFile.Value.GetOneBasedScanFromDynamicConnection(oneBasedScanNum);
+                    return null;
+                }
 
-                    if (scan == null)
-                    {
-                        return null;
-                    }
+                if (CachedScans.Count >= NumScansToCache && CachedScanNumberQueue.TryDequeue(out var scanToRemove))
+                {
+                    CachedScans.TryRemove(scanToRemove, out _);
+                }
 
-                    if (CachedScans.Count >= NumScansToCache && CachedScanNumberQueue.TryDequeue(out var scanToRemove))
-                    {
-                        CachedScans.TryRemove(scanToRemove, out _);
-                    }
-
-                    if (CachedScans.TryAdd(cacheKey, scan))
-                    {
-                        CachedScanNumberQueue.Enqueue(cacheKey);
-                    }
+                if (CachedScans.TryAdd(cacheKey, scan))
+                {
+                    CachedScanNumberQueue.Enqueue(cacheKey);
                 }
             }
 
@@ -132,7 +142,8 @@ namespace ProteoformExplorer.Core
 
             if (TicData.Count == 0)
             {
-                int lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                int lastScanNum = DataFile.Value.Scans[^1].OneBasedScanNumber;
+                    /*PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));*/
                 var identifiedTicDict = OneBasedScanToAnnotatedSpecies.Values
                     .SelectMany(p => p.Where(m => m.Identification != null))
                     .Select(species => species.Identification.Dataset)
@@ -143,7 +154,7 @@ namespace ProteoformExplorer.Core
                 {
                     deconClaimedMzs.Clear();
                     identClaimedMzs.Clear();
-                    var scan = GetOneBasedScan(i);
+                    var scan = DataFile.Value.GetOneBasedScan(i);
                     double deconvolutedTic = 0;
                     identifiedTicDict.ForEach(p => identifiedTicDict[p.Key] = 0.0);
 

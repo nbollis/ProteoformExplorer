@@ -8,6 +8,7 @@ using System.Linq;
 using System.IO;
 using MzLibUtil;
 using Chemistry;
+using System.Collections.Concurrent;
 
 namespace ProteoformExplorer.Core
 {
@@ -19,7 +20,6 @@ namespace ProteoformExplorer.Core
             {
                 if (_deconvolutionEngine == null)
                 {
-                    Loaders.LoadElements();
                     _deconvolutionEngine = new DeconvolutionEngine(2000, 0.3, 4, 0.3, 3, 5, 2, 60, 2);
                 }
 
@@ -28,22 +28,22 @@ namespace ProteoformExplorer.Core
         }
 
         private static DeconvolutionEngine _deconvolutionEngine;
-        static Dictionary<string, double[]> SpectraFilePathsToRtArray;
+        static ConcurrentDictionary<string, double[]> SpectraFilePathsToRtArray;
 
         public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt)
         {
             if (SpectraFilePathsToRtArray == null)
             {
-                SpectraFilePathsToRtArray = new Dictionary<string, double[]>();
+                SpectraFilePathsToRtArray = new ConcurrentDictionary<string, double[]>();
             }
 
             if (!SpectraFilePathsToRtArray.TryGetValue(data.Key, out var rtArray))
             {
-                var lastScanNumber = GetLastOneBasedScanNumber(data);
+                var lastScanNumber = data.Value.DataFile.Value.Scans[^1].OneBasedScanNumber;
                 var lastScan = data.Value.GetOneBasedScan(lastScanNumber);
 
                 var arr = new double[lastScan.OneBasedScanNumber];
-                SpectraFilePathsToRtArray.Add(data.Key, arr);
+                SpectraFilePathsToRtArray.AddOrUpdate(data.Key, arr, (_, oldValue) => oldValue);
 
                 for (int j = 0; j < arr.Length; j++)
                 {
