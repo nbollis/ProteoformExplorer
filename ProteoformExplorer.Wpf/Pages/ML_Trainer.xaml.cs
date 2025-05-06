@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using UsefulProteomicsDatabases;
+using Readers;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -51,7 +52,7 @@ namespace ProteoformExplorer.Wpf
 
             var data = new KeyValuePair<string, CachedSpectraFileData>(
                 file,
-                new CachedSpectraFileData(new KeyValuePair<string, MassSpectrometry.DynamicDataConnection>(file, new IO.ThermoRawFileReader.ThermoDynamicData(file)))
+                new CachedSpectraFileData(new KeyValuePair<string, MsDataFile>(file, MsDataFileReader.GetDataFile(file)))
             );
 
             int len = PfmXplorerUtil.GetLastOneBasedScanNumber(data);

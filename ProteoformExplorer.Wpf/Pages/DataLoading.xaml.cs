@@ -4,6 +4,7 @@ using MassSpectrometry;
 using Nett;
 using ProteoformExplorer.Core;
 using ProteoformExplorer.GuiFunctions;
+using Readers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -137,20 +138,9 @@ namespace ProteoformExplorer.Wpf
             var ext = Path.GetExtension(file.FullFilePath).ToLowerInvariant();
             var fileName = Path.GetFileName(file.FullFilePath);
 
-            if (ext == ".raw")
-            {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new ThermoDynamicData(file.FullFilePath));
-
-                App.Current.Dispatcher.Invoke((Action)delegate
-                {
-                    LoadedSpectraFiles.Add(file);
-                });
-
-                DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
-            }
-            else if (ext == ".mzml")
-            {
-                var kvp = new KeyValuePair<string, DynamicDataConnection>(fileName, new MzmlDynamicData(file.FullFilePath));
+            if (ext == ".raw" || ext == ".mzml") 
+            { 
+                var kvp = new KeyValuePair<string, MsDataFile>(fileName, MsDataFileReader.GetDataFile(file.FullFilePath));
 
                 App.Current.Dispatcher.Invoke((Action)delegate
                 {

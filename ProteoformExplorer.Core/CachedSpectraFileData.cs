@@ -11,7 +11,7 @@ namespace ProteoformExplorer.Core
 {
     public class CachedSpectraFileData
     {
-        public KeyValuePair<string, DynamicDataConnection> DataFile { get; private set; }
+        public KeyValuePair<string, MsDataFile> DataFile { get; private set; }
         public Dictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
         public Dictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
         private List<Datum> TicData;
@@ -21,7 +21,7 @@ namespace ProteoformExplorer.Core
         private static int NumScansToCache;
         private static Queue<(string, int)> CachedScanNumberQueue;
 
-        public CachedSpectraFileData(KeyValuePair<string, DynamicDataConnection> loadedDataFile)
+        public CachedSpectraFileData(KeyValuePair<string, MsDataFile> loadedDataFile)
         {
             DataFile = loadedDataFile;
             TicData = new List<Datum>();
