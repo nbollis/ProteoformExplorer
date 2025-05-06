@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UsefulProteomicsDatabases;
+using Readers;
+using ThermoFisher.CommonCore.Data.Business;
 
 namespace Test
 {
@@ -48,7 +50,7 @@ namespace Test
             species = species.Where(p => p.SpectraFileNameWithoutExtension == "05-26-17_B7A_yeast_td_fract7_rep1" 
                 && p.Identification.IdentificationScanNum == 9).Take(1).ToList();
             string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\05-26-17_B7A_yeast_td_fract7_rep1.raw");
-            var connection = new KeyValuePair<string, DynamicDataConnection>(rawFile, new ThermoDynamicData(rawFile));
+            var connection = new KeyValuePair<string, MsDataFile>(rawFile, MsDataFileReader.GetDataFile(rawFile));
             var cachedData = new KeyValuePair<string, CachedSpectraFileData>(rawFile, new CachedSpectraFileData(connection));
             DataManagement.SpectraFiles = new Dictionary<string, CachedSpectraFileData> { { cachedData.Key, cachedData.Value } };
             cachedData.Value.CreateAnnotatedDeconvolutionFeatures(species);
@@ -76,7 +78,7 @@ namespace Test
 
             species = species.Where(p => (int)p.DeconvolutionFeature.MonoisotopicMass == 15229).ToList();
             string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\05-26-17_B7A_yeast_td_fract7_rep1.raw");
-            var connection = new KeyValuePair<string, DynamicDataConnection>(rawFile, new ThermoDynamicData(rawFile));
+            var connection = new KeyValuePair<string, MsDataFile>(rawFile, MsDataFileReader.GetDataFile(rawFile));
             var cachedData = new KeyValuePair<string, CachedSpectraFileData>(rawFile, new CachedSpectraFileData(connection));
             cachedData.Value.CreateAnnotatedDeconvolutionFeatures(species);
 
@@ -105,7 +107,7 @@ namespace Test
         public void TestDynamicConnectionRtBinarySearch()
         {
             string rawFile = Path.Combine(TestContext.CurrentContext.TestDirectory, @"TestData\mcf7_sliced\mcf7_sliced_td.raw");
-            var connection = new KeyValuePair<string, DynamicDataConnection>(rawFile, new ThermoDynamicData(rawFile));
+            var connection = new KeyValuePair<string, MsDataFile>(rawFile, MsDataFileReader.GetDataFile(rawFile));
             var cachedData = new KeyValuePair<string, CachedSpectraFileData>(rawFile, new CachedSpectraFileData(connection));
 
             var lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(cachedData);
@@ -213,7 +215,7 @@ namespace Test
             var species = InputReaderParser.ReadSpeciesFromFile(path, out var errors);
 
             // populate the decon feature with data from the spectra file
-            var file = new CachedSpectraFileData(new KeyValuePair<string, DynamicDataConnection>(filePath, new ThermoDynamicData(filePath)));
+            var file = new CachedSpectraFileData(new KeyValuePair<string, MsDataFile>(filePath, MsDataFileReader.GetDataFile(filePath)));
             file.CreateAnnotatedDeconvolutionFeatures(species);
 
             Assert.That(!errors.Any());

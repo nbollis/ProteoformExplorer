@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="mzLib" Version="1.0.562" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ProteoformExplorer.Deconvoluter\ProteoformExplorer.Deconvoluter.csproj" />
   </ItemGroup>
 
