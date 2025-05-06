@@ -11,7 +11,7 @@
     <description>Proteoform Dashboard for WPF Applications</description>
     <tags>Chemistry Spectrometry Proteomics</tags>
     <dependencies>
-	  <group targetFramework="net9.0-windows">
+	  <group targetFramework="net9.0-windows7.0">
 		<dependency id="MahApps.Metro.IconPacks.BoxIcons" version="4.8.0"/>
 		<dependency id="Microsoft.ML" version="1.5.5"/>
 		<dependency id="Microsoft.ML.LightGbm" version="1.5.5"/>
@@ -23,9 +23,9 @@
     </dependencies>
   </metadata>
   <files>
-	<file src="ProteoformExplorer.Deconvoluter\bin\x64\Release\net9.0\ProteoformExplorer.Deconvoluter.dll" target="lib\net9.0-windows" /> 
-	<file src="ProteoformExplorer.Wpf\bin\x64\Release\net9.0-windows\ProteoformExplorer.Wpf.dll" target="lib\net9.0-windows" /> 
-	<file src="ProteoformExplorer.Core\bin\x64\Release\net9.0\ProteoformExplorer.Core.dll" target="lib\net9.0-windows" /> 
-	<file src="ProteoformExplorer.GuiFunctions\bin\x64\Release\net9.0\ProteoformExplorer.GuiFunctions.dll" target="lib\net9.0-windows" /> 
+	<file src="ProteoformExplorer.Deconvoluter\bin\x64\Release\net9.0\ProteoformExplorer.Deconvoluter.dll" target="lib\net9.0-windows7.0" /> 
+	<file src="ProteoformExplorer.Wpf\bin\x64\Release\net9.0-windows7.0\ProteoformExplorer.Wpf.dll" target="lib\net9.0-windows7.0" /> 
+	<file src="ProteoformExplorer.Core\bin\x64\Release\net9.0\ProteoformExplorer.Core.dll" target="lib\net9.0-windows7.0" /> 
+	<file src="ProteoformExplorer.GuiFunctions\bin\x64\Release\net9.0\ProteoformExplorer.GuiFunctions.dll" target="lib\net9.0-windows7.0" /> 
   </files>
 </package>
