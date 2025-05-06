@@ -51,7 +51,7 @@ namespace ProteoformExplorer.Core
             var end = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Maximum);
             double modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(MonoisotopicMass);
 
-            for (int i = start.OneBasedScanNumber; i <= end.OneBasedScanNumber + 1; i++)
+            for (int i = start.OneBasedScanNumber; i <= end.OneBasedScanNumber/* + 1*/; i++)
             {
                 var scan = data.Value.GetOneBasedScan(i);
 

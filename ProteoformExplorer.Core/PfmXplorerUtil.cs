@@ -30,6 +30,8 @@ namespace ProteoformExplorer.Core
         private static DeconvolutionEngine _deconvolutionEngine;
         static ConcurrentDictionary<string, double[]> SpectraFilePathsToRtArray;
 
+        public static Dictionary<string, string> NameConversionDictionary { get; } = [];
+
         public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt)
         {
             if (SpectraFilePathsToRtArray == null)
@@ -144,6 +146,7 @@ namespace ProteoformExplorer.Core
 
         public static int GetLastOneBasedScanNumber(KeyValuePair<string, CachedSpectraFileData> data)
         {
+            return data.Value.DataFile.Value.Scans[^1].OneBasedScanNumber;
             int m = 1;
             int l = 1;
             int r = int.MaxValue - l;
