@@ -24,8 +24,8 @@ namespace ProteoformExplorer.GuiFunctions
 
         public static Color UnannotatedSpectrumColor = Color.Gray;
         public static Color TicColor = Color.FromArgb(53, 59, 72); // dark gray
-        public static Color DeconvolutedColor = Color.FromArgb(0, 168, 255); // blue
-        public static Color IdentifiedColor = Color.FromArgb(140, 122, 230); // purple
+        public static Color DeconvolutedColor = Color.FromArgb(0, 255, 255); // blue
+        public static Color IdentifiedColor = Color.FromArgb(102, 0, 204); // purple
         public static Color RtIndicatorColor = Color.Red;
         public static int IntegrationFillAlpha = 50;
         public static int FillAlpha = 190;
@@ -47,6 +47,52 @@ namespace ProteoformExplorer.GuiFunctions
         public static bool DpiScaling = true;
         public static double DpiScalingX = 1;
         public static double DpiScalingY = 1;
+
+        #region Coloring identified Tics
+
+        private static Dictionary<string, Color> ColorDict;
+
+        private static Queue<Color> ColorQueue = new Queue<Color>(new[]
+        {
+            Color.Purple, 
+            Color.Green,
+            Color.OrangeRed,
+            Color.Yellow, 
+            Color.Pink,
+            Color.DarkMagenta,
+            Color.DarkCyan,
+            Color.DarkGoldenrod,
+            Color.DarkOliveGreen,
+            Color.DarkRed,
+            Color.DarkSlateBlue,
+            Color.DarkTurquoise,
+            Color.DarkViolet,
+            Color.DeepPink,
+            Color.DeepSkyBlue,
+        });
+
+        public static Color ConvertStringToColor(this string input)
+        {
+            ColorDict ??= new Dictionary<string, Color>();
+
+            if (ColorDict.TryGetValue(input, out var color))
+            {
+                return color;
+            }
+
+            if (ColorQueue.Count == 0)
+            {
+                throw new Exception("Ran out of colors for identified TICs");
+            }
+
+            color = ColorQueue.Dequeue();
+            ColorDict.Add(input, color);
+
+            return color;
+        }
+        
+
+        #endregion
 
         public static TomlTable ToTomlTable()
         {

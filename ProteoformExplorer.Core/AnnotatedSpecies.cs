@@ -9,7 +9,7 @@
 
         public AnnotatedSpecies(DeconvolutionFeature deconvolutionFeature, string speciesLabel = null)
         {
-            SpeciesLabel = speciesLabel == null ? deconvolutionFeature.MonoisotopicMass.ToString("F2") : speciesLabel;
+            SpeciesLabel = speciesLabel ?? deconvolutionFeature.MonoisotopicMass.ToString("F2");
             DeconvolutionFeature = deconvolutionFeature;
             SpectraFileNameWithoutExtension = deconvolutionFeature.SpectraFileNameWithoutExtension;
         }

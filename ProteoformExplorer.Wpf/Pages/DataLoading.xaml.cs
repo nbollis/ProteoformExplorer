@@ -11,6 +11,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using UsefulProteomicsDatabases;
@@ -149,7 +151,7 @@ namespace ProteoformExplorer.Wpf
 
                 DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
-            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt")
+            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt" || ext == ".feature")
             {
                 var items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
 
@@ -188,7 +190,7 @@ namespace ProteoformExplorer.Wpf
             });
 
             // double-count spectra files for transparency because we're going to load some extra stuff from them
-            double itemsLoaded = 0;
+            int itemsLoaded = 0;
             double itemsToLoad = FilesToLoad.Count +
                 FilesToLoad.Count(p => Path.GetExtension(p.FileNameWithExtension).ToLowerInvariant() == ".raw" || Path.GetExtension(p.FileNameWithExtension).ToLowerInvariant() == ".mzml");
 
@@ -199,14 +201,25 @@ namespace ProteoformExplorer.Wpf
             var temp = PfmXplorerUtil.DeconvolutionEngine;
 
             // load the selected files
-            foreach (var file in FilesToLoad)
+            //foreach (var file in FilesToLoad)
+            //{
+            //    LoadFile(file);
+            //    itemsLoaded++;
+
+            //    int progress = (int)(itemsLoaded / itemsToLoad * 100);
+            //    worker.ReportProgress(progress);
+            //}
+
+            Parallel.ForEach(FilesToLoad, file =>
             {
                 LoadFile(file);
-                itemsLoaded++;
-
-                int progress = (int)(itemsLoaded / itemsToLoad * 100);
-                worker.ReportProgress(progress);
-            }
+                lock (worker)
+                {
+                    Interlocked.Increment(ref itemsLoaded);
+                    int progress = (int)(itemsLoaded / itemsToLoad * 100);
+                    worker.ReportProgress(progress);
+                }
+            });
 
             // pre-compute TIC stuff and report loading progress
             foreach (var file in DataManagement.SpectraFiles)
