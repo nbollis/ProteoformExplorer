@@ -149,7 +149,7 @@ namespace ProteoformExplorer.Wpf
 
                 DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
             }
-            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt")
+            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt" || ext == ".feature")
             {
                 var items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
 

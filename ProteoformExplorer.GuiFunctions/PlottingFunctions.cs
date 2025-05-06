@@ -12,6 +12,8 @@ using System.Collections.ObjectModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using Easy.Common.Extensions;
+using MathNet.Numerics;
 
 namespace ProteoformExplorer.GuiFunctions
 {
@@ -368,10 +370,20 @@ namespace ProteoformExplorer.GuiFunctions
 
                     if (identifiedTicChromatogram.Any())
                     {
-                        plot.AddScatterLines(
-                            identifiedTicChromatogram.Select(p => p.X).ToArray(),
-                            identifiedTicChromatogram.Select(p => p.Y.Value).ToArray(),
-                            GuiSettings.IdentifiedColor, (float)GuiSettings.ChartLineWidth, label: "Identified TIC");
+                        var nonIdentifiedValue = identifiedTicChromatogram.Where(p => p.Label is null).ToArray();
+                        bool oneType = identifiedTicChromatogram.DistinctBy(p => p.Label).Count() == 1;
+                        foreach (var labelSet in identifiedTicChromatogram.GroupBy(p => p.Label))
+                        {
+                            if (labelSet.Key is null)
+                                continue;
+
+                            var toPlot = nonIdentifiedValue.Concat(labelSet).OrderBy(p => p.X);
+
+                            plot.AddScatterLines(
+                                toPlot.Select(p => p.X).ToArray(),
+                                toPlot.Select(p => p.Y.Value).ToArray(),
+                                labelSet.Key.ConvertStringToColor(), (float)GuiSettings.ChartLineWidth, label: oneType ? "Identified TIC" : labelSet.Key);
+                        }
                     }
                 }
 
@@ -394,13 +406,23 @@ namespace ProteoformExplorer.GuiFunctions
             {
                 plot.Title(@"MS1 TIC");
 
-                var ticValues = new List<(string file, double tic, double deconvolutedTic, double identifiedTic)>();
+                var ticValues = new List<(string file, double tic, double deconvolutedTic, double identifiedTic, string label)>();
 
+
+                var identifiedTicDict = DataManagement.AllLoadedAnnotatedSpecies
+                    .Where(p => p.Identification != null)
+                    .Select(p => p.Identification.Dataset)
+                    .Where(p => p != null)
+                    .Distinct()
+                    .ToDictionary(p => p, p => 0.0);
+
+                bool multipleInputRuns = identifiedTicDict.Count > 1;
                 foreach (var file in DataManagement.SpectraFiles)
                 {
                     double tic = 0;
                     double deconvolutedTic = 0;
                     double identifiedTic = 0;
+                    identifiedTicDict.ForEach(p => identifiedTicDict[p.Key] = 0);
 
                     var ticChromatogram = file.Value.GetTicChromatogram();
                     if (ticChromatogram != null)
@@ -417,32 +439,53 @@ namespace ProteoformExplorer.GuiFunctions
                     var identifiedTicChromatogram = file.Value.GetIdentifiedTicChromatogram();
                     if (identifiedTicChromatogram != null)
                     {
-                        identifiedTic = identifiedTicChromatogram.Sum(p => p.Y.Value);
+                        identifiedTicChromatogram.Where(p => p.Label != null).ForEach(id => identifiedTicDict[id.Label] += id.Y.Value);
+                        foreach (var label in identifiedTicChromatogram.Select(m => m.Label).Distinct())
+                        {
+                            if (label is null)
+                                continue;
+                            ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTicDict[label], label));
+                        }
                     }
-
-                    ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTic));
                 }
 
-                double[] positions = Enumerable.Range(0, ticValues.Count).Select(p => (double)p).ToArray();
-                string[] labels = ticValues.Select(p => p.file).ToArray();
+                double[] positions = Enumerable.Range(0, ticValues.DistinctBy(p => p.file).Count()).Select(p => (double)p).ToArray();
+                string[] labels = ticValues.Select(p => p.file).Distinct().ToArray();
 
-                var ticPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.tic).ToArray());
+                var ticPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.DistinctBy(p => p.file).Select(p => p.tic).ToArray());
                 ticPlot.Label = @"TIC";
                 ticPlot.LollipopColor = GuiSettings.TicColor;
                 ticPlot.LollipopRadius = 10;
                 plot.Add(ticPlot);
 
-                var deconTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.deconvolutedTic).ToArray());
+                var deconTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.DistinctBy(p => p.file).Select(p => p.deconvolutedTic).ToArray());
                 deconTicPlot.Label = @"Deconvoluted TIC";
                 deconTicPlot.LollipopColor = GuiSettings.DeconvolutedColor;
                 deconTicPlot.LollipopRadius = 10;
                 plot.Add(deconTicPlot);
 
-                var identTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.identifiedTic).ToArray());
-                identTicPlot.Label = @"Identified TIC";
-                identTicPlot.LollipopColor = GuiSettings.IdentifiedColor;
-                identTicPlot.LollipopRadius = 10;
-                plot.Add(identTicPlot);
+
+                if (ticValues.Select(p => p.label).Distinct().Count() > 1)
+                {
+                    foreach (var labelGroup in ticValues.GroupBy(p => p.label))
+                    {
+                        var identTicPlot =
+                            new LollipopPlot(positions, labelGroup.Select(p => p.identifiedTic).ToArray());
+                        identTicPlot.Label = labelGroup.Key;
+                        identTicPlot.LollipopColor = labelGroup.Key.ConvertStringToColor();
+                        identTicPlot.LollipopRadius = 10;
+                        plot.Add(identTicPlot);
+                    }
+                }
+                else
+                {
+                    var identTicPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.Select(p => p.identifiedTic).ToArray());
+                    identTicPlot.Label = @"Identified TIC";
+                    identTicPlot.LollipopColor = GuiSettings.IdentifiedColor;
+                    identTicPlot.LollipopRadius = 10;
+                    plot.Add(identTicPlot);
+                }
+                
 
                 plot.YAxis.Label("Intensity");
                 plot.SetAxisLimitsY(ticValues.Max(p => p.tic) * -0.03, ticValues.Max(p => p.tic) * 1.4);

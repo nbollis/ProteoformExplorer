@@ -44,7 +44,8 @@ namespace ProteoformExplorer.Wpf
                         var fileType = InputReaderParser.GetFileTypeFromHeader(line);
 
                         if (fileType == InputReaderParser.InputSourceType.ThermoDecon || fileType == InputReaderParser.InputSourceType.Promex
-                            || fileType == InputReaderParser.InputSourceType.FlashDeconv || fileType == InputReaderParser.InputSourceType.ProteoformExplorer)
+                            || fileType == InputReaderParser.InputSourceType.FlashDeconv || fileType == InputReaderParser.InputSourceType.ProteoformExplorer
+                            || fileType == InputReaderParser.InputSourceType.TopFD)
                         {
                             FileType = FileType.Deconvolution;
                         }

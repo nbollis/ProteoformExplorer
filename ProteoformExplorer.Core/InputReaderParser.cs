@@ -7,8 +7,20 @@ namespace ProteoformExplorer.Core
 {
     public static class InputReaderParser
     {
-        public enum InputSourceType { Promex, FlashDeconv, ThermoDecon, ProteoformExplorer, MetaMorpheus, TDPortal, ProteoformSuiteNodes, ProteoformSuiteEdges, Unknown }
-        public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt" };
+        public enum InputSourceType
+        {
+            Promex,
+            FlashDeconv,
+            ThermoDecon,
+            ProteoformExplorer,
+            MetaMorpheus,
+            TDPortal,
+            ProteoformSuiteNodes,
+            ProteoformSuiteEdges,
+            TopFD,
+            Unknown
+        }
+        public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt", ".feature" };
         public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
         // populated from KnownFileExtensions.txt
@@ -16,7 +28,7 @@ namespace ProteoformExplorer.Core
         { 
           ".raw", ".mzml", ".wiff", ".mzxml", ".mgf", ".d", ".yep", ".baf", ".fid", ".tdf", ".t2d", ".pkl",
           ".dat", ".ms", ".qgd", ".lcd", ".spc", ".sms", ".xms", ".itm", ".ita", ".tdc", ".psmtsv", ".tsv", 
-          ".txt", ".csv", ".tab" 
+          ".txt", ".csv", ".tab" , ".feature"
         };
 
         private static int SpeciesNameColumn;
@@ -35,6 +47,7 @@ namespace ProteoformExplorer.Core
         private static char[] ItemDelimiter = new char[] { '\t' };
         private static string[] HeadersFlashDeconv = new string[] { "ID", "FileName", "IsotopeCosineScore", "ChargeIntensityCosineScore" };
         private static string[] HeadersMetaMorpheus = new string[] { "File Name", "Notch", "Full Sequence", "QValue Notch" };
+        private static string[] HeadersTopFD = new string[] { "Sample_ID", "ID", "Mass", "Intensity", "Time_begin" };
         private static string[] HeadersThermoDecon = new string[] { "No.", "Monoisotopic Mass", "Number of Charge States", "Scan Range" };
         private static string[] HeadersTdPortal = new string[] { "PFR", "Uniprot Id", "Monoisotopic Mass", "Result Set" };
         private static string[] HeadersProteoformExplorer = new string[] { "File Name", "Scan Number", "Retention Time", "Species", "Monoisotopic Mass", "Charge", "Peaks List" };
@@ -61,7 +74,7 @@ namespace ProteoformExplorer.Core
 
             // read the file
             int lineNum = 0;
-
+            string dataset = "";
             while (reader.Peek() > 0)
             {
                 string line = reader.ReadLine();
@@ -78,6 +91,12 @@ namespace ProteoformExplorer.Core
                         return listOfSpecies;
                     }
 
+                    if (fileType == InputSourceType.MetaMorpheus)
+                    {
+                        // assumes dataset name is a component of the file path: the name of the main search output in which the psmtsv file is located
+                        dataset = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(Path.GetDirectoryName(filePath)));
+                    }
+
                     continue;
                 }
 
@@ -89,7 +108,7 @@ namespace ProteoformExplorer.Core
                     switch (fileType)
                     {
                         case InputSourceType.MetaMorpheus:
-                            species = GetMetaMorpheusSpecies(line);
+                            species = GetMetaMorpheusSpecies(line, dataset);
                             break;
 
                         case InputSourceType.FlashDeconv:
@@ -106,6 +125,10 @@ namespace ProteoformExplorer.Core
 
                         case InputSourceType.ProteoformExplorer:
                             species = GetProteoformExplorerSpecies(line, reader);
+                            break;
+
+                        case InputSourceType.TopFD:
+                            species = GetTopFDSpecies(line, filePath);
                             break;
                     }
                 }
@@ -124,7 +147,7 @@ namespace ProteoformExplorer.Core
             return listOfSpecies;
         }
 
-        private static AnnotatedSpecies GetMetaMorpheusSpecies(string line)
+        private static AnnotatedSpecies GetMetaMorpheusSpecies(string line, string dataset = "")
         {
             string[] items = line.Split(ItemDelimiter);
 
@@ -143,7 +166,7 @@ namespace ProteoformExplorer.Core
             string fileNameWithExtension = items[SpectraFileNameColumn];
 
             var id = new Identification(baseSequence, modSequence, mass, charge, precursorScanNumber, 
-                identificationScanNum, fileNameWithExtension);
+                identificationScanNum, fileNameWithExtension, dataset);
 
             var species = new AnnotatedSpecies(id);
 
@@ -183,6 +206,29 @@ namespace ProteoformExplorer.Core
             double rtStart = double.Parse(items[FeatureRtStartColumn]) / 60;
             double rtEnd = double.Parse(items[FeatureRtEndColumn]) / 60;
             string fileName = items[SpectraFileNameColumn];
+            var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
+            var species = new AnnotatedSpecies(deconFeature, identifier);
+
+            return species;
+        }
+
+        private static AnnotatedSpecies GetTopFDSpecies(string line, string filePath)
+        {
+            string[] items = line.Split(ItemDelimiter);
+            double mass = double.Parse(items[MonoisotopicMassColumn]);
+            string identifier = items[SpeciesNameColumn] + " (" + mass.ToString("F3") + ")";
+
+            double apexRt = double.Parse(items[RetentionTimeColumn]);
+            double rtStart = double.Parse(items[FeatureRtStartColumn]);
+            double rtEnd = double.Parse(items[FeatureRtEndColumn]);
+            int minCharge = int.Parse(items[MinChargeColumn]);
+            int maxCharge = int.Parse(items[MaxChargeColumn]);
+            var chargeList = Enumerable.Range(minCharge, maxCharge - minCharge + 1).ToList();
+
+            // TODO: remove -calib-averaged from this 
+            string fileName = Path.GetFileName(filePath).Replace("_ms1.feature", "-calib-averaged");
+
+
             var deconFeature = new DeconvolutionFeature(mass, apexRt, rtStart, rtEnd, chargeList, fileName);
             var species = new AnnotatedSpecies(deconFeature, identifier);
 
@@ -275,6 +321,18 @@ namespace ProteoformExplorer.Core
                 MaxChargeColumn = Array.IndexOf(split, "MaxCharge");
 
                 return InputSourceType.FlashDeconv;
+            }
+            else if (HeadersTopFD.All(p => split.Contains(p)))
+            {
+                SpeciesNameColumn = Array.IndexOf(split, "ID");
+                MonoisotopicMassColumn = Array.IndexOf(split, "Mass");
+                FeatureRtStartColumn = Array.IndexOf(split, "Time_begin");
+                RetentionTimeColumn = Array.IndexOf(split, "Apex_time");
+                FeatureRtEndColumn = Array.IndexOf(split, "Time_end");
+                MinChargeColumn = Array.IndexOf(split, "Minimum_charge_state");
+                MaxChargeColumn = Array.IndexOf(split, "Maximum_charge_state");
+
+                return InputSourceType.TopFD;
             }
             // thermo decon input
             else if (HeadersThermoDecon.All(p => split.Select(p => p.Trim()).Contains(p)))

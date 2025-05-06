@@ -14,9 +14,10 @@ namespace ProteoformExplorer.Core
         public int OneBasedPrecursorScanNumber { get; private set; }
         public int IdentificationScanNum { get; private set; }
         public string SpectraFileNameWithoutExtension { get; private set; }
+        public string Dataset { get; private set; }
 
         public Identification(string baseSequence, string modifiedSequence, double monoMass, int chargeState,
-            int precursorScanNum, int identificationScanNum, string spectraFileNameWithoutExtension)
+            int precursorScanNum, int identificationScanNum, string spectraFileNameWithoutExtension, string dataset = "")
         {
             this.FullSequence = modifiedSequence;
             this.BaseSequence = baseSequence;
@@ -24,6 +25,7 @@ namespace ProteoformExplorer.Core
             this.PrecursorChargeState = chargeState;
             this.OneBasedPrecursorScanNumber = precursorScanNum;
             this.IdentificationScanNum = identificationScanNum;
+            this.Dataset = dataset;
 
             this.SpectraFileNameWithoutExtension = PfmXplorerUtil.GetFileNameWithoutExtension(spectraFileNameWithoutExtension);
         }

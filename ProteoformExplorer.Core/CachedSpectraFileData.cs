@@ -6,20 +6,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Easy.Common.Extensions;
+using System.Collections.Concurrent;
 
 namespace ProteoformExplorer.Core
 {
     public class CachedSpectraFileData
     {
         public KeyValuePair<string, MsDataFile> DataFile { get; private set; }
-        public Dictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
-        public Dictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
+        public ConcurrentDictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
+        public ConcurrentDictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
         private List<Datum> TicData;
         private List<Datum> IdentifiedTicData;
         private List<Datum> DeconvolutedTicData;
-        private static Dictionary<(string, int), MsDataScan> CachedScans;
+        private static ConcurrentDictionary<(string, int), MsDataScan> CachedScans;
         private static int NumScansToCache;
-        private static Queue<(string, int)> CachedScanNumberQueue;
+        private static ConcurrentQueue<(string, int)> CachedScanNumberQueue;
 
         public CachedSpectraFileData(KeyValuePair<string, MsDataFile> loadedDataFile)
         {
@@ -27,11 +29,11 @@ namespace ProteoformExplorer.Core
             TicData = new List<Datum>();
             IdentifiedTicData = new List<Datum>();
             DeconvolutedTicData = new List<Datum>();
-            OneBasedScanToAnnotatedSpecies = new Dictionary<int, List<AnnotatedSpecies>>();
-            OneBasedScanToAnnotatedEnvelopes = new Dictionary<int, List<AnnotatedEnvelope>>();
-            CachedScans = new Dictionary<(string, int), MsDataScan>();
+            OneBasedScanToAnnotatedSpecies = new ConcurrentDictionary<int, List<AnnotatedSpecies>>();
+            OneBasedScanToAnnotatedEnvelopes = new ConcurrentDictionary<int, List<AnnotatedEnvelope>>();
+            CachedScans = new ConcurrentDictionary<(string, int), MsDataScan>();
             NumScansToCache = 10000;
-            CachedScanNumberQueue = new Queue<(string, int)>();
+            CachedScanNumberQueue = new ConcurrentQueue<(string, int)>();
         }
 
         public void CreateAnnotatedDeconvolutionFeatures(List<AnnotatedSpecies> allAnnotatedSpecies)
@@ -74,48 +76,53 @@ namespace ProteoformExplorer.Core
                     int scanNum = envelope.OneBasedScanNumber;
                     envelope.Species = species;
 
-                    if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
+                    OneBasedScanToAnnotatedEnvelopes.AddOrUpdate(scanNum, [envelope], (key, list) =>
                     {
-                        OneBasedScanToAnnotatedSpecies.Add(scanNum, new List<AnnotatedSpecies>());
-                    }
-                    if (!OneBasedScanToAnnotatedEnvelopes.ContainsKey(scanNum))
+                        list.Add(envelope);
+                        return list;
+                    });
+                    OneBasedScanToAnnotatedSpecies.AddOrUpdate(scanNum, [species], (key, list) =>
                     {
-                        OneBasedScanToAnnotatedEnvelopes.Add(scanNum, new List<AnnotatedEnvelope>());
-                    }
-
-                    OneBasedScanToAnnotatedSpecies[scanNum].Add(species);
-                    OneBasedScanToAnnotatedEnvelopes[scanNum].Add(envelope);
+                        list.Add(species);
+                        return list;
+                    });
                 }
             }
         }
 
         public MsDataScan GetOneBasedScan(int oneBasedScanNum)
         {
+            var cacheKey = (DataFile.Key, oneBasedScanNum);
+
+            if (CachedScans.TryGetValue(cacheKey, out var scan))
+            {
+                return scan;
+            }
+
             lock (CachedScans)
             {
-                if (!CachedScans.TryGetValue((this.DataFile.Key, oneBasedScanNum), out var scan))
+                if (!CachedScans.TryGetValue(cacheKey, out scan))
                 {
                     scan = DataFile.Value.GetOneBasedScanFromDynamicConnection(oneBasedScanNum);
 
                     if (scan == null)
                     {
-                        return scan;
+                        return null;
                     }
 
-                    while (CachedScans.Count > NumScansToCache)
+                    if (CachedScans.Count >= NumScansToCache && CachedScanNumberQueue.TryDequeue(out var scanToRemove))
                     {
-                        var scanToRemove = CachedScanNumberQueue.Dequeue();
-                        CachedScans.Remove(scanToRemove);
+                        CachedScans.TryRemove(scanToRemove, out _);
                     }
 
-                    if (CachedScans.TryAdd((this.DataFile.Key, scan.OneBasedScanNumber), scan))
+                    if (CachedScans.TryAdd(cacheKey, scan))
                     {
-                        CachedScanNumberQueue.Enqueue((this.DataFile.Key, oneBasedScanNum));
+                        CachedScanNumberQueue.Enqueue(cacheKey);
                     }
                 }
-
-                return scan;
             }
+
+            return scan;
         }
 
         public List<Datum> GetTicChromatogram()
@@ -126,6 +133,11 @@ namespace ProteoformExplorer.Core
             if (TicData.Count == 0)
             {
                 int lastScanNum = PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
+                var identifiedTicDict = OneBasedScanToAnnotatedSpecies.Values
+                    .SelectMany(p => p.Where(m => m.Identification != null))
+                    .Select(species => species.Identification.Dataset)
+                    .Distinct()
+                    .ToDictionary(p => p, p => 0.0);
 
                 for (int i = 1; i <= lastScanNum; i++)
                 {
@@ -133,7 +145,8 @@ namespace ProteoformExplorer.Core
                     identClaimedMzs.Clear();
                     var scan = GetOneBasedScan(i);
                     double deconvolutedTic = 0;
-                    double identifiedTic = 0;
+                    identifiedTicDict.ForEach(p => identifiedTicDict[p.Key] = 0.0);
+
 
                     // tic
                     if (scan != null && scan.MsnOrder == 1)
@@ -147,7 +160,7 @@ namespace ProteoformExplorer.Core
 
                     // deconvoluted and identified tic
                     var deconDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
-                    var identDatum = new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber);
+                    var identifiedDatumDict = identifiedTicDict.ToDictionary(p => p.Key, p => new Datum(scan.RetentionTime, 0, scan.OneBasedScanNumber));
 
                     if (OneBasedScanToAnnotatedEnvelopes.TryGetValue(i, out var annotatedEnvelopes))
                     {
@@ -167,17 +180,18 @@ namespace ProteoformExplorer.Core
                                 if (envelope.Species.Identification != null && !identClaimedMzs.Contains(actualMz))
                                 {
                                     identClaimedMzs.Add(actualMz);
-                                    identifiedTic += scan.MassSpectrum.YArray[index];
+                                    identifiedTicDict[envelope.Species.Identification.Dataset] += scan.MassSpectrum.YArray[index];
                                 }
                             }
                         }
 
                         deconDatum = new Datum(scan.RetentionTime, deconvolutedTic, scan.OneBasedScanNumber);
-                        identDatum = new Datum(scan.RetentionTime, identifiedTic, scan.OneBasedScanNumber);
+                        identifiedTicDict.ForEach(p => identifiedDatumDict[p.Key] =
+                            new Datum(scan.RetentionTime, identifiedTicDict[p.Key], scan.OneBasedScanNumber, p.Key));
                     }
 
                     DeconvolutedTicData.Add(deconDatum);
-                    IdentifiedTicData.Add(identDatum);
+                    IdentifiedTicData.AddRange(identifiedDatumDict.Values);
                 }
             }
 
