@@ -1,36 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ProteoformExplorer.GuiFunctions;
+using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
-namespace ProteoformExplorer.Wpf.Pages
+namespace ProteoformExplorer.Wpf.Pages;
+
+/// <summary>
+/// Interaction logic for SettingsWindow.xaml
+/// </summary>
+public partial class SettingsWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for SettingsWindow.xaml
-    /// </summary>
-    public partial class SettingsWindow : Window
+    SettingsViewModel Data;
+    public SettingsWindow(SettingsViewModel viewModel)
     {
-        SettingsViewModel Data;
-        public SettingsWindow(SettingsViewModel viewModel)
-        {
-            InitializeComponent();
-            Data = viewModel;
-            DataContext = Data;
-        }
+        InitializeComponent();
+        Data = viewModel;
+        DataContext = Data;
+    }
 
-        private void SettingsWindow_OnClosed(object sender, EventArgs e)
-        {
-            Data.SaveSettings();
-        }
+    private void SettingsWindow_OnClosed(object sender, EventArgs e)
+    {
+        Data.UpdateStaticSettings();
+        GuiSettings.SaveSettingsToFile();
     }
 }

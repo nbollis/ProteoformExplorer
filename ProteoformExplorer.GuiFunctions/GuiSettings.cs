@@ -11,8 +11,10 @@ namespace ProteoformExplorer.GuiFunctions
     {
         static GuiSettings()
         {
-            ColorDict = [];
-            NameConversionDictionary = [];
+            if (File.Exists(SettingsFilePath))
+                LoadSettingsFromFile();
+            else
+                SaveSettingsToFile();
         }
 
         // from: http://seaborn.pydata.org/tutorial/color_palettes.html (qualitative bright palette)
@@ -58,8 +60,6 @@ namespace ProteoformExplorer.GuiFunctions
 
         #region Coloring identified Tics
 
-        public static Dictionary<string, Color> ColorDict;
-
         private static Queue<Color> ColorQueue = new Queue<Color>(new[]
         {
             Color.Purple, 
@@ -78,45 +78,50 @@ namespace ProteoformExplorer.GuiFunctions
             Color.DeepPink,
             Color.DeepSkyBlue,
         });
-
-        public static Color ConvertStringToColor(this string input)
-        {
-            ColorDict ??= new Dictionary<string, Color>();
-
-            string lookup = input.ConvertName();
-            if (ColorDict.TryGetValue(lookup, out var color))
-            {
-                return color;
-            }
-
-            if (ColorQueue.Count == 0)
-            {
-                throw new Exception("Ran out of colors for identified TICs");
-            }
-
-            color = ColorQueue.Dequeue();
-            ColorDict.Add(lookup, color);
-
-            return color;
-        }
-
-
-        #endregion
-
-        #region Name Conversions
-        public static Dictionary<string, string> NameConversionDictionary;
+        public static List<NameMapping> NameMappings { get; set; } = new();
 
         public static string ConvertName(this string input)
         {
-            if (NameConversionDictionary.TryGetValue(input, out var name))
-                return name;
-            else if (NameConversionDictionary.TryGetValue(Path.GetFileNameWithoutExtension(input), out var name2))
-                return name2;
-            return input;
+            var mapping = NameMappings.FirstOrDefault(m => m.LongNames.Contains(input));
+            return mapping?.ShortName ?? input;
         }
+
+        public static Color ConvertStringToColor(this string shortName)
+        {
+            var mapping = NameMappings.FirstOrDefault(m => m.ShortName == shortName);
+            return mapping?.Color ?? ColorQueue.Dequeue();
+        }
+
         #endregion
 
-        public static TomlTable ToTomlTable()
+        #region Settings Loading and Writing
+
+        private static readonly string SettingsDirectory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "ProteoformExplorer"
+        );
+
+        private static readonly string SettingsFilePath = Path.Combine(SettingsDirectory, "ProteoformExplorerSettings.toml");
+
+        public static void LoadSettingsFromFile()
+        {
+            if (!File.Exists(SettingsFilePath)) 
+                return;
+
+            var table = Toml.ReadFile(SettingsFilePath).ToDictionary();
+            FromTomlTable(table);
+        }
+
+        public static void SaveSettingsToFile()
+        {
+            if (!Directory.Exists(SettingsDirectory))
+                Directory.CreateDirectory(SettingsDirectory);
+
+            var table = ToTomlTable();
+            File.WriteAllText(SettingsFilePath, table.ToString());
+        }
+
+        private static TomlTable ToTomlTable()
         {
             TomlTable table = Toml.Create();
 
@@ -180,7 +185,7 @@ namespace ProteoformExplorer.GuiFunctions
             return table;
         }
 
-        public static void FromTomlTable(Dictionary<string, object> tomlDictionary)
+        private static void FromTomlTable(Dictionary<string, object> tomlDictionary)
         {
             Type type = typeof(GuiSettings);
             var fields = type.GetFields();
@@ -229,5 +234,7 @@ namespace ProteoformExplorer.GuiFunctions
                 }
             }
         }
+
+        #endregion
     }
 }
