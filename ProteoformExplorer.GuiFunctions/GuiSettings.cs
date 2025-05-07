@@ -2,12 +2,19 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 
 namespace ProteoformExplorer.GuiFunctions
 {
     public static class GuiSettings
     {
+        static GuiSettings()
+        {
+            ColorDict = [];
+            NameConversionDictionary = [];
+        }
+
         // from: http://seaborn.pydata.org/tutorial/color_palettes.html (qualitative bright palette)
         public static string[] ChartColorPalette = new string[]
         {
@@ -50,7 +57,7 @@ namespace ProteoformExplorer.GuiFunctions
 
         #region Coloring identified Tics
 
-        private static Dictionary<string, Color> ColorDict;
+        public static Dictionary<string, Color> ColorDict;
 
         private static Queue<Color> ColorQueue = new Queue<Color>(new[]
         {
@@ -90,8 +97,21 @@ namespace ProteoformExplorer.GuiFunctions
 
             return color;
         }
-        
 
+
+        #endregion
+
+        #region Name Conversions
+        public static Dictionary<string, string> NameConversionDictionary;
+
+        public static string ConvertName(this string input)
+        {
+            if (NameConversionDictionary.TryGetValue(input, out var name))
+                return name;
+            else if (NameConversionDictionary.TryGetValue(Path.GetFileNameWithoutExtension(input), out var name2))
+                return name2;
+            return input;
+        }
         #endregion
 
         public static TomlTable ToTomlTable()
@@ -137,9 +157,21 @@ namespace ProteoformExplorer.GuiFunctions
                 {
                     table.Add(name, strarr);
                 }
-                else
+                else if (v is Dictionary<string, string> dict)
                 {
-                    throw new NotImplementedException();
+                    table.Add(name, dict);
+                }
+                else if (v is Dictionary<string, Color> colorDict)
+                {
+                    table.Add(name, colorDict);
+                }
+                else if (v is Dictionary<string, object> objDict)
+                {
+                    table.Add(name, objDict);
+                }
+                else if (v is object[] objarr)
+                {
+                    table.Add(name, objarr);
                 }
             }
 
@@ -184,9 +216,13 @@ namespace ProteoformExplorer.GuiFunctions
                             field.SetValue(null, objarr.Select(p => (string)p).ToArray());
                         }
                     }
-                    else
+                    else if (v is Dictionary<string, string> dict)
                     {
-                        throw new NotImplementedException();
+                        field.SetValue(null, dict);
+                    }
+                    else if (v is Dictionary<string, Color> colorDict)
+                    {
+                        field.SetValue(null, colorDict);
                     }
                 }
             }

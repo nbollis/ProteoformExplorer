@@ -30,8 +30,6 @@ namespace ProteoformExplorer.Core
         private static DeconvolutionEngine _deconvolutionEngine;
         static ConcurrentDictionary<string, double[]> SpectraFilePathsToRtArray;
 
-        public static Dictionary<string, string> NameConversionDictionary { get; } = [];
-
         public static MsDataScan GetClosestScanToRtFromDynamicConnection(KeyValuePair<string, CachedSpectraFileData> data, double rt)
         {
             if (SpectraFilePathsToRtArray == null)
