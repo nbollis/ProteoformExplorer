@@ -135,7 +135,7 @@ namespace ProteoformExplorer.Core
             return scan;
         }
 
-        public List<Datum> GetTicChromatogram()
+        public List<Datum> GetTicChromatogram(int rollingAverage = 0)
         {
             HashSet<double> deconClaimedMzs = new HashSet<double>();
             HashSet<double> identClaimedMzs = new HashSet<double>();
@@ -143,7 +143,7 @@ namespace ProteoformExplorer.Core
             if (TicData.Count == 0)
             {
                 int lastScanNum = DataFile.Value.Scans[^1].OneBasedScanNumber;
-                    /*PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));*/
+                /*PfmXplorerUtil.GetLastOneBasedScanNumber(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));*/
                 var identifiedTicDict = OneBasedScanToAnnotatedSpecies.Values
                     .SelectMany(p => p.Where(m => m.Identification != null))
                     .Select(species => species.Identification.Dataset)
@@ -206,19 +206,27 @@ namespace ProteoformExplorer.Core
                 }
             }
 
+            // Apply rolling average
+            if (rollingAverage > 0)
+            {
+                TicData = TicData.RollingAverage(rollingAverage);
+                DeconvolutedTicData = DeconvolutedTicData.RollingAverage(rollingAverage);
+                IdentifiedTicData = IdentifiedTicData.RollingAverage(rollingAverage);
+            }
+
             return TicData;
         }
 
-        public List<Datum> GetDeconvolutedTicChromatogram()
+        public List<Datum> GetDeconvolutedTicChromatogram(int rollingAverage = 0)
         {
-            GetTicChromatogram();
+            GetTicChromatogram(rollingAverage);
 
             return DeconvolutedTicData;
         }
 
-        public List<Datum> GetIdentifiedTicChromatogram()
+        public List<Datum> GetIdentifiedTicChromatogram(int rollingAverage = 0)
         {
-            GetTicChromatogram();
+            GetTicChromatogram(rollingAverage);
 
             return IdentifiedTicData;
         }

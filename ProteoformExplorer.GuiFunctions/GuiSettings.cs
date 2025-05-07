@@ -54,6 +54,7 @@ namespace ProteoformExplorer.GuiFunctions
         public static bool DpiScaling = true;
         public static double DpiScalingX = 1;
         public static double DpiScalingY = 1;
+        public static int TicRollingAverage = 3;
 
         #region Coloring identified Tics
 
@@ -82,7 +83,8 @@ namespace ProteoformExplorer.GuiFunctions
         {
             ColorDict ??= new Dictionary<string, Color>();
 
-            if (ColorDict.TryGetValue(input, out var color))
+            string lookup = input.ConvertName();
+            if (ColorDict.TryGetValue(lookup, out var color))
             {
                 return color;
             }
@@ -93,7 +95,7 @@ namespace ProteoformExplorer.GuiFunctions
             }
 
             color = ColorQueue.Dequeue();
-            ColorDict.Add(input, color);
+            ColorDict.Add(lookup, color);
 
             return color;
         }
