@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.7.25104.5739" />
     <PackageReference Include="MahApps.Metro.IconPacks.BoxIcons" Version="4.8.0" />
     <PackageReference Include="mzLib" Version="1.0.562" />
     <PackageReference Include="ScottPlot" Version="4.1.16" />

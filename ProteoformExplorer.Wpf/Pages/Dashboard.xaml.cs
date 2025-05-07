@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using ProteoformExplorer.Wpf.Pages;
 using UsefulProteomicsDatabases;
 
 namespace ProteoformExplorer.Wpf
@@ -19,6 +20,7 @@ namespace ProteoformExplorer.Wpf
         public static Page2_SpeciesView Page2;
         public static Page3_StackedIons Page3;
         public static ProteoformFamilyVisualization ProteoformFamilyVisualization;
+        public SettingsViewModel SettingsViewModel;
         private static ML_Trainer ML_Trainer;
         public static bool TicLollipopPlot = true;
         public static bool EnvelopeCountPlot = true;
@@ -31,9 +33,9 @@ namespace ProteoformExplorer.Wpf
         public Dashboard()
         {
             InitializeComponent();
-            Loaders.LoadElements();
 
             InitializeDashboard();
+            SettingsViewModel = new();
         }
 
         private void InitializeDashboard()
@@ -191,6 +193,12 @@ namespace ProteoformExplorer.Wpf
         private void goToDataLoading_Click(object sender, RoutedEventArgs e)
         {
             this.NavigationService.Navigate(new DataLoading());
+        }
+
+        private void SettingsButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow(SettingsViewModel);
+            settingsWindow.ShowDialog();
         }
     }
 }

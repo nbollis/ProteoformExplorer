@@ -247,9 +247,9 @@ namespace ProteoformExplorer.Wpf
             dataLoadingProgressBar.Value = e.ProgressPercentage;
         }
 
-        private void LoadSettings()
+        public void LoadSettings()
         {
-            var file = Path.Combine(@"C:\Users\rjmil\Desktop\MS data", @"GUIsettings.toml");
+            var file = "ProteoformExplorerGUIsettings.toml";
             Toml.WriteFile(GuiSettings.ToTomlTable(), file);
 
             var test = Toml.ReadFile(file).ToDictionary();

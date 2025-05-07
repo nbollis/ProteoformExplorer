@@ -382,7 +382,7 @@ namespace ProteoformExplorer.GuiFunctions
                             plot.AddScatterLines(
                                 toPlot.Select(p => p.X).ToArray(),
                                 toPlot.Select(p => p.Y.Value).ToArray(),
-                                labelSet.Key.ConvertStringToColor(), (float)GuiSettings.ChartLineWidth, label: oneType ? "Identified TIC" : labelSet.Key);
+                                labelSet.Key.ConvertStringToColor(), (float)GuiSettings.ChartLineWidth, label: oneType ? "Identified TIC" : labelSet.Key.ConvertName());
                         }
                     }
                 }
@@ -444,7 +444,7 @@ namespace ProteoformExplorer.GuiFunctions
                         {
                             if (label is null)
                                 continue;
-                            ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTicDict[label], label));
+                            ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTicDict[label], label.ConvertName()));
                         }
                     }
                 }
