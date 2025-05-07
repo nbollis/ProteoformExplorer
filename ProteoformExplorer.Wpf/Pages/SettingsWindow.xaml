@@ -88,6 +88,12 @@
                 <TextBlock Text="RT Indicator Color:" VerticalAlignment="Center" Width="150" />
                 <xctk:ColorPicker SelectedColor="{Binding RtIndicatorColor, Converter={StaticResource ColorToColorConverter}}" Width="200" />
             </StackPanel>
+
+            <!-- Tic Rolling Average -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Tic Rolling Average:" VerticalAlignment="Center" Width="150" />
+                <wpf:IntegerTexBoxControl Text="{Binding TicRollingAverage}" Width="200" />
+            </StackPanel>
         </StackPanel>
 
         <!-- Controls to add new entries -->

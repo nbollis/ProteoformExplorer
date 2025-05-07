@@ -346,7 +346,7 @@ namespace ProteoformExplorer.GuiFunctions
                 }
 
                 // display TIC chromatogram
-                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram();
+                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram(GuiSettings.TicRollingAverage);
 
                 plot.AddScatterLines(
                     ticChromatogram.Select(p => p.X).ToArray(),
@@ -356,7 +356,7 @@ namespace ProteoformExplorer.GuiFunctions
                 // display identified TIC chromatogram
                 if (DataManagement.AllLoadedAnnotatedSpecies.Any())
                 {
-                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram();
+                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram(GuiSettings.TicRollingAverage);
 
                     if (deconvolutedTicChromatogram.Any())
                     {
@@ -366,7 +366,7 @@ namespace ProteoformExplorer.GuiFunctions
                             GuiSettings.DeconvolutedColor, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
                     }
 
-                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram();
+                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram(GuiSettings.TicRollingAverage);
 
                     if (identifiedTicChromatogram.Any())
                     {

@@ -13,10 +13,24 @@ namespace ProteoformExplorer.Wpf
 {
     public class SettingsViewModel : BaseViewModel
     {
-        private const string SettingsFilePath = "ProteoformExplorerSettings.toml";
+        private static readonly string SettingsDirectory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "ProteoformExplorer"
+        );
 
+        private static readonly string SettingsFilePath = Path.Combine(SettingsDirectory, "ProteoformExplorerSettings.toml");
 
         public ObservableCollection<PlottableSpeciesViewModel> PlottableSpecies { get; set; } = [];
+
+        public int TicRollingAverage
+        {
+            get => GuiSettings.TicRollingAverage;
+            set
+            {
+                GuiSettings.TicRollingAverage = value;
+                OnPropertyChanged(nameof(TicRollingAverage));
+            }
+        }
 
         public Color TicColor
         {
@@ -64,10 +78,14 @@ namespace ProteoformExplorer.Wpf
             AddSpeciesCommand = new DelegateCommand((obj) => AddSpeciesFromUI(obj));
         }
 
-
-
         public void SaveSettings()
         {
+            // Ensure the settings directory exists
+            if (!Directory.Exists(SettingsDirectory))
+            {
+                Directory.CreateDirectory(SettingsDirectory);
+            }
+
             // Update GUI Settings with any new values
             if (PlottableSpecies.Any())
             {
