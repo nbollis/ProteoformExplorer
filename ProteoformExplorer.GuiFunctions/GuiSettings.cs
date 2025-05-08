@@ -88,15 +88,20 @@ namespace ProteoformExplorer.GuiFunctions
             return mapping?.ShortName ?? input;
         }
 
-        public static Color ConvertStringToColor(this string shortName)
+        public static Color ConvertStringToColor(this string input)
         {
-            var mapping = NameMappings.FirstOrDefault(m => m.ShortName == shortName);
+            // Saved to file as short name
+            var mapping = NameMappings.FirstOrDefault(m => m.ShortName == input);
+            if (mapping is not null) 
+                return mapping.Color;
 
-            // Saved to file
-            if (mapping is not null) return mapping.Color;
+            // Saved to file as long name
+            mapping = NameMappings.FirstOrDefault(m => m.LongNames.Contains(input));
+            if (mapping is not null) 
+                return mapping.Color;
 
             // Saved during this instance
-            if (UsedColorsWithKey.TryGetValue(shortName, out var color)) return color;
+            if (UsedColorsWithKey.TryGetValue(input, out var color)) return color;
 
             if (ColorQueue.Count == 0)
             {
@@ -121,7 +126,7 @@ namespace ProteoformExplorer.GuiFunctions
             }
 
             var newColor = ColorQueue.Dequeue();
-            UsedColorsWithKey[shortName] = newColor;
+            UsedColorsWithKey[input] = newColor;
             return newColor;
         }
 

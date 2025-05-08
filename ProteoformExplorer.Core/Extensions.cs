@@ -32,7 +32,7 @@ public static class Extensions
                 sum += inputData[i - j].Y ?? 0;
             }
             var average = sum / toAverage;
-            outputData.Add(new Datum(inputData[i].X, average));
+            outputData.Add(new Datum(inputData[i].X, average, inputData[i].Z, inputData[i].Label, inputData[i].Weight));
         }
         return outputData;
     }
