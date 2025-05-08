@@ -13,6 +13,7 @@ namespace ProteoformExplorer.Wpf
     {
         public string FullFilePath { get; set; }
         public string FileNameWithExtension { get; set; }
+        public string LowerFileNameWithoutExtensions { get; set; }
         public FileType FileType { get; set; }
         public SolidColorBrush BackgroundColor { get; private set; }
         public SolidColorBrush ForegroundColor { get; private set; }
@@ -21,6 +22,7 @@ namespace ProteoformExplorer.Wpf
         {
             FullFilePath = fullFilePath;
             FileNameWithExtension = Path.GetFileName(fullFilePath);
+            LowerFileNameWithoutExtensions = PfmXplorerUtil.GetFileNameWithoutExtension(fullFilePath);
             DetermineFileType(out errors);
         }
 

@@ -101,7 +101,7 @@ namespace ProteoformExplorer.Wpf
 
             if (selectedItems != null && selectedItems.Count >= 1)
             {
-                var spectraFileName = ((FileForDataGrid)selectedItems[0]).FileNameWithExtension;
+                var spectraFileName = ((FileForDataGrid)selectedItems[0]).LowerFileNameWithoutExtensions;
 
                 if (DataManagement.SpectraFiles.ContainsKey(spectraFileName))
                 {

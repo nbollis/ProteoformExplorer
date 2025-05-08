@@ -189,7 +189,7 @@ namespace ProteoformExplorer.Core
                 str = str.Substring(0, loc);
             }
 
-            return str;
+            return str.ToLower();
         }
 
         public static List<Datum> GetXicData(List<MsDataScan> scans, double mz, int z, Tolerance tolerance)
