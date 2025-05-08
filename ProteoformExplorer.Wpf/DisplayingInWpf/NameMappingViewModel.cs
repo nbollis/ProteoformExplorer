@@ -6,11 +6,11 @@ using ProteoformExplorer.GuiFunctions;
 
 namespace ProteoformExplorer.Wpf;
 
-public class PlottableSpeciesViewModel(PlottableSpecies plottableSpecies) : BaseViewModel
+public class NameMappingViewModel(NameMapping plottableSpecies) : BaseViewModel
 {
-    private PlottableSpecies _plottableSpecies = plottableSpecies;
+    private NameMapping _plottableSpecies = plottableSpecies;
 
-    public PlottableSpecies PlottableSpecies
+    public NameMapping PlottableSpecies
     {
         get => _plottableSpecies;
         set

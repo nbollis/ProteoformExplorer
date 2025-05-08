@@ -32,10 +32,6 @@ namespace ProteoformExplorer.Wpf
         {
             InitializeComponent();
 
-            Loaders.LoadElements();
-
-            //LoadSettings();
-
             if (DataManagement.AllLoadedAnnotatedSpecies == null)
             {
                 DataManagement.AllLoadedAnnotatedSpecies = new ObservableCollection<AnnotatedSpecies>();
@@ -155,9 +151,12 @@ namespace ProteoformExplorer.Wpf
             {
                 var items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
 
-                foreach (var item in items)
+                lock(DataManagement.AllLoadedAnnotatedSpecies)
                 {
-                    DataManagement.AllLoadedAnnotatedSpecies.Add(item);
+                    foreach (var item in items)
+                    {
+                        DataManagement.AllLoadedAnnotatedSpecies.Add(item);
+                    }
                 }
             }
             else
@@ -201,15 +200,6 @@ namespace ProteoformExplorer.Wpf
             var temp = PfmXplorerUtil.DeconvolutionEngine;
 
             // load the selected files
-            //foreach (var file in FilesToLoad)
-            //{
-            //    LoadFile(file);
-            //    itemsLoaded++;
-
-            //    int progress = (int)(itemsLoaded / itemsToLoad * 100);
-            //    worker.ReportProgress(progress);
-            //}
-
             Parallel.ForEach(FilesToLoad, file =>
             {
                 LoadFile(file);
@@ -245,15 +235,6 @@ namespace ProteoformExplorer.Wpf
 
             dataLoadingProgressBar.Maximum = 100;
             dataLoadingProgressBar.Value = e.ProgressPercentage;
-        }
-
-        public void LoadSettings()
-        {
-            var file = "ProteoformExplorerGUIsettings.toml";
-            Toml.WriteFile(GuiSettings.ToTomlTable(), file);
-
-            var test = Toml.ReadFile(file).ToDictionary();
-            GuiSettings.FromTomlTable(test);
         }
     }
 }
