@@ -11,6 +11,7 @@ namespace ProteoformExplorer.GuiFunctions
     {
         static GuiSettings()
         {
+            NameMappings = [];
             if (File.Exists(SettingsFilePath))
                 LoadSettingsFromFile();
             else
@@ -60,6 +61,7 @@ namespace ProteoformExplorer.GuiFunctions
 
         #region Coloring identified Tics
 
+        private static Dictionary<string, Color> UsedColorsWithKey { get; } = [];
         private static Queue<Color> ColorQueue = new Queue<Color>(new[]
         {
             Color.Purple, 
@@ -78,7 +80,7 @@ namespace ProteoformExplorer.GuiFunctions
             Color.DeepPink,
             Color.DeepSkyBlue,
         });
-        public static List<NameMapping> NameMappings { get; set; } = new();
+        public static List<NameMapping> NameMappings;
 
         public static string ConvertName(this string input)
         {
@@ -89,7 +91,38 @@ namespace ProteoformExplorer.GuiFunctions
         public static Color ConvertStringToColor(this string shortName)
         {
             var mapping = NameMappings.FirstOrDefault(m => m.ShortName == shortName);
-            return mapping?.Color ?? ColorQueue.Dequeue();
+
+            // Saved to file
+            if (mapping is not null) return mapping.Color;
+
+            // Saved during this instance
+            if (UsedColorsWithKey.TryGetValue(shortName, out var color)) return color;
+
+            if (ColorQueue.Count == 0)
+            {
+                ColorQueue = new Queue<Color>(new[]
+                {
+                    Color.Purple,
+                    Color.Green,
+                    Color.OrangeRed,
+                    Color.Yellow,
+                    Color.Pink,
+                    Color.DarkMagenta,
+                    Color.DarkCyan,
+                    Color.DarkGoldenrod,
+                    Color.DarkOliveGreen,
+                    Color.DarkRed,
+                    Color.DarkSlateBlue,
+                    Color.DarkTurquoise,
+                    Color.DarkViolet,
+                    Color.DeepPink,
+                    Color.DeepSkyBlue,
+                });
+            }
+
+            var newColor = ColorQueue.Dequeue();
+            UsedColorsWithKey[shortName] = newColor;
+            return newColor;
         }
 
         #endregion
@@ -180,6 +213,10 @@ namespace ProteoformExplorer.GuiFunctions
                 {
                     table.Add(name, objarr);
                 }
+                else if (v is List<NameMapping> maps)
+                {
+                    table.Add(name, maps);
+                }
             }
 
             return table;
@@ -218,7 +255,7 @@ namespace ProteoformExplorer.GuiFunctions
                     }
                     else if (v is object[] objarr)
                     {
-                        if (objarr[1] is string str)
+                        if (objarr.Length >=2 && objarr[1] is string str)
                         {
                             field.SetValue(null, objarr.Select(p => (string)p).ToArray());
                         }
@@ -230,6 +267,10 @@ namespace ProteoformExplorer.GuiFunctions
                     else if (v is Dictionary<string, Color> colorDict)
                     {
                         field.SetValue(null, colorDict);
+                    }
+                    else if (v is List<NameMapping> maps)
+                    {
+                        field.SetValue(null, maps);
                     }
                 }
             }

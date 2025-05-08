@@ -85,7 +85,7 @@ namespace ProteoformExplorer.Wpf
                 }
 
                 // Update the static settings with the new name mappings if they are not already present
-                GuiSettings.NameMappings = GuiSettings.NameMappings.Concat(nameMappings).Distinct().ToList();
+                GuiSettings.NameMappings = nameMappings;
             }
         }
 
