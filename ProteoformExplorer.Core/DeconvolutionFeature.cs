@@ -47,15 +47,10 @@ namespace ProteoformExplorer.Core
             HashSet<double> alreadyClaimedMzs = new HashSet<double>();
             List<(double, double)> intensitiesBuffer = new List<(double, double)>();
 
-            var start = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Minimum);
-            var end = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Maximum);
             double modeMass = PfmXplorerUtil.DeconvolutionEngine.GetModeMassFromMonoisotopicMass(MonoisotopicMass);
-
-            for (int i = start.OneBasedScanNumber; i <= end.OneBasedScanNumber/* + 1*/; i++)
+            foreach (var scan in data.Value.DataFile.Value.GetMsScansInTimeRange(RtElutionRange.Minimum, RtElutionRange.Maximum))
             {
-                var scan = data.Value.GetOneBasedScan(i);
-
-                if (scan == null || scan.MsnOrder != 1)
+                if (scan is not { MsnOrder: 1 })
                 {
                     continue;
                 }
@@ -82,7 +77,7 @@ namespace ProteoformExplorer.Core
 
             if (AnnotatedEnvelopes.Count == 0)
             {
-                var scan = data.Value.GetOneBasedScan(start.OneBasedScanNumber);
+                var scan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(data, RtElutionRange.Minimum);
 
                 if (Charges.Any() && scan != null)
                 {
@@ -117,6 +112,7 @@ namespace ProteoformExplorer.Core
             int direction = 1;
             (int scanNum, double intensity) mostIntenseEnvelope = (id.OneBasedPrecursorScanNumber, 0);
 
+            // Move left and right one scan at a time u
             for (int i = id.OneBasedPrecursorScanNumber; i >= 1 && i <= lastScanNum; i += direction)
             {
                 var scan = data.Value.GetOneBasedScan(i);

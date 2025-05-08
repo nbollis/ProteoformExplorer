@@ -181,6 +181,8 @@ namespace ProteoformExplorer.Core
         {
             string str = Path.GetFileName(filename);
 
+            str = str.Replace("-calib", "").Replace("-averaged", "");
+
             foreach (string extension in InputReaderParser.AllKnownFileFormats.Where(p => str.Contains(p, StringComparison.InvariantCultureIgnoreCase)))
             {
                 int loc = str.IndexOf(extension, StringComparison.InvariantCultureIgnoreCase);
