@@ -39,7 +39,7 @@ public class Ms1FeatureProcessingStrategy : IFileProcessingStrategy
         var fileName = PfmXplorerUtil.GetFileNameWithoutExtension(filePath.Replace("_ms1.feature", ""));
         foreach (var feature in features)
         {
-            var decon = new DeconvolutionFeature(feature.Mass, feature.RetentionTimeApex, feature.RetentionTimeBegin, feature.RetentionTimeEnd,
+            var decon = new DeconvolutionFeature(feature.Mass, feature.RetentionTimeApex / 60.0, feature.RetentionTimeBegin / 60.0, feature.RetentionTimeEnd / 60.0,
                 Enumerable.Range(feature.ChargeStateMin, feature.ChargeStateMax - feature.ChargeStateMin + 1).ToList(), fileName);
             var specie = new AnnotatedSpecies(decon, feature.Id.ToString());
             species.Add(specie);
@@ -57,7 +57,7 @@ public class FlashDeconvTsvProcessingStrategy : IFileProcessingStrategy
         List<AnnotatedSpecies> species = new List<AnnotatedSpecies>(features.Count);
         foreach (var feature in features)
         {
-            var decon = new DeconvolutionFeature(feature.MonoisotopicMass, feature.RetentionTimeApex, feature.RetentionTimeBegin, feature.RetentionTimeEnd,
+            var decon = new DeconvolutionFeature(feature.MonoisotopicMass, feature.RetentionTimeApex / 60.0, feature.RetentionTimeBegin / 60.0, feature.RetentionTimeEnd / 60.0,
                 Enumerable.Range(feature.ChargeStateMin, feature.ChargeStateMax - feature.ChargeStateMin + 1).ToList(), feature.FilePath);
             var specie = new AnnotatedSpecies(decon, feature.FeatureIndex.ToString());
             species.Add(specie);
