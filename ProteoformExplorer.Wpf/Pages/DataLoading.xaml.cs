@@ -3,6 +3,7 @@ using IO.ThermoRawFileReader;
 using MassSpectrometry;
 using Nett;
 using ProteoformExplorer.Core;
+using ProteoformExplorer.Core.IO;
 using ProteoformExplorer.GuiFunctions;
 using Readers;
 using System;
@@ -134,7 +135,7 @@ namespace ProteoformExplorer.Wpf
         private static void LoadFile(FileForDataGrid file)
         {
             var ext = Path.GetExtension(file.FullFilePath).ToLowerInvariant();
-            var fileName = Path.GetFileName(file.FullFilePath);
+            var fileName = PfmXplorerUtil.GetFileNameWithoutExtension(file.FullFilePath);
 
             if (ext == ".raw" || ext == ".mzml") 
             { 
@@ -145,11 +146,24 @@ namespace ProteoformExplorer.Wpf
                     LoadedSpectraFiles.Add(file);
                 });
 
-                DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
+                lock (DataManagement.SpectraFiles)
+                {
+                    DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
+                }
             }
             else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt" || ext == ".feature")
             {
-                var items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
+                List<AnnotatedSpecies> items;
+                var processor = FileProcessor.GetProcessor(file.FullFilePath);
+                
+                if (processor != null) // We will use the mzlib file reading then translate to Proteoform Explorer if implemented. 
+                { 
+                    items = processor.Process(file.FullFilePath);
+                }
+                else // Otherwise use what Rob wrote here for Proteoform Explorer. 
+                {
+                    items = InputReaderParser.ReadSpeciesFromFile(file.FullFilePath, out var errors);
+                }
 
                 lock(DataManagement.AllLoadedAnnotatedSpecies)
                 {

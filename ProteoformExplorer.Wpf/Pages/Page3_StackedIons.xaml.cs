@@ -35,7 +35,7 @@ namespace ProteoformExplorer.Wpf
 
             // select the spectra file
             DataListView.SelectedItem = DataLoading.LoadedSpectraFiles.First(p =>
-                PfmXplorerUtil.GetFileNameWithoutExtension(p.FileNameWithExtension) == species.SpectraFileNameWithoutExtension);
+                p.LowerFileNameWithoutExtensions == species.SpectraFileNameWithoutExtension);
 
             // notify the data manager that the spectra file has changed
             WpfFunctions.OnSpectraFileChanged(DataListView, null);

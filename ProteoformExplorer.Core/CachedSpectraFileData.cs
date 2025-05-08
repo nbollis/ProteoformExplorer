@@ -44,7 +44,7 @@ namespace ProteoformExplorer.Core
             OneBasedScanToAnnotatedEnvelopes.Clear();
 
             var relevantSpecies = allAnnotatedSpecies
-                .Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key))
+                .Where(p => p.SpectraFileNameWithoutExtension == DataFile.Key)
                 .ToList();
 
             Parallel.ForEach(relevantSpecies, species =>
@@ -75,8 +75,8 @@ namespace ProteoformExplorer.Core
                     }
                 }
 
-                species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
 
+                species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                 foreach (AnnotatedEnvelope envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
                 {
                     int scanNum = envelope.OneBasedScanNumber;
