@@ -15,8 +15,8 @@ namespace ProteoformExplorer.Core
     public class CachedSpectraFileData
     {
         public KeyValuePair<string, MsDataFile> DataFile { get; private set; }
-        public Dictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
-        public Dictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
+        public ConcurrentDictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
+        public ConcurrentDictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
         private List<Datum> TicData;
         private List<Datum> IdentifiedTicData;
         private List<Datum> DeconvolutedTicData;
@@ -43,7 +43,11 @@ namespace ProteoformExplorer.Core
             OneBasedScanToAnnotatedSpecies.Clear();
             OneBasedScanToAnnotatedEnvelopes.Clear();
 
-            foreach (var species in allAnnotatedSpecies.Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key)))
+            var relevantSpecies = allAnnotatedSpecies
+                .Where(p => p.SpectraFileNameWithoutExtension == PfmXplorerUtil.GetFileNameWithoutExtension(DataFile.Key))
+                .ToList();
+
+            Parallel.ForEach(relevantSpecies, species =>
             {
                 // the deconvoluted species is from a file type that does not specify the envelopes in the deconvolution feature
                 // therefore, we'll have to do some peakfinding and guess what envelopes are part of this feature
@@ -61,13 +65,13 @@ namespace ProteoformExplorer.Core
                         }
                         else
                         {
-                            continue;
+                            return; // Skip this species if precursor info is invalid
                         }
                     }
                     else
                     {
                         // TODO: some kind of error message? or just skip? this species doesn't have a deconvolution feature or an identification...
-                        continue;
+                        return; // Skip this species if it has no deconvolution feature or identification
                     }
                 }
 
@@ -78,19 +82,25 @@ namespace ProteoformExplorer.Core
                     int scanNum = envelope.OneBasedScanNumber;
                     envelope.Species = species;
 
-                    if (!OneBasedScanToAnnotatedSpecies.ContainsKey(scanNum))
+                    OneBasedScanToAnnotatedEnvelopes.AddOrUpdate(scanNum, _ => new List<AnnotatedEnvelope> { envelope }, (_, list) =>
                     {
-                        OneBasedScanToAnnotatedSpecies.Add(scanNum, new List<AnnotatedSpecies>());
-                    }
-                    if (!OneBasedScanToAnnotatedEnvelopes.ContainsKey(scanNum))
-                    {
-                        OneBasedScanToAnnotatedEnvelopes.Add(scanNum, new List<AnnotatedEnvelope>());
-                    }
+                        lock (list) // Ensure thread-safe updates to the list
+                        {
+                            list.Add(envelope);
+                        }
+                        return list;
+                    });
 
-                    OneBasedScanToAnnotatedSpecies[scanNum].Add(species);
-                    OneBasedScanToAnnotatedEnvelopes[scanNum].Add(envelope);
+                    OneBasedScanToAnnotatedSpecies.AddOrUpdate(scanNum, _ => new List<AnnotatedSpecies> { species }, (_, list) =>
+                    {
+                        lock (list) // Ensure thread-safe updates to the list
+                        {
+                            list.Add(species);
+                        }
+                        return list;
+                    });
                 }
-            }
+            });
         }
 
         public MsDataScan GetOneBasedScan(int oneBasedScanNum)
