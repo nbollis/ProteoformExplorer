@@ -215,7 +215,7 @@ namespace ProteoformExplorer.Wpf
             foreach (var file in DataManagement.SpectraFiles)
             {
                 file.Value.CreateAnnotatedDeconvolutionFeatures(DataManagement.AllLoadedAnnotatedSpecies.ToList());
-                file.Value.GetTicChromatogram();
+                file.Value.GetTicChromatogram(GuiSettings.TicRollingAverage);
                 itemsLoaded++;
 
                 int progress = (int)(itemsLoaded / itemsToLoad * 100);

@@ -1,5 +1,8 @@
 ﻿namespace ProteoformExplorer.Core
 {
+    /// <summary>
+    /// A class which represents a species in a MS1. This contains a decovoluted feature and sometimes an Identifications. 
+    /// </summary>
     public class AnnotatedSpecies
     {
         public string SpeciesLabel { get; private set; }

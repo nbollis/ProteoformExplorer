@@ -2,6 +2,9 @@
 
 namespace ProteoformExplorer.Core
 {
+    /// <summary>
+    /// Represents an envelope of peaks with annotations.
+    /// </summary>
     public class AnnotatedEnvelope
     {
         public int OneBasedScanNumber { get; private set; }
