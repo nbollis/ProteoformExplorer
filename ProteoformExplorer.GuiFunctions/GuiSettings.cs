@@ -255,7 +255,39 @@ namespace ProteoformExplorer.GuiFunctions
                     }
                     else if (v is object[] objarr)
                     {
-                        if (objarr.Length >=2 && objarr[1] is string str)
+                        if (objarr.Length == 0)
+                            continue;
+                            
+                        if (objarr[0] is Dictionary<string, object> { Count: 3 })
+                        {
+                            foreach (var obj in objarr)
+                            {
+                                var dict = (Dictionary<string, object>)obj;
+                                var colorDict = (Dictionary<string, object>)dict["Color"];
+                                Color col = Color.Black;
+
+                                string shortName = dict["ShortName"] as string;
+                                var longNames = (dict["LongNames"] as object[]).Select(p => p.ToString()).ToList();
+
+                                if (colorDict is not null)
+                                {
+                                    int a = int.Parse(colorDict["A"].ToString());
+                                    int r = int.Parse(colorDict["R"].ToString());
+                                    int g = int.Parse(colorDict["G"].ToString());
+                                    int b2 = int.Parse(colorDict["B"].ToString());
+                                    col = Color.FromArgb(a, r, g, b2);
+                                }
+
+                                var mapping = new NameMapping()
+                                {
+                                    ShortName = shortName,
+                                    LongNames = longNames,
+                                    Color = col
+                                };
+                                NameMappings.Add(mapping);
+                            }
+                        }
+                        else if (objarr[1] is string str)
                         {
                             field.SetValue(null, objarr.Select(p => (string)p).ToArray());
                         }
