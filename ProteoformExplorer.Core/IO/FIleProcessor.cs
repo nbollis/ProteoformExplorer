@@ -27,7 +27,8 @@ public class FileProcessor
 
     public static FileProcessor? GetProcessor(string filePath)
     {
-        switch (filePath.ParseFileType())
+        var type = filePath.ParseFileType();
+        switch (type)
         {
             case SupportedFileType.psmtsv:
             case SupportedFileType.osmtsv:
