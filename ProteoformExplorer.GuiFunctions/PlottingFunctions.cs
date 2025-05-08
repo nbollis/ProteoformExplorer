@@ -374,8 +374,8 @@ namespace ProteoformExplorer.GuiFunctions
                         bool oneType = identifiedTicChromatogram.DistinctBy(p => p.Label).Count() == 1;
                         foreach (var labelSet in identifiedTicChromatogram.GroupBy(p => p.Label))
                         {
-                            if (labelSet.Key is null)
-                                continue;
+                            //if (labelSet.Key is null)
+                            //    continue;
 
                             var toPlot = nonIdentifiedValue.Concat(labelSet).OrderBy(p => p.X);
 
