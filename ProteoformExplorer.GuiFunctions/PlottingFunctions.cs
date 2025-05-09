@@ -209,7 +209,7 @@ namespace ProteoformExplorer.GuiFunctions
                     }
                 }
 
-                StyleSpectrumPlot(spectrumPlot, scan, data.Key);
+                StyleSpectrumPlot(spectrumPlot, scan, data.Value.FileName);
                 spectrumPlot.SetAxisLimits(scan.ScanWindowRange.Minimum, scan.ScanWindowRange.Maximum, 0, scan.MassSpectrum.YArray.Max() * 1.2);
             }
             catch (Exception e)

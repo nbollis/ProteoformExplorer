@@ -69,8 +69,11 @@ namespace ProteoformExplorer.Wpf
                 // Remove relevant data from statically loaded objects
                 if (file.IsLoaded)
                 {
-                    DataManagement.SpectraFiles.Remove(file.LowerFileNameWithoutExtensions);
-                    LoadedSpectraFiles.Remove(file);
+                    if (file.FileType == FileType.Spectra)
+                    {
+                        DataManagement.SpectraFiles.Remove(file.LowerFileNameWithoutExtensions);
+                        LoadedSpectraFiles.Remove(file);
+                    }
                 }
             }
         }
