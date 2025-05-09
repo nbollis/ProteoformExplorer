@@ -40,15 +40,26 @@
         <Label Content="Data Loading" FontSize="24" FontWeight="Bold" Foreground="{StaticResource Electromagnetic}" Margin="20 0" VerticalAlignment="Center" 
                HorizontalAlignment="Left" Grid.Row="0" Width="200"/>
 
-        <Button x:Name="loadFiles" Grid.Row="0" Visibility="Hidden" Content=">" FontWeight="Bold" VerticalAlignment="Center" 
-                HorizontalAlignment="Right" Width="30" Height="30" />
 
-        <Button x:Name="goToDashboard" Grid.Row="0" Visibility="Hidden" Content=">" FontWeight="Bold" VerticalAlignment="Center" 
-                HorizontalAlignment="Right" Width="30" Height="30" />
 
-        <ProgressBar Name="dataLoadingProgressBar" Grid.Row="0" Width="30" Height="30" Visibility="Hidden" Foreground="{StaticResource ProtossPylon}" 
-                     Background="{StaticResource LynxWhite}" VerticalAlignment="Center"
-                     HorizontalAlignment="Right" Orientation="Vertical" Margin="5" />
+        <StackPanel  Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <!-- Load Files Button -->
+            <Button x:Name="loadFiles" Visibility="Hidden" Content="Load Files" FontWeight="Bold" VerticalAlignment="Center" 
+                     HorizontalAlignment="Right" Width="60" Height="40" />
+
+            <!-- Clear All Button -->
+            <Button x:Name="clearAllFiles" Content="Clear All" Visibility="Hidden" FontWeight="Bold" VerticalAlignment="Center" 
+                    HorizontalAlignment="Right" Width="60" Height="40" />
+            
+            <Button x:Name="goToDashboard" Grid.Row="0" Visibility="Hidden" Content=">" FontWeight="Bold" VerticalAlignment="Center" 
+                    HorizontalAlignment="Right" Width="40" Height="40" />
+
+            <ProgressBar Name="dataLoadingProgressBar" Grid.Row="0" Width="40" Height="40" Visibility="Hidden" Foreground="{StaticResource ProtossPylon}" 
+                         Background="{StaticResource LynxWhite}" VerticalAlignment="Center"
+                         HorizontalAlignment="Right" Orientation="Vertical" Margin="5" />
+        </StackPanel>
+
+
 
         <Border Grid.Row="1" BorderThickness="2" Margin="30 20" Background="{StaticResource LynxWhite}" Name="dragAndDropFileLoadingArea">
             <Border.BorderBrush>
@@ -70,14 +81,42 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" Margin="0">
-            <ListView ScrollViewer.HorizontalScrollBarVisibility="Disabled" Name="filesToLoad" HorizontalAlignment="Center" 
-                      Visibility="Hidden" BorderThickness="0" Margin="0">
-                <ListView.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel />
-                    </ItemsPanelTemplate>
-                </ListView.ItemsPanel>
-            </ListView>
+          <ListView ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                    Name="filesToLoad" HorizontalAlignment="Center" 
+                    KeyDown="DataLoading_OnKeyDown"
+                    Visibility="Hidden" BorderThickness="0" Margin="0" ItemsSource="{Binding FilesToLoad}">
+              <ListView.ItemTemplate>
+                  <DataTemplate>
+                      <Grid Margin="5">
+                          <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="*" />
+                              <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          
+                          <Grid.RowDefinitions>
+                               <RowDefinition Height="Auto" />
+                               <RowDefinition Height="*" />
+                           </Grid.RowDefinitions>
+
+                           <!-- Remove button -->
+                           <Button Content="X" Margin="0 0 0 0" Padding="5" 
+                                   Grid.Column="1" 
+                                   Grid.Row="0"
+                                   HorizontalAlignment="Right" 
+                                   VerticalAlignment="Top"
+                                   Command="{Binding RemoveFileCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                   CommandParameter="{Binding}" />
+                          
+                           <!-- Display file name -->
+                          <TextBlock Text="{Binding FileNameWithExtension}" 
+                                     VerticalAlignment="Center" Margin="5" 
+                                     Grid.Row="0" Grid.RowSpan="2"
+                                     Grid.Column="0" Grid.ColumnSpan="1"/>
+
+                      </Grid>
+                  </DataTemplate>
+              </ListView.ItemTemplate>
+          </ListView>
         </ScrollViewer>
     </Grid>
 </Page>
