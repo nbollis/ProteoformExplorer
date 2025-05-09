@@ -14,6 +14,7 @@ namespace ProteoformExplorer.Core
 {
     public class CachedSpectraFileData
     {
+        public string FileName { get; }
         public KeyValuePair<string, MsDataFile> DataFile { get; private set; }
         public ConcurrentDictionary<int, List<AnnotatedSpecies>> OneBasedScanToAnnotatedSpecies { get; private set; }
         public ConcurrentDictionary<int, List<AnnotatedEnvelope>> OneBasedScanToAnnotatedEnvelopes { get; private set; }
@@ -28,6 +29,7 @@ namespace ProteoformExplorer.Core
         {
             DataFile = loadedDataFile;
             DataFile.Value.LoadAllStaticData();
+            FileName = Path.GetFileNameWithoutExtension(loadedDataFile.Value.FilePath);
             TicData = new List<Datum>();
             IdentifiedTicData = new List<Datum>();
             DeconvolutedTicData = new List<Datum>();
