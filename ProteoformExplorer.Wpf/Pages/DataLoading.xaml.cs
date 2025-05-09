@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using UsefulProteomicsDatabases;
 
 namespace ProteoformExplorer.Wpf
@@ -25,9 +26,11 @@ namespace ProteoformExplorer.Wpf
     /// </summary>
     public partial class DataLoading : Page
     {
+        private bool AllFilesLoaded => FilesToLoad.All(file => file.IsLoaded);
         public static ObservableCollection<FileForDataGrid> FilesToLoad;
         public static ObservableCollection<FileForDataGrid> LoadedSpectraFiles;
         private static BackgroundWorker worker;
+        public ICommand RemoveFileCommand { get; }
 
         public DataLoading()
         {
@@ -43,7 +46,9 @@ namespace ProteoformExplorer.Wpf
 
             filesToLoad.ItemsSource = FilesToLoad;
 
+            RemoveFileCommand = new DelegateCommand(RemoveFile);
             loadFiles.Click += new RoutedEventHandler(LoadDataButton_Click);
+            clearAllFiles.Click += new RoutedEventHandler(ClearAllFiles_Click);
             goToDashboard.Click += new RoutedEventHandler(GoToDashboard_Click);
 
             worker = new BackgroundWorker();
@@ -52,6 +57,22 @@ namespace ProteoformExplorer.Wpf
             worker.WorkerReportsProgress = true;
 
             RefreshPage();
+        }
+
+        private void RemoveFile(object parameter)
+        {
+            if (parameter is FileForDataGrid file)
+            {
+                FilesToLoad.Remove(file);
+                RefreshPage();
+
+                // Remove relevant data from statically loaded objects
+                if (file.IsLoaded)
+                {
+                    DataManagement.SpectraFiles.Remove(file.LowerFileNameWithoutExtensions);
+                    LoadedSpectraFiles.Remove(file);
+                }
+            }
         }
 
         public static void LoadDataButton_Click(object sender, RoutedEventArgs e)
@@ -80,31 +101,35 @@ namespace ProteoformExplorer.Wpf
         {
             App.Current.Dispatcher.Invoke((Action)delegate
             {
-                dataLoadingProgressBar.Visibility = Visibility.Hidden;
+                dataLoadingProgressBar.Visibility = Visibility.Collapsed;
 
                 if (FilesToLoad.Any())
                 {
                     dragAndDropFileLoadingArea.Visibility = Visibility.Hidden;
                     filesToLoad.Visibility = Visibility.Visible;
+                    clearAllFiles.Visibility = Visibility.Visible; // Show "Clear All" button when files exist
 
-                    if (DataManagement.SpectraFiles.Any())
+                    if (AllFilesLoaded)
                     {
-                        // files have been loaded
+                        // All files have been loaded
                         goToDashboard.Visibility = Visibility.Visible;
                         loadFiles.Visibility = Visibility.Hidden;
                     }
                     else
                     {
-                        // files have been dragged in but not loaded yet
+                        // Not all files have been loaded
                         goToDashboard.Visibility = Visibility.Hidden;
                         loadFiles.Visibility = Visibility.Visible;
                     }
                 }
                 else
                 {
-                    // no files have been dragged in yet
+                    // No files have been dragged in yet
                     dragAndDropFileLoadingArea.Visibility = Visibility.Visible;
                     filesToLoad.Visibility = Visibility.Hidden;
+                    clearAllFiles.Visibility = Visibility.Hidden;
+                    goToDashboard.Visibility = Visibility.Hidden;
+                    loadFiles.Visibility = Visibility.Hidden;
                 }
             });
         }
@@ -177,6 +202,7 @@ namespace ProteoformExplorer.Wpf
             {
                 MessageBox.Show("Unrecognized file format: " + ext);
             }
+            file.IsLoaded = true;
         }
 
         private void Window_Drop(object sender, DragEventArgs e)
@@ -200,6 +226,7 @@ namespace ProteoformExplorer.Wpf
             {
                 loadFiles.Visibility = Visibility.Hidden;
                 goToDashboard.Visibility = Visibility.Hidden;
+                clearAllFiles.Visibility = Visibility.Hidden;
             });
 
             // double-count spectra files for transparency because we're going to load some extra stuff from them
@@ -249,6 +276,31 @@ namespace ProteoformExplorer.Wpf
 
             dataLoadingProgressBar.Maximum = 100;
             dataLoadingProgressBar.Value = e.ProgressPercentage;
+        }
+
+        private void ClearAllFiles_Click(object sender, RoutedEventArgs e)
+        {
+            // Clear the FilesToLoad list
+            FilesToLoad.Clear();
+
+            // Clear any loaded spectra files
+            LoadedSpectraFiles.Clear();
+
+            // Clear any data in DataManagement
+            DataManagement.AllLoadedAnnotatedSpecies.Clear();
+            DataManagement.SpectraFiles.Clear();
+
+            // Refresh the UI
+            RefreshPage();
+        }
+
+        private void DataLoading_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if ((e.Key == Key.Delete || e.Key == Key.Back) && filesToLoad.SelectedItems.Count == 1)
+            {
+                var file = (FileForDataGrid)filesToLoad.SelectedItem;
+                RemoveFile(file);
+            }
         }
     }
 }

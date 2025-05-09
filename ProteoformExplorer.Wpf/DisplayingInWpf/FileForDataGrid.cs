@@ -11,6 +11,7 @@ namespace ProteoformExplorer.Wpf
 
     public class FileForDataGrid
     {
+        public bool IsLoaded = false;
         public string FullFilePath { get; set; }
         public string FileNameWithExtension { get; set; }
         public string LowerFileNameWithoutExtensions { get; set; }
