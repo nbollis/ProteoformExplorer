@@ -24,8 +24,13 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
         <!-- DataGrid to display the dictionary -->
-        <DataGrid Grid.Row="0" ItemsSource="{Binding PlottableSpecies}" AutoGenerateColumns="False" CanUserAddRows="False">
+        <DataGrid Grid.ColumnSpan="2"  Grid.Row="0" ItemsSource="{Binding PlottableSpecies}" AutoGenerateColumns="False" CanUserAddRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Short Name" Binding="{Binding ShortName}" />
 
@@ -62,7 +67,7 @@
         </DataGrid>
 
         <!-- Controls for color settings -->
-        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="10">
+        <StackPanel Grid.Column="0"  Grid.Row="1" Orientation="Vertical" Margin="10">
             <TextBlock Text="Color Settings" FontWeight="Bold" Margin="0,0,0,10" />
 
             <!-- Deconvoluted Color -->
@@ -96,8 +101,49 @@
             </StackPanel>
         </StackPanel>
 
+        <!-- Chart text sizing settings -->
+        <StackPanel Grid.Column="1"  Grid.Row="1" Orientation="Vertical" Margin="10">
+            <TextBlock Text="Chart Settings" FontWeight="Bold" Margin="0,0,0,10" />
+
+            <!-- Chart Tick Font Size -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Tick Font Size:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding ChartTickFontSize}" Width="100" />
+            </StackPanel>
+
+            <!-- Chart Header Font Size -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Title Font Size:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding ChartHeaderFontSize}" Width="100" />
+            </StackPanel>
+
+            <!-- Chart Legend Font Size -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Legend Font Size:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding ChartLegendFontSize}" Width="100" />
+            </StackPanel>
+
+            <!-- Chart Axis Label Font Size -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Axis Label Font Size:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding ChartAxisLabelFontSize}" Width="100" />
+            </StackPanel>
+
+            <!-- Chart Line Width -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Line Width:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding ChartLineWidth}" Width="100" />
+            </StackPanel>
+
+            <!-- Annotated Envelope Line Width -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Envelope Line Width:" VerticalAlignment="Center" Width="150" />
+                <wpf:DoubleTextBoxControl Text="{Binding AnnotatedEnvelopeLineWidth}" Width="100" />
+            </StackPanel>
+        </StackPanel>
+
         <!-- Controls to add new entries -->
-        <Grid Grid.Row="2" Margin="10" >
+        <Grid Grid.Column="0"  Grid.ColumnSpan="2" Grid.Row="2" Margin="10" >
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>

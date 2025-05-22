@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
 using System.IO;
+using ProteoformExplorer.GuiFunctions;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -97,7 +98,7 @@ namespace ProteoformExplorer.Wpf
             }
 
             int fileNum = 0;
-            foreach (var file in DataManagement.SpectraFiles)
+            foreach (var file in DataManagement.SpectraFiles.OrderBy(p => p.Key.ConvertName()))
             {
                 if (charge == null)
                 {
@@ -109,7 +110,7 @@ namespace ProteoformExplorer.Wpf
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        fileNum == 0, null, out var errors, 0, 0, true, file.Key);
+                        fileNum == 0, null, out var errors, 0, 0, true, file.Key.ConvertName());
 
                     if (errors.Any())
                     {
@@ -136,7 +137,7 @@ namespace ProteoformExplorer.Wpf
             fileNum = 0;
             double xOffset = 0;
             double yOffset = 0;
-            foreach (var file in DataManagement.SpectraFiles)
+            foreach (var file in DataManagement.SpectraFiles.OrderBy(p => p.Key.ConvertName()))
             {
                 if (charge == null)
                 {
@@ -148,7 +149,7 @@ namespace ProteoformExplorer.Wpf
                 {
                     // plot the charge state envelope, one line per file
                     GuiFunctions.PlottingFunctions.PlotSummedChargeStateXic(modeMass, charge.Value, initialScan.RetentionTime, GuiFunctions.GuiSettings.RtExtractionWindow, file, topPlotView.Plot,
-                        fileNum == 0, null, out var errors, xOffset, yOffset, true, file.Key);
+                        fileNum == 0, null, out var errors, xOffset, yOffset, true, file.Key.ConvertName());
 
                     if (errors.Any())
                     {

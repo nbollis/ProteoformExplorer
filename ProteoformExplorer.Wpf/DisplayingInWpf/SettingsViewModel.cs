@@ -22,6 +22,66 @@ namespace ProteoformExplorer.Wpf
             }
         }
 
+        public double ChartTickFontSize
+        {
+            get => GuiSettings.ChartTickFontSize;
+            set
+            {
+                GuiSettings.ChartTickFontSize = value;
+                OnPropertyChanged(nameof(ChartTickFontSize));
+            }
+        }
+
+        public double ChartHeaderFontSize
+        {
+            get => GuiSettings.ChartHeaderFontSize;
+            set
+            {
+                GuiSettings.ChartHeaderFontSize = value;
+                OnPropertyChanged(nameof(ChartHeaderFontSize));
+            }
+        }
+
+        public double ChartLegendFontSize
+        {
+            get => GuiSettings.ChartLegendFontSize;
+            set
+            {
+                GuiSettings.ChartLegendFontSize = value;
+                OnPropertyChanged(nameof(ChartLegendFontSize));
+            }
+        }
+
+        public double ChartAxisLabelFontSize
+        {
+            get => GuiSettings.ChartAxisLabelFontSize;
+            set
+            {
+                GuiSettings.ChartAxisLabelFontSize = value;
+                OnPropertyChanged(nameof(ChartAxisLabelFontSize));
+            }
+        }
+
+        public double ChartLineWidth
+        {
+            get => GuiSettings.ChartLineWidth;
+            set
+            {
+                GuiSettings.ChartLineWidth = value;
+                OnPropertyChanged(nameof(ChartLineWidth));
+            }
+        }
+
+        public double AnnotatedEnvelopeLineWidth
+        {
+            get => GuiSettings.AnnotatedEnvelopeLineWidth;
+            set
+            {
+                GuiSettings.AnnotatedEnvelopeLineWidth = value;
+                OnPropertyChanged(nameof(AnnotatedEnvelopeLineWidth));
+            }
+        }
+
         public Color TicColor
         {
             get => GuiSettings.TicColor;
