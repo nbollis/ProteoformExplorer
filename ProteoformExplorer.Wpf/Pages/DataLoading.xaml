@@ -77,74 +77,79 @@
         </Border>
 
         <ScrollViewer Grid.Row="1" Margin="0">
-          <ListView ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+            <ListView ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
                     Name="filesToLoad" HorizontalAlignment="Center" 
                     KeyDown="DataLoading_OnKeyDown" SelectionMode="Single"
                     Visibility="Hidden" BorderThickness="0" Margin="0" ItemsSource="{Binding FilesToLoad}">
-              <ListView.ItemContainerStyle>
-                  <Style TargetType="ListViewItem">
-                      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                      <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                      <Setter Property="Foreground" Value="{Binding ForegroundColor}"/>
-                      <Setter Property="Background" Value="{Binding BackgroundColor}"/>
-                      <Setter Property="FontSize" Value="12"/>
-                      <Setter Property="FontWeight" Value="Bold"/>
-                      <Setter Property="BorderThickness" Value="0"/>
-                      <Setter Property="Height" Value="100"/>
-                      <Setter Property="Width" Value="300"/>
-                      <Setter Property="Margin" Value="5"/>
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                        <Setter Property="Foreground" Value="{Binding ForegroundColor}"/>
+                        <Setter Property="Background" Value="{Binding BackgroundColor}"/>
+                        <Setter Property="FontSize" Value="12"/>
+                        <Setter Property="FontWeight" Value="Bold"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Height" Value="100"/>
+                        <Setter Property="Width" Value="300"/>
+                        <Setter Property="Margin" Value="5"/>
 
-                      <Style.Resources>
-                          <Style TargetType="Border">
-                              <Setter Property="CornerRadius" Value="10"/>
-                          </Style>
-                      </Style.Resources>
-                  </Style>
-              </ListView.ItemContainerStyle>
+                        <Style.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Style.Resources>
+                    </Style>
+                </ListView.ItemContainerStyle>
                 <ListView.ItemTemplate>
-                  <DataTemplate>
-                      <Grid Margin="0" >
-                          <!-- Define the layout -->
-                          <Grid.ColumnDefinitions>
-                              <ColumnDefinition Width="*" />
+                    <DataTemplate>
+                        <Grid Margin="0" >
+                            <!-- Define the layout -->
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
-                          </Grid.ColumnDefinitions>
-                          <Grid.RowDefinitions>
-                              <RowDefinition Height="Auto" />
-                              <RowDefinition Height="*" />
-                          </Grid.RowDefinitions>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                          <!-- Remove button in the top-right corner -->
-                          <Button Content="X"
-                                  Grid.Column="1"
-                                  Grid.Row="0"
-                                  HorizontalAlignment="Right"
-                                  VerticalAlignment="Top"
-                                  Padding="5"
-                                  Margin="0"
-                                  Background="Transparent"
-                                  Foreground="{StaticResource NasturcianFlower}"
-                                  Command="{Binding RemoveFileCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                  CommandParameter="{Binding}" />
+                            <!-- Remove button in the top-right corner -->
+                            <Button Content="X"
+                                Grid.Column="1"
+                                Grid.Row="0"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Padding="5"
+                                Margin="0"
+                                Background="Transparent"
+                                Foreground="{StaticResource NasturcianFlower}"
+                                Command="{Binding RemoveFileCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                CommandParameter="{Binding}" />
 
-                          <!-- File name text in the center -->
-                          <TextBlock Text="{Binding FileNameWithExtension}"
-                                     Grid.Column="0"
-                                     Grid.ColumnSpan="2"
-                                     Grid.Row="0"
-                                     Grid.RowSpan="2"
-                                     TextWrapping="WrapWithOverflow"
-                                     HorizontalAlignment="Center"
-                                     VerticalAlignment="Center"
-                                     Margin="10"
-                                     FontSize="14"
-                                     FontWeight="Bold"
-                                     Foreground="{Binding ForegroundColor}" />
+                            <!-- File name text in the center -->
+                            <TextBlock Text="{Binding FileNameWithExtension}"
+                                    Grid.Column="0"
+                                    Grid.ColumnSpan="2"
+                                    Grid.Row="0"
+                                    Grid.RowSpan="2"
+                                    TextWrapping="WrapWithOverflow"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="10"
+                                    FontSize="14"
+                                    FontWeight="Bold"
+                                    Foreground="{Binding ForegroundColor}" />
 
                         </Grid>
-                  </DataTemplate>
-              </ListView.ItemTemplate>
-          </ListView>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </ScrollViewer>
     </Grid>
 </Page>
