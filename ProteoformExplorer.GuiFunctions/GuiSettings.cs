@@ -40,8 +40,8 @@ namespace ProteoformExplorer.GuiFunctions
         public static int IntegrationFillAlpha = 50;
         public static int FillAlpha = 190;
         public static double ChartTickFontSize = 10;
-        public static double ChartHeaderFontSize = 14;
-        public static double ChartLegendFontSize = 10;
+        public static double ChartHeaderFontSize = 18;
+        public static double ChartLegendFontSize = 14;
         public static double ChartAxisLabelFontSize = 13;
         public static double ChartLineWidth = 1;
         public static double AnnotatedEnvelopeLineWidth = 2;
