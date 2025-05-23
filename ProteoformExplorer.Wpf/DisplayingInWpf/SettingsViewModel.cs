@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Input;
 using ProteoformExplorer.GuiFunctions;
+using ScottPlot;
 
 namespace ProteoformExplorer.Wpf
 {
@@ -69,6 +70,18 @@ namespace ProteoformExplorer.Wpf
             {
                 GuiSettings.ChartLineWidth = value;
                 OnPropertyChanged(nameof(ChartLineWidth));
+            }
+        }
+
+        public ObservableCollection<Alignment> LegendLocations { get; } = [..Enum.GetValues<Alignment>()];
+
+        public Alignment LegendLocation
+        {
+            get => GuiSettings.LegendLocation;
+            set
+            {
+                GuiSettings.LegendLocation = value;
+                OnPropertyChanged(nameof(LegendLocation));
             }
         }
 

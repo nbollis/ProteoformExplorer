@@ -140,6 +140,12 @@
                 <TextBlock Text="Envelope Line Width:" VerticalAlignment="Center" Width="150" />
                 <wpf:DoubleTextBoxControl Text="{Binding AnnotatedEnvelopeLineWidth}" Width="100" />
             </StackPanel>
+
+            <!-- Legend Location -->
+            <StackPanel Orientation="Horizontal" Margin="0,5">
+                <TextBlock Text="Legend Location:" VerticalAlignment="Center" Width="150" />
+                <ComboBox ItemsSource="{Binding LegendLocations}" SelectedItem="{Binding LegendLocation}" />
+            </StackPanel>
         </StackPanel>
 
         <!-- Controls to add new entries -->
