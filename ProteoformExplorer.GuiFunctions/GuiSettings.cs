@@ -45,7 +45,7 @@ namespace ProteoformExplorer.GuiFunctions
         public static double ChartAxisLabelFontSize = 13;
         public static double ChartLineWidth = 1;
         public static double AnnotatedEnvelopeLineWidth = 2;
-        public static ScottPlot.Alignment LegendLocation = ScottPlot.Alignment.UpperRight;
+        public static ScottPlot.Alignment LegendLocation = ScottPlot.Alignment.UpperLeft;
         public static bool ShowChartGrid = false;
         public static double XLabelRotation = 30;
         public static bool FillWaterfall = true;

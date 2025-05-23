@@ -65,6 +65,8 @@ namespace ProteoformExplorer.GuiFunctions
                     lollipopPlot.BarWidth = (float)(GuiSettings.ChartLineWidth * GuiSettings.DpiScalingX);
                 }
             }
+
+            plot.Benchmark(false);
         }
 
         public static void StyleDashboardPlot(Plot plot)
@@ -663,6 +665,7 @@ namespace ProteoformExplorer.GuiFunctions
             }
 
             indicator.X = scan.RetentionTime;
+            indicator.Color = GuiSettings.RtIndicatorColor;
 
             // this does not seem to update properly. need to call .Render() on the WpfPlot object, not the Plot
             //plot.Render();
