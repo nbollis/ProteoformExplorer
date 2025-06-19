@@ -61,7 +61,7 @@ namespace ProteoformExplorer.Core
                         // (i.e., from a top-down search program)
                         species.Identification.GetPrecursorInfoForIdentification();
 
-                        if (species.Identification.PrecursorChargeState > 0 && species.Identification.OneBasedPrecursorScanNumber > 0)
+                        if (species.Identification.PrecursorChargeState != 0 && species.Identification.OneBasedPrecursorScanNumber > 0)
                         {
                             species.DeconvolutionFeature = new DeconvolutionFeature(species.Identification, new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                         }

@@ -179,7 +179,7 @@ namespace ProteoformExplorer.Wpf
                     DataManagement.SpectraFiles.Add(fileName, new CachedSpectraFileData(kvp));
                 }
             }
-            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".txt" || ext == ".feature")
+            else if (ext == ".psmtsv" || ext == ".tsv" || ext == ".osmtsv" || ext == ".txt" || ext == ".feature")
             {
                 List<AnnotatedSpecies> items;
                 var processor = FileProcessor.GetProcessor(file.FullFilePath);

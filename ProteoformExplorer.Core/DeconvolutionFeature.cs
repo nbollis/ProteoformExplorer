@@ -93,7 +93,7 @@ namespace ProteoformExplorer.Core
         {
             id.GetPrecursorInfoForIdentification();
 
-            if (id.OneBasedPrecursorScanNumber <= 0 || id.PrecursorChargeState <= 0)
+            if (id.OneBasedPrecursorScanNumber <= 0 || id.PrecursorChargeState == 0)
             {
                 // TODO: some kind of error here?
                 return;

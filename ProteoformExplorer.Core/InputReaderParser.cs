@@ -20,7 +20,7 @@ namespace ProteoformExplorer.Core
             TopFD,
             Unknown
         }
-        public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".txt", ".feature" };
+        public static List<string> AcceptedTextFileFormats = new List<string> { ".psmtsv", ".tsv", ".osmtsv", ".txt", ".feature" };
         public static List<string> AcceptedSpectraFileFormats = new List<string> { ".raw", ".mzml" };
 
         // populated from KnownFileExtensions.txt
