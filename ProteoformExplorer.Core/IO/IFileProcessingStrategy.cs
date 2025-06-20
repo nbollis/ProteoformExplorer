@@ -19,7 +19,7 @@ public class MetaMorpheusProcessingStrategy : IFileProcessingStrategy
         List<AnnotatedSpecies> species = new List<AnnotatedSpecies>(psms.Count);
         foreach (var spectralMatch in psms)
         {
-            var id = new Identification(spectralMatch.BaseSequence, spectralMatch.FullSequence, spectralMatch.MonoisotopicMass, spectralMatch.ChargeState,
+            var id = new Identification(spectralMatch.BaseSequence, spectralMatch.FullSequence, spectralMatch.PrecursorMass, spectralMatch.ChargeState,
                 spectralMatch.PrecursorScanNum, spectralMatch.Ms2ScanNumber, spectralMatch.FileNameWithoutExtension, dataset);
 
             species.Add(new AnnotatedSpecies(id));

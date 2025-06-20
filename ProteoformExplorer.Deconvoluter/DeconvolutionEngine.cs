@@ -8,7 +8,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ThermoFisher.CommonCore.Data.Business;
 using UsefulProteomicsDatabases;
+using Polarity = MassSpectrometry.Polarity;
 
 namespace ProteoformExplorer.Deconvoluter
 {
@@ -149,7 +151,7 @@ namespace ProteoformExplorer.Deconvoluter
 
         public IEnumerable<DeconvolutedEnvelope> Deconvolute(MsDataScan scan)
         {
-            var deconvolutedEnvs = Deconvolute(scan.MassSpectrum, scan.MassSpectrum.Range).ToList();
+            var deconvolutedEnvs = Deconvolute(scan.MassSpectrum, scan.MassSpectrum.Range, scan.Polarity).ToList();
 
             foreach (var env in deconvolutedEnvs)
             {
@@ -161,7 +163,7 @@ namespace ProteoformExplorer.Deconvoluter
             }
         }
 
-        public IEnumerable<DeconvolutedEnvelope> Deconvolute(MzSpectrum spectrum, MzRange mzRange)
+        public IEnumerable<DeconvolutedEnvelope> Deconvolute(MzSpectrum spectrum, MzRange mzRange, Polarity polarity)
         {
             // if no peaks in the scan, stop
             if (spectrum.Size == 0)
@@ -171,21 +173,21 @@ namespace ProteoformExplorer.Deconvoluter
 
             // get list of envelope candidates for this scan
             var indicies = GetPeaksThatPassSignalToNoiseFilter(spectrum).ToList();
-            var candidateEnvelopes = GetEnvelopeCandidates(spectrum, mzRange, indicies);
+            var candidateEnvelopes = GetEnvelopeCandidates(spectrum, mzRange, indicies, polarity);
             var parsimoniousEnvelopes = RunEnvelopeParsimony(candidateEnvelopes, spectrum);
 
             // return deconvoluted envelopes
             foreach (DeconvolutedEnvelope envelope in parsimoniousEnvelopes.Where(p =>
                 p.SignalToNoise >= SignalToNoiseRequired
                 && p.MonoisotopicMass >= MinMass
-                && p.Charge >= MinCharge
+                && (polarity == Polarity.Positive && p.Charge >= MinCharge || polarity == Polarity.Negative && p.Charge <= MinCharge)
                 && p.Peaks.Count >= MinPeaks))
             {
                 yield return envelope;
             }
         }
 
-        public List<DeconvolutedEnvelope> GetEnvelopeCandidates(MzSpectrum spectrum, MzRange mzRange, List<int> optionalIndicies = null)
+        public List<DeconvolutedEnvelope> GetEnvelopeCandidates(MzSpectrum spectrum, MzRange mzRange, List<int> optionalIndicies = null, Polarity polarity = Polarity.Positive)
         {
             List<DeconvolutedEnvelope> envelopeCandidates = new List<DeconvolutedEnvelope>();
             List<DeconvolutedPeak> peaksBuffer = new List<DeconvolutedPeak>();
@@ -214,7 +216,7 @@ namespace ProteoformExplorer.Deconvoluter
                 }
 
                 // get rough list of charge states to check for based on m/z peaks around this peak
-                potentialChargeStates = GetPotentialChargeStates(potentialChargeStates, spectrum, p);
+                potentialChargeStates = GetPotentialChargeStates(potentialChargeStates, spectrum, p, polarity);
 
                 // examine different charge state possibilities and get corresponding envelope candidates
                 foreach (int z in potentialChargeStates)
@@ -568,7 +570,7 @@ namespace ProteoformExplorer.Deconvoluter
             return env;
         }
 
-        public HashSet<int> GetPotentialChargeStates(HashSet<int> potentialChargeStates, MzSpectrum scan, int xArrayIndex)
+        public HashSet<int> GetPotentialChargeStates(HashSet<int> potentialChargeStates, MzSpectrum scan, int xArrayIndex, Polarity polarity)
         {
             // get rough list of charge states to check for based on m/z peaks around this peak
             potentialChargeStates.Clear();
@@ -583,11 +585,24 @@ namespace ProteoformExplorer.Deconvoluter
                     break;
                 }
 
-                for (int z = 1; z <= MaxCharge; z++)
+                if (polarity == Polarity.Negative)
                 {
-                    if (PpmTolerance.Within(potentialIsotopeMz.ToMass(z), mz.ToMass(z) + Constants.C13MinusC12))
+                    for (int z = -MinCharge; z >= -MaxCharge; z--)
                     {
-                        potentialChargeStates.Add(z);
+                        if (PpmTolerance.Within(potentialIsotopeMz.ToMass(z), mz.ToMass(z) + Constants.C13MinusC12))
+                        {
+                            potentialChargeStates.Add(z);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int z = MinCharge; z <= MaxCharge; z++)
+                    {
+                        if (PpmTolerance.Within(potentialIsotopeMz.ToMass(z), mz.ToMass(z) + Constants.C13MinusC12))
+                        {
+                            potentialChargeStates.Add(z);
+                        }
                     }
                 }
             }

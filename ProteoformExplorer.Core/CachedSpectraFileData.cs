@@ -77,7 +77,6 @@ namespace ProteoformExplorer.Core
                     }
                 }
 
-
                 species.DeconvolutionFeature.FindAnnotatedEnvelopesInData(new KeyValuePair<string, CachedSpectraFileData>(DataFile.Key, this));
                 foreach (AnnotatedEnvelope envelope in species.DeconvolutionFeature.AnnotatedEnvelopes)
                 {

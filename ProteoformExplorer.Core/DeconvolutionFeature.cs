@@ -4,6 +4,8 @@ using MzLibUtil;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MassSpectrometry;
+using System.Runtime.InteropServices;
 
 namespace ProteoformExplorer.Core
 {
@@ -15,6 +17,7 @@ namespace ProteoformExplorer.Core
         public List<int> Charges { get; private set; }
         public string SpectraFileNameWithoutExtension { get; private set; }
         public List<AnnotatedEnvelope> AnnotatedEnvelopes { get; private set; }
+        public Polarity Polarity { get; private set; }
 
         public DeconvolutionFeature(double monoMass, double apexRt, double rtStart, double rtEnd, List<int> charges, string spectraFileName,
             List<AnnotatedEnvelope> annotatedEnvelopes = null)
@@ -25,19 +28,28 @@ namespace ProteoformExplorer.Core
             this.Charges = charges;
             this.SpectraFileNameWithoutExtension = PfmXplorerUtil.GetFileNameWithoutExtension(spectraFileName);
             this.AnnotatedEnvelopes = annotatedEnvelopes;
+            this.Polarity = charges.Sum() > 0 
+                ? Polarity.Positive
+                : Polarity.Negative;
         }
 
         public DeconvolutionFeature(Identification id, KeyValuePair<string, CachedSpectraFileData> data)
         {
             this.MonoisotopicMass = id.MonoisotopicMass;
             this.SpectraFileNameWithoutExtension = PfmXplorerUtil.GetFileNameWithoutExtension(id.SpectraFileNameWithoutExtension);
-
+            this.Polarity = id.PrecursorChargeState > 0
+                ? Polarity.Positive
+                : Polarity.Negative;
             GenerateDeconvolutionFeatureFromIdentification(id, data);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
         public void FindAnnotatedEnvelopesInData(KeyValuePair<string, CachedSpectraFileData> data)
         {
-            if (AnnotatedEnvelopes != null && AnnotatedEnvelopes.Count > 0)
+            if (AnnotatedEnvelopes is { Count: > 0 })
             {
                 return;
             }
@@ -163,42 +175,60 @@ namespace ProteoformExplorer.Core
                 }
             }
 
-            direction = 1;
-            var mostIntenseScan = data.Value.GetOneBasedScan(mostIntenseEnvelope.scanNum);
-            for (int z = id.PrecursorChargeState; z <= deconEngine.MaxCharge && z >= deconEngine.MinCharge; z += direction)
-            {
-                bool successfullyFoundEnvelope = false;
 
+            var mostIntenseScan = data.Value.GetOneBasedScan(mostIntenseEnvelope.scanNum);
+
+            // Find envelopes by moving in both directions from the precursor charge
+            var foundCharges = new HashSet<int>();
+            int precursorCharge = id.PrecursorChargeState;
+
+            // Always check the precursor charge itself
+            TryAddEnvelopeAtCharge(precursorCharge);
+
+            int step = Polarity == Polarity.Positive ? 1 : -1;
+
+            // Search higher charges
+            for (int z = precursorCharge + step;
+                 Polarity == Polarity.Positive ? z <= deconEngine.MaxCharge : z >= -deconEngine.MaxCharge;
+                 z += step)
+            {
+                if (!TryAddEnvelopeAtCharge(z))
+                    break;
+            }
+
+            // Search lower charges
+            for (int z = precursorCharge - step;
+                 Polarity == Polarity.Positive ? z >= deconEngine.MinCharge : z <= -deconEngine.MinCharge;
+                 z -= step)
+            {
+                if (!TryAddEnvelopeAtCharge(z))
+                    break;
+            }
+
+            bool TryAddEnvelopeAtCharge(int z)
+            {
                 int index = mostIntenseScan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(z));
                 double expMz = mostIntenseScan.MassSpectrum.XArray[index];
 
                 if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(z), modeMass))
                 {
-                    var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(mostIntenseScan.MassSpectrum, index, z, peaksBuffer,
-                        alreadyClaimedMzs, intensitiesBuffer);
+                    var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(
+                        mostIntenseScan.MassSpectrum, index, z, peaksBuffer, alreadyClaimedMzs, intensitiesBuffer);
 
                     if (envelope != null)
                     {
-                        envelopes.Add(new AnnotatedEnvelope(mostIntenseScan.OneBasedScanNumber, mostIntenseScan.RetentionTime,
-                            z, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
-
-                        successfullyFoundEnvelope = true;
+                        envelopes.Add(new AnnotatedEnvelope(
+                            mostIntenseScan.OneBasedScanNumber,
+                            mostIntenseScan.RetentionTime,
+                            z,
+                            envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
+                        foundCharges.Add(z);
+                        return true;
                     }
                 }
-
-                if (!successfullyFoundEnvelope || z == deconEngine.MaxCharge)
-                {
-                    if (direction == 1)
-                    {
-                        direction = -1;
-                        z = id.PrecursorChargeState;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+                return false;
             }
+
 
             if (!envelopes.Any())
             {
@@ -210,7 +240,19 @@ namespace ProteoformExplorer.Core
             //TODO
             this.ApexRt = envelopes.First().RetentionTime;
             this.RtElutionRange = new DoubleRange(envelopes.Min(p => p.RetentionTime), envelopes.Max(p => p.RetentionTime));
-            this.Charges = Enumerable.Range(envelopes.Min(p => p.Charge), envelopes.Max(p => p.Charge) - envelopes.Min(p => p.Charge) + 1).ToList();
+
+            int minCharge = envelopes.Min(p => p.Charge);
+            int maxCharge = envelopes.Max(p => p.Charge);
+            if (maxCharge >= minCharge)
+            {
+                this.Charges = Enumerable.Range(minCharge, maxCharge - minCharge + 1).ToList();
+            }
+            else
+            {
+                // Handle the error case appropriately
+            }
         }
+
+        
     }
 }

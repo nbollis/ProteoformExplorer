@@ -67,7 +67,7 @@ namespace ProteoformExplorer.Wpf
                 scan = data.Value.GetOneBasedScan(scanNum);
             }
 
-            var decon = PfmXplorerUtil.DeconvolutionEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange).OrderBy(p => r.Next()).ToList();
+            var decon = PfmXplorerUtil.DeconvolutionEngine.GetEnvelopeCandidates(scan.MassSpectrum, scan.ScanWindowRange, null, scan.Polarity).OrderBy(p => r.Next()).ToList();
 
 
             currentlyDisplayedScan = scan;
