@@ -168,7 +168,7 @@ namespace Test
             var spectrum = new MzSpectrum(peaks.Select(p => p.Item1).ToArray(), peaks.Select(p => p.Item2).ToArray(), true);
 
             var engine = new DeconvolutionEngine(0, 0.4, 3, 0.4, 1.5, 5, 1, 60, 2);
-            var envs = engine.Deconvolute(spectrum, spectrum.Range).ToList();
+            var envs = engine.Deconvolute(spectrum, spectrum.Range, MassSpectrometry.Polarity.Positive).ToList();
 
             List<string> output = new List<string> { DeconvolutedEnvelope.TabDelimitedHeader };
 

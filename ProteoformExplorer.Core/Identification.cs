@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MassSpectrometry;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace ProteoformExplorer.Core
         public int IdentificationScanNum { get; private set; }
         public string SpectraFileNameWithoutExtension { get; private set; }
         public string Dataset { get; private set; }
+        public Polarity Polarity { get; private set; }
 
         public Identification(string baseSequence, string modifiedSequence, double monoMass, int chargeState,
             int precursorScanNum, int identificationScanNum, string spectraFileNameWithoutExtension, string dataset = "")
@@ -59,8 +61,10 @@ namespace ProteoformExplorer.Core
                 }
             }
 
+            Polarity = file.Value.GetOneBasedScan(IdentificationScanNum).Polarity;
+
             // get the precursor charge
-            //if (OneBasedPrecursorScanNumber > 0 && PrecursorChargeState <= 0)
+            if (OneBasedPrecursorScanNumber > 0 && ((PrecursorChargeState <= 0 && Polarity == Polarity.Positive) || (PrecursorChargeState >= 0 && Polarity == Polarity.Negative)))
             {
                 var fragmentationScan = file.Value.GetOneBasedScan(IdentificationScanNum);
 
