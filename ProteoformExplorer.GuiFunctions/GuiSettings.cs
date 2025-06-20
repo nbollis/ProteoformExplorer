@@ -84,8 +84,35 @@ namespace ProteoformExplorer.GuiFunctions
 
         public static string ConvertName(this string input)
         {
-            var mapping = NameMappings.FirstOrDefault(m => m.LongNames.Contains(input));
-            return mapping?.ShortName ?? input;
+            if (string.IsNullOrWhiteSpace(input))
+                return input;
+
+            // Helper to normalize names: lower case, remove extension if present
+            static string Normalize(string name)
+            {
+                if (string.IsNullOrEmpty(name))
+                    return string.Empty;
+                var lower = name.ToLowerInvariant();
+                var idx = lower.LastIndexOf('.');
+                return idx > 0 ? lower[..idx] : lower;
+            }
+
+            var normalizedInput = Normalize(input);
+
+            foreach (var mapping in NameMappings)
+            {
+                // Check normalized long names
+                foreach (var longName in mapping.LongNames)
+                {
+                    if (Normalize(longName) == normalizedInput)
+                        return mapping.ShortName;
+                }
+                // Also check if input is a normalized version of the short name
+                if (Normalize(mapping.ShortName) == normalizedInput)
+                    return mapping.ShortName;
+            }
+
+            return input;
         }
 
         public static Color ConvertStringToColor(this string input)
