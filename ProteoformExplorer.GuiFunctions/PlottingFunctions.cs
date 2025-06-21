@@ -335,7 +335,7 @@ namespace ProteoformExplorer.GuiFunctions
             }
         }
 
-        public static void PlotTotalIonChromatograms(Plot plot, VLine rtIndicator, out List<string> errors)
+        public static void PlotTotalIonChromatograms(Plot plot, VLine rtIndicator, out List<string> errors, double? minRt = null, double? maxRt = null)
         {
             errors = new List<string>();
             plot.Clear();
@@ -348,7 +348,7 @@ namespace ProteoformExplorer.GuiFunctions
                 }
 
                 // display TIC chromatogram
-                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram(GuiSettings.TicRollingAverage);
+                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                 plot.AddScatterLines(
                     ticChromatogram.Select(p => p.X).ToArray(),
@@ -358,7 +358,7 @@ namespace ProteoformExplorer.GuiFunctions
                 // display identified TIC chromatogram
                 if (DataManagement.AllLoadedAnnotatedSpecies.Any())
                 {
-                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram(GuiSettings.TicRollingAverage);
+                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                     if (deconvolutedTicChromatogram.Any())
                     {
@@ -368,7 +368,7 @@ namespace ProteoformExplorer.GuiFunctions
                             GuiSettings.DeconvolutedColor, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
                     }
 
-                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram(GuiSettings.TicRollingAverage);
+                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                     if (identifiedTicChromatogram.Any())
                     {

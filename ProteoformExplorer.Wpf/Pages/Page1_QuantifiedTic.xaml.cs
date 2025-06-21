@@ -12,6 +12,47 @@ using ProteoformExplorer.GuiFunctions;
 
 namespace ProteoformExplorer.Wpf
 {
+    public class TicPageViewModel : BaseViewModel
+    {
+        private static double? _minRt;
+        private static double? _maxRt;
+
+        public double? MinRt
+        {
+            get => _minRt;
+            set
+            {
+                if (_minRt != value)
+                {
+                    _minRt = value;
+                    OnPropertyChanged(nameof(MinRt));
+                }
+            }
+        }
+
+        public double? MaxRt
+        {
+            get => _maxRt;
+            set
+            {
+                if (_maxRt != value)
+                {
+                    _maxRt = value;
+                    OnPropertyChanged(nameof(MaxRt));
+                }
+            }
+        }
+
+        public void InitializeMinMaxRt()
+        {
+            if (_minRt.HasValue && _maxRt.HasValue)
+                return;
+
+            MinRt = 0;
+            MaxRt = DataManagement.SpectraFiles.Select(p => p.Value.DataFile.Value.Scans.Last().RetentionTime).Max();
+        }
+    }
+
     /// <summary>
     /// Interaction logic for Page1_QuantifiedTic.xaml
     /// </summary>
@@ -24,11 +65,14 @@ namespace ProteoformExplorer.Wpf
         private Text PercentDeconAnnotation;
         private Text PercentIdentifiedAnnotation;
         private Text SelectedSpectrumItemAnnotation;
+        private readonly TicPageViewModel _viewModel = new();
 
         public Page1_QuantifiedTic()
         {
             InitializeComponent();
+            DataContext = _viewModel;
             DataListView.ItemsSource = DataLoading.LoadedSpectraFiles;
+            _viewModel.InitializeMinMaxRt();
 
             // right click to zoom is replaced by right click to integrate for this chart
             topPlotView.Configuration.RightClickDragZoom = false;
@@ -49,7 +93,7 @@ namespace ProteoformExplorer.Wpf
 
         private void DisplayTic()
         {
-            PlottingFunctions.PlotTotalIonChromatograms(topPlotView.Plot, CurrentRtIndicator, out var errors);
+            PlottingFunctions.PlotTotalIonChromatograms(topPlotView.Plot, CurrentRtIndicator, out var errors, _viewModel.MinRt, _viewModel.MaxRt);
 
             if (errors.Any())
             {
@@ -107,7 +151,7 @@ namespace ProteoformExplorer.Wpf
             }
 
             double rt = WpfFunctions.GetXPositionFromMouseClickOnChart(sender, e);
-            var theScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataManagement.CurrentlySelectedFile, rt);
+            var theScan = PfmXplorerUtil.GetClosestScanToRtFromDynamicConnection(DataManagement.CurrentlySelectedFile, rt, 1);
             DisplayAnnotatedSpectrum(theScan.OneBasedScanNumber);
 
             IntegratedAreaStart = new VLine();
