@@ -136,8 +136,24 @@ namespace ProteoformExplorer.Core
             return scan;
         }
 
-        public List<Datum> GetTicChromatogram(int rollingAverage = 0)
+        public List<Datum> GetTicChromatogram(int rollingAverage = 0, double? minRt = null, double? maxRt = null)
         {
+            if (TicData.Count != 0)
+            {
+                IEnumerable<Datum> result = TicData;
+
+                if (minRt.HasValue)
+                {
+                    result = result.Where(d => d.X >= minRt.Value);
+                }
+                if (maxRt.HasValue)
+                {
+                    result = result.Where(d => d.X <= maxRt.Value);
+                }
+
+                return result.ToList();
+            }
+
             HashSet<double> deconClaimedMzs = new HashSet<double>();
             Dictionary<string, HashSet<double>> identClaimedMzs = new();
             Dictionary<string, double> identifiedTicDict = new();
@@ -147,8 +163,7 @@ namespace ProteoformExplorer.Core
                 .Distinct()
                 .ToArray();
 
-            if (TicData.Count != 0) return TicData;
-            
+
             int lastScanNum = DataFile.Value.Scans[^1].OneBasedScanNumber;
 
             foreach (var dataset in datasetNames)
@@ -220,20 +235,31 @@ namespace ProteoformExplorer.Core
                 DeconvolutedTicData = DeconvolutedTicData.RollingAverage(rollingAverage);
                 IdentifiedTicData = IdentifiedTicData.RollingAverage(rollingAverage);
             }
-            
-            return TicData;
+
+            IEnumerable<Datum> filtered = TicData;
+
+            if (minRt.HasValue)
+            {
+                filtered = filtered.Where(d => d.X >= minRt.Value);
+            }
+            if (maxRt.HasValue)
+            {
+                filtered = filtered.Where(d => d.X <= maxRt.Value);
+            }
+
+            return filtered.ToList();
         }
 
-        public List<Datum> GetDeconvolutedTicChromatogram(int rollingAverage = 0)
+        public List<Datum> GetDeconvolutedTicChromatogram(int rollingAverage = 0, double? minRt = null, double? maxRt = null)
         {
-            GetTicChromatogram(rollingAverage);
+            GetTicChromatogram(rollingAverage, minRt, maxRt);
 
             return DeconvolutedTicData;
         }
 
-        public List<Datum> GetIdentifiedTicChromatogram(int rollingAverage = 0)
+        public List<Datum> GetIdentifiedTicChromatogram(int rollingAverage = 0, double? minRt = null, double? maxRt = null)
         {
-            GetTicChromatogram(rollingAverage);
+            GetTicChromatogram(rollingAverage, minRt, maxRt);
 
             return IdentifiedTicData;
         }

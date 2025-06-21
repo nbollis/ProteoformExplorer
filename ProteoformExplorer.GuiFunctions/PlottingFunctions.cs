@@ -335,7 +335,7 @@ namespace ProteoformExplorer.GuiFunctions
             }
         }
 
-        public static void PlotTotalIonChromatograms(Plot plot, VLine rtIndicator, out List<string> errors)
+        public static void PlotTotalIonChromatograms(Plot plot, VLine rtIndicator, out List<string> errors, double? minRt = null, double? maxRt = null)
         {
             errors = new List<string>();
             plot.Clear();
@@ -348,7 +348,7 @@ namespace ProteoformExplorer.GuiFunctions
                 }
 
                 // display TIC chromatogram
-                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram(GuiSettings.TicRollingAverage);
+                var ticChromatogram = DataManagement.CurrentlySelectedFile.Value.GetTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                 plot.AddScatterLines(
                     ticChromatogram.Select(p => p.X).ToArray(),
@@ -358,7 +358,7 @@ namespace ProteoformExplorer.GuiFunctions
                 // display identified TIC chromatogram
                 if (DataManagement.AllLoadedAnnotatedSpecies.Any())
                 {
-                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram(GuiSettings.TicRollingAverage);
+                    var deconvolutedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetDeconvolutedTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                     if (deconvolutedTicChromatogram.Any())
                     {
@@ -368,7 +368,7 @@ namespace ProteoformExplorer.GuiFunctions
                             GuiSettings.DeconvolutedColor, (float)GuiSettings.ChartLineWidth, label: "Deconvoluted TIC");
                     }
 
-                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram(GuiSettings.TicRollingAverage);
+                    var identifiedTicChromatogram = DataManagement.CurrentlySelectedFile.Value.GetIdentifiedTicChromatogram(GuiSettings.TicRollingAverage, minRt, maxRt);
 
                     if (identifiedTicChromatogram.Any())
                     {
@@ -419,7 +419,7 @@ namespace ProteoformExplorer.GuiFunctions
                     .ToDictionary(p => p, p => 0.0);
 
                 bool multipleInputRuns = identifiedTicDict.Count > 1;
-                foreach (var file in DataManagement.SpectraFiles)
+                foreach (var file in DataManagement.SpectraFiles.OrderBy(p => p.Key.ConvertName()))
                 {
                     double tic = 0;
                     double deconvolutedTic = 0;
@@ -446,13 +446,13 @@ namespace ProteoformExplorer.GuiFunctions
                         {
                             if (label is null)
                                 continue;
-                            ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), tic, deconvolutedTic, identifiedTicDict[label], label.ConvertName()));
+                            ticValues.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key).ConvertName(), tic, deconvolutedTic, identifiedTicDict[label], label.ConvertName()));
                         }
                     }
                 }
 
                 double[] positions = Enumerable.Range(0, ticValues.DistinctBy(p => p.file).Count()).Select(p => (double)p).ToArray();
-                string[] labels = ticValues.Select(p => p.file).Distinct().ToArray();
+                string[] labels = ticValues.Select(p => p.file.ConvertName()).Distinct().ToArray();
 
                 var ticPlot = new ScottPlot.Plottable.LollipopPlot(positions, ticValues.DistinctBy(p => p.file).Select(p => p.tic).ToArray());
                 ticPlot.Label = @"TIC";
@@ -513,7 +513,7 @@ namespace ProteoformExplorer.GuiFunctions
 
                 var numFilteredEnvelopesPerFile = new List<(string file, int numFilteredEnvs)>();
 
-                foreach (var file in DataManagement.SpectraFiles)
+                foreach (var file in DataManagement.SpectraFiles.OrderBy(p => p.Key.ConvertName()))
                 {
                     int envs = file.Value.GetDistinctEnvelopes().Count;
                     numFilteredEnvelopesPerFile.Add((PfmXplorerUtil.GetFileNameWithoutExtension(file.Key), envs));
@@ -521,7 +521,7 @@ namespace ProteoformExplorer.GuiFunctions
 
                 double[] values = numFilteredEnvelopesPerFile.Select(p => (double)p.numFilteredEnvs).ToArray();
                 double[] positions = Enumerable.Range(0, numFilteredEnvelopesPerFile.Count).Select(p => (double)p).ToArray();
-                string[] labels = numFilteredEnvelopesPerFile.Select(p => p.file).ToArray();
+                string[] labels = numFilteredEnvelopesPerFile.Select(p => p.file.ConvertName()).ToArray();
 
                 var envsCountPlot = new ScottPlot.Plottable.LollipopPlot(positions, values);
                 envsCountPlot.Label = @"Deconvoluted Envelopes";
@@ -553,7 +553,7 @@ namespace ProteoformExplorer.GuiFunctions
 
                 int fileNum = 0;
                 double maxMass = 0;
-                foreach (var file in DataManagement.SpectraFiles)
+                foreach (var file in DataManagement.SpectraFiles.OrderBy(p => p.Key.ConvertName()))
                 {
                     //TODO: decon feature could be null
                     var envelopeMasses = file.Value
@@ -597,7 +597,7 @@ namespace ProteoformExplorer.GuiFunctions
                 plot.SetAxisLimitsY(0, maxMass * 1.2);
 
                 double[] xPositions = Enumerable.Range(0, DataManagement.SpectraFiles.Count).Select(p => (double)p).ToArray();
-                string[] xLabels = DataManagement.SpectraFiles.Select(p => PfmXplorerUtil.GetFileNameWithoutExtension(p.Key)).ToArray();
+                string[] xLabels = DataManagement.SpectraFiles.Select(p => PfmXplorerUtil.GetFileNameWithoutExtension(p.Key).ConvertName()).ToArray();
                 plot.XTicks(xPositions, xLabels);
 
                 StyleDashboardPlot(plot);

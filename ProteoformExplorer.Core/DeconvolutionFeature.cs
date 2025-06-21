@@ -124,55 +124,57 @@ namespace ProteoformExplorer.Core
             int direction = 1;
             (int scanNum, double intensity) mostIntenseEnvelope = (id.OneBasedPrecursorScanNumber, 0);
 
-            // Move left and right one scan at a time u
-            for (int i = id.OneBasedPrecursorScanNumber; i >= 1 && i <= lastScanNum; i += direction)
+            // Collect envelopes, starting with the precursor scan
+            var processedScans = new HashSet<int>();
+            int precursorScanNumber = id.OneBasedPrecursorScanNumber;
+
+            // Helper to try adding an envelope at a scan
+            bool TryAddEnvelopeAtScan(int scanNum)
             {
-                var scan = data.Value.GetOneBasedScan(i);
+                if (processedScans.Contains(scanNum)) return false;
+                var scan = data.Value.GetOneBasedScan(scanNum);
+                if (scan == null || scan.MsnOrder != 1) return false;
 
-                bool successfullyFoundEnvelope = false;
+                int index = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(id.PrecursorChargeState));
+                double expMz = scan.MassSpectrum.XArray[index];
 
-                if (scan != null && scan.MsnOrder == 1)
+                if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(id.PrecursorChargeState), modeMass))
                 {
-                    int index = scan.MassSpectrum.GetClosestPeakIndex(modeMass.ToMz(id.PrecursorChargeState));
-                    double expMz = scan.MassSpectrum.XArray[index];
+                    var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(
+                        scan.MassSpectrum, index, id.PrecursorChargeState, peaksBuffer, alreadyClaimedMzs, intensitiesBuffer);
 
-                    if (PfmXplorerUtil.DeconvolutionEngine.PpmTolerance.Within(expMz.ToMass(id.PrecursorChargeState), modeMass))
+                    if (envelope != null)
                     {
-                        var envelope = PfmXplorerUtil.DeconvolutionEngine.GetIsotopicEnvelope(scan.MassSpectrum, index, id.PrecursorChargeState, peaksBuffer,
-                            alreadyClaimedMzs, intensitiesBuffer);
-
-                        if (envelope != null)
-                        {
-                            envelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime,
-                                id.PrecursorChargeState, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
-
-                            successfullyFoundEnvelope = true;
-
-                            double intensity = envelope.Peaks.Sum(p => p.ExperimentalIntensity);
-                            if (intensity > mostIntenseEnvelope.intensity)
-                            {
-                                mostIntenseEnvelope = (scan.OneBasedScanNumber, intensity);
-                            }
-                        }
+                        envelopes.Add(new AnnotatedEnvelope(scan.OneBasedScanNumber, scan.RetentionTime,
+                            id.PrecursorChargeState, envelope.Peaks.Select(p => p.ExperimentalMz).ToList()));
+                        processedScans.Add(scanNum);
+                        return true;
                     }
                 }
-                else if (scan.MsnOrder != 1 && i != lastScanNum)
-                {
-                    continue;
-                }
+                return false;
+            }
 
-                if (!successfullyFoundEnvelope || i == lastScanNum)
-                {
-                    if (direction == 1)
-                    {
-                        direction = -1;
-                        i = id.OneBasedPrecursorScanNumber;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
+            // Always add the precursor scan first
+            TryAddEnvelopeAtScan(precursorScanNumber);
+
+            // Expand left (lower scan numbers)
+            int gapCount = 0;
+            for (int i = precursorScanNumber - 1; i >= 1 && gapCount < 2; i--)
+            {
+                if (!TryAddEnvelopeAtScan(i))
+                    gapCount++;
+                else
+                    gapCount = 0;
+            }
+
+            // Expand right (higher scan numbers)
+            gapCount = 0;
+            for (int i = precursorScanNumber + 1; i <= lastScanNum && gapCount < 2; i++)
+            {
+                if (!TryAddEnvelopeAtScan(i))
+                    gapCount++;
+                else
+                    gapCount = 0;
             }
 
 

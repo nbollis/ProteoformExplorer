@@ -126,7 +126,7 @@ namespace ProteoformExplorer.Wpf
 
         public override string ToString()
         {
-            return FileNameWithExtension;
+            return FileNameWithExtension.ConvertName();
         }
     }
 }
