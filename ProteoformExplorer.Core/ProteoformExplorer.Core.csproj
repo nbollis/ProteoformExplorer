@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="mzLib" Version="1.0.562" />
+    <PackageReference Include="mzLib" Version="1.0.566" />
   </ItemGroup>
 
   <ItemGroup>
